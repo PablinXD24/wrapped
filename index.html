@@ -109,7 +109,7 @@
         .fighter-av { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); color: white; border: 3px solid white; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; margin-bottom: 10px; }
         .vs-sign { font-size: 2rem; font-weight: 900; font-style: italic; color: var(--neon-red); text-shadow: 0 0 15px red; }
 
-        /* Modal Share (CORREÇÃO DE BUG: Display none inicial) */
+        /* Modal Share (CORRIGIDO DISPLAY NONE INICIAL) */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; display: none; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); color: white; }
         .btn-opt { padding: 15px; margin-top: 10px; width: 100%; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
@@ -348,6 +348,7 @@
     let protestRival = "";
     let protestCategory = "";
     let amIWinningProtest = false;
+    let pendingBlob = null; // Para compartilhar
 
     // Globals
     window.goToMenu = goToMenu;
@@ -361,15 +362,19 @@
     window.confirmProtest = confirmProtest;
     window.selectAccuser = selectAccuser;
     window.castProtestVote = castProtestVote;
-    window.shareSlide = shareSlide;
-    window.closeShareModal = closeShareModal;
-    window.initProtestSequence = initProtestSequence;
-    window.startProtestVoting = startProtestVoting;
+    window.startProtestVoting = startProtestVoting; 
     window.nextProtestTurn = nextProtestTurn;
-    window.processShare = processShare; 
+    window.initProtestSequence = initProtestSequence;
+    window.shareSlide = shareSlide;
+    window.processShare = processShare;
+    window.closeShareModal = closeShareModal;
 
+    // --- NAV ---
     function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
+        document.querySelectorAll('.screen').forEach(s => { 
+            s.classList.remove('active'); 
+            s.style.display = 'none'; 
+        });
         const target = document.getElementById(id);
         target.style.display = 'flex';
         setTimeout(() => target.classList.add('active'), 10);
@@ -384,6 +389,7 @@
     }
     function showJoinInput() { document.getElementById('join-area').style.display = 'block'; }
 
+    // --- FIREBASE LOBBY ---
     function createRoomReal() {
         roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         amIHost = true;
@@ -451,6 +457,7 @@
         });
     }
 
+    // --- VOTING LOGIC ---
     function startGameReal() { update(roomRef, { status: 'voting' }); }
 
     function startLocalVoting() {
@@ -462,6 +469,7 @@
     function loadQuestionLocal() {
         const q = questions[localQIdx];
         const theme = themes[localQIdx % themes.length];
+        
         document.getElementById('q-text').innerText = q.q;
         document.getElementById('vote-count').innerText = `${localQIdx+1}/${questions.length}`;
         document.getElementById('vote-bar').style.width = `${((localQIdx+1)/questions.length)*100}%`;
@@ -480,12 +488,15 @@
     }
 
     function castVote(target) {
+        // Envia voto
         set(ref(db, `rooms/${roomCode}/votes/${localQIdx}/${myId}`), target);
+        
         if(localQIdx < questions.length - 1) {
             localQIdx++;
             loadQuestionLocal();
         } else {
-            update(ref(db, `rooms/${roomCode}/finishedPlayers/${myId}`), true);
+            set(ref(db, `rooms/${roomCode}/finishedPlayers/${myId}`), true);
+            
             showScreen('screen-wait-others');
             if(amIHost) checkAllFinished();
         }
@@ -496,7 +507,10 @@
         const data = snap.val();
         const total = Object.keys(data.players).length;
         const finished = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
-        if(finished >= total) calculateResults(data);
+        
+        if(finished >= total) {
+            calculateResults(data);
+        }
     }
 
     function calculateResults(data) {
@@ -541,6 +555,7 @@
         update(roomRef, { finalResults: calcRes, awards: awards, status: 'results' });
     }
 
+    // --- WRAPPED ---
     function startWrapped() {
         slideIdx = 0;
         const total = questions.length + awardSlides.length;
@@ -611,17 +626,24 @@
         else { slideIdx++; loadSlide(); }
     }
 
-    // --- PROTESTO REAL ---
-    function initProtestSequence() { goToProtestSelection(); }
+    // --- PROTESTO REAL (QUEUE) ---
+    function initProtestSequence() {
+        const potentialProtesters = Object.values(currentPlayers).filter(name => name !== myName);
+        // Simula fila
+        protestQueue = potentialProtesters.filter(() => Math.random() > 0.4); 
+        currentProtester = myName; 
+        goToProtestSelection();
+    }
 
     function goToProtestSelection() {
         const list = document.getElementById('protest-cat-list');
-        list.innerHTML = ''; 
+        list.innerHTML = '';
         questions.forEach((q, idx) => {
             const res = finalResults[idx] || {};
             const sorted = Object.entries(res).sort((a,b)=>b[1]-a[1]);
             const winner = sorted[0] ? sorted[0][0] : "Ninguém";
             const isMe = winner === myName;
+            
             list.innerHTML += `
                 <div class="cat-list-item" onclick="confirmProtest('${winner}', ${idx})">
                     <div class="cat-info"><span class="cat-title">${q.q}</span></div>
@@ -664,6 +686,7 @@
         const active = data.activeProtest;
         const queue = data.protestQueue;
 
+        // Host gerencia fila
         if(amIHost && !active && queue) {
             const keys = Object.keys(queue).sort((a,b) => queue[a].timestamp - queue[b].timestamp); // FIFO
             const nextKey = keys[0];
@@ -732,7 +755,7 @@
         const active = snap.val();
         if(!active) return;
         const votes = active.votes || {};
-        const totalVoters = Math.max(1, Object.keys(currentPlayers).length - 2); // Avoid div by zero
+        const totalVoters = Math.max(1, Object.keys(currentPlayers).length - 2); 
         
         if(Object.keys(votes).length >= totalVoters) {
             let cScore = 0; let rScore = 0;
@@ -742,8 +765,18 @@
         }
     }
 
+    function nextProtestTurn() {
+        update(roomRef, { activeProtest: null });
+    }
+
+    async function startProtestVoting() {
+        showScreen('screen-wait');
+        document.querySelector('#screen-wait h1').innerText = "DUELO INICIADO";
+        document.querySelector('#screen-wait p').innerText = `O tribunal está em sessão.`;
+    }
+
     // --- SHARE ---
-    let pendingBlob = null;
+    async function processShare(type) { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); }
     async function shareSlide() {
         isPaused = true; clearTimeout(timer);
         const activeNav = document.querySelector('.nav-fill.active'); if(activeNav) activeNav.classList.add('paused');
@@ -800,7 +833,6 @@
         try { const canvas = await html2canvas(canvasEl, { scale: 2 }); canvas.toBlob(blob => { pendingBlob = blob; document.getElementById('share-modal').style.display = 'flex'; }); } catch(e) { closeShareModal(); }
         document.getElementById('export-canvas').style.display = 'none';
     }
-    function processShare(type) { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); };
     function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { slideIdx++; loadSlide(); }, 2000); }
 </script>
 </body>
