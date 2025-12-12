@@ -26,7 +26,7 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        /* SCROLLBAR */
+        /* SCROLLBAR PERSONALIZADA */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
@@ -109,7 +109,7 @@
         .fighter-av { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); color: white; border: 3px solid white; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; margin-bottom: 10px; }
         .vs-sign { font-size: 2rem; font-weight: 900; font-style: italic; color: var(--neon-red); text-shadow: 0 0 15px red; }
 
-        /* Modal Share */
+        /* Modal Share (CORREÇÃO DE BUG: Display none inicial) */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; display: none; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); color: white; }
         .btn-opt { padding: 15px; margin-top: 10px; width: 100%; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
@@ -288,7 +288,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, push, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, push, remove, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
@@ -340,10 +340,13 @@
     let timer;
     let isPaused = false;
     let currentTheme = "";
+    let localQIdx = 0; 
 
-    // Protesto
-    let protestCategory = "";
+    // Protest State
+    let protestQueue = [];
+    let currentProtester = "";
     let protestRival = "";
+    let protestCategory = "";
     let amIWinningProtest = false;
 
     // Globals
@@ -359,8 +362,11 @@
     window.selectAccuser = selectAccuser;
     window.castProtestVote = castProtestVote;
     window.shareSlide = shareSlide;
-    window.processShare = processShare;
     window.closeShareModal = closeShareModal;
+    window.initProtestSequence = initProtestSequence;
+    window.startProtestVoting = startProtestVoting;
+    window.nextProtestTurn = nextProtestTurn;
+    window.processShare = processShare; 
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
@@ -445,7 +451,6 @@
         });
     }
 
-    let localQIdx = 0;
     function startGameReal() { update(roomRef, { status: 'voting' }); }
 
     function startLocalVoting() {
@@ -491,10 +496,7 @@
         const data = snap.val();
         const total = Object.keys(data.players).length;
         const finished = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
-        
-        if(finished >= total) {
-            calculateResults(data);
-        }
+        if(finished >= total) calculateResults(data);
     }
 
     function calculateResults(data) {
@@ -509,30 +511,36 @@
             Object.values(vQ).forEach(t => counts[t] = (counts[t]||0)+1);
             if(Object.keys(counts).length===0) {
                 const names = Object.values(data.players).map(p=>p.name);
-                counts[names[0]] = 1;
+                if(names.length > 0) counts[names[0]] = 1;
             }
             calcRes[idx] = counts;
             const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-            const w = sorted[0][0];
-            if(q.type==='vote') {
-                if(wins[w]!==undefined) wins[w]++;
-                Object.entries(counts).forEach(([p,c]) => { if(totalV[p]!==undefined) totalV[p]+=c; });
+            if(sorted.length > 0) {
+                const w = sorted[0][0];
+                if(q.type==='vote') {
+                    if(wins[w]!==undefined) wins[w]++;
+                    Object.entries(counts).forEach(([p,c]) => { if(totalV[p]!==undefined) totalV[p]+=c; });
+                }
             }
         });
 
         const sWins = Object.entries(wins).sort((a,b)=>b[1]-a[1]);
         const sVotes = Object.entries(totalV).sort((a,b)=>b[1]-a[1]);
         
+        const mvp = sWins[0] ? sWins[0][0] : "Ninguém";
+        const canceled = sVotes[0] ? sVotes[0][0] : "Ninguém";
+        const ghost = sVotes[sVotes.length-1] ? sVotes[sVotes.length-1][0] : "Ninguém";
+
         const awards = [
             { type: 'cover', cat: "PREMIAÇÃO", name: "", desc: "", icon: "" },
-            { type: 'final', cat: "MVP", name: sWins[0][0], desc: "Maior vencedor.", icon: "fa-crown" },
-            { type: 'final', cat: "CANCELADO", name: sVotes[0][0], desc: "Mais votos recebidos.", icon: "fa-ban" }
+            { type: 'final', cat: "MVP", name: mvp, desc: "Maior vencedor.", icon: "fa-crown" },
+            { type: 'final', cat: "CANCELADO", name: canceled, desc: "Mais votos recebidos.", icon: "fa-ban" },
+            { type: 'final', cat: "PLANTA", name: ghost, desc: "Menos lembrado.", icon: "fa-leaf" }
         ];
 
         update(roomRef, { finalResults: calcRes, awards: awards, status: 'results' });
     }
 
-    // --- WRAPPED ---
     function startWrapped() {
         slideIdx = 0;
         const total = questions.length + awardSlides.length;
@@ -603,13 +611,16 @@
         else { slideIdx++; loadSlide(); }
     }
 
-    // --- PROTESTO REAL (QUEUE) ---
+    // --- PROTESTO REAL ---
+    function initProtestSequence() { goToProtestSelection(); }
+
     function goToProtestSelection() {
         const list = document.getElementById('protest-cat-list');
-        list.innerHTML = '';
+        list.innerHTML = ''; 
         questions.forEach((q, idx) => {
             const res = finalResults[idx] || {};
-            const winner = Object.entries(res).sort((a,b)=>b[1]-a[1])[0]?.[0] || "Ninguém";
+            const sorted = Object.entries(res).sort((a,b)=>b[1]-a[1]);
+            const winner = sorted[0] ? sorted[0][0] : "Ninguém";
             const isMe = winner === myName;
             list.innerHTML += `
                 <div class="cat-list-item" onclick="confirmProtest('${winner}', ${idx})">
@@ -626,7 +637,7 @@
             const list = document.getElementById('accuser-list');
             list.innerHTML = '';
             Object.entries(currentPlayers).forEach(([id, name]) => {
-                if(name !== myName) list.innerHTML += `<div class="vote-card" onclick="submitProtestQueue('${name}', true)"><div class="avatar">${name[0]}</div><span>${name}</span></div>`;
+                if(name !== myName) list.innerHTML += `<div class="vote-card" onclick="selectAccuser('${name}')"><div class="avatar">${name[0]}</div><span>${name}</span></div>`;
             });
             showScreen('screen-protest-accusers');
         } else {
@@ -653,9 +664,9 @@
         const active = data.activeProtest;
         const queue = data.protestQueue;
 
-        // Host gerencia fila
         if(amIHost && !active && queue) {
-            const nextKey = Object.keys(queue)[0];
+            const keys = Object.keys(queue).sort((a,b) => queue[a].timestamp - queue[b].timestamp); // FIFO
+            const nextKey = keys[0];
             update(roomRef, {
                 activeProtest: { ...queue[nextKey], votes: {} },
                 [`protestQueue/${nextKey}`]: null
@@ -721,7 +732,7 @@
         const active = snap.val();
         if(!active) return;
         const votes = active.votes || {};
-        const totalVoters = Object.keys(currentPlayers).length - 2;
+        const totalVoters = Math.max(1, Object.keys(currentPlayers).length - 2); // Avoid div by zero
         
         if(Object.keys(votes).length >= totalVoters) {
             let cScore = 0; let rScore = 0;
@@ -774,11 +785,11 @@
                 const p2 = sorted[1] ? sorted[1][0] : "Ninguém";
                 document.getElementById('ex-m-p1').innerText = p1[0] || "?";
                 document.getElementById('ex-m-p2').innerText = p2[0] || "?";
-                document.getElementById('ex-match-text').innerText = q.roast[1];
+                document.getElementById('ex-match-text').innerText = "DEU MATCH!";
             } else {
                 document.getElementById('ex-standard-ui').style.display = 'block';
-                document.getElementById('ex-winner').innerText = document.getElementById('res-winner').innerText;
-                document.getElementById('ex-roast').innerText = document.getElementById('res-roast').innerText;
+                document.getElementById('ex-winner').innerText = sorted[0] ? sorted[0][0] : "Ninguém";
+                document.getElementById('ex-roast').innerText = "...";
                 const dataHTML = document.getElementById('res-data').innerHTML;
                 const exData = document.getElementById('ex-data');
                 exData.innerHTML = dataHTML;
@@ -789,8 +800,8 @@
         try { const canvas = await html2canvas(canvasEl, { scale: 2 }); canvas.toBlob(blob => { pendingBlob = blob; document.getElementById('share-modal').style.display = 'flex'; }); } catch(e) { closeShareModal(); }
         document.getElementById('export-canvas').style.display = 'none';
     }
-    window.processShare = (type) => { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); };
-    window.closeShareModal = () => { document.getElementById('share-modal').style.display='none'; isPaused=false; timer=setTimeout(()=>{slideIdx++;loadSlide()},2000); };
+    function processShare(type) { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); };
+    function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { slideIdx++; loadSlide(); }, 2000); }
 </script>
 </body>
 </html>
