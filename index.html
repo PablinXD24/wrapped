@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Realtime</title>
+    <title>Wrapped 2025 - Final</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -47,7 +47,7 @@
         .app-container { 
             position: relative; width: 100%; height: 100%; max-width: 480px; z-index: 10; 
             display: flex; justify-content: center; align-items: center; 
-            @media(min-width:768px){ height: 95vh; border:1px solid #333; border-radius:20px; overflow:hidden; }
+            @media(min-width:768px){ height: 95vh; border:1px solid rgba(255,255,255,0.1); border-radius:20px; overflow:hidden; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
         }
 
         .screen {
@@ -63,9 +63,12 @@
         p { font-size: clamp(0.9rem, 4vw, 1.1rem); opacity: 0.8; line-height: 1.5; margin-bottom: 30px; }
 
         input { width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 20px; border-radius: 12px; font-family: var(--font-data); font-size: 1.2rem; outline: none; margin-bottom: 20px; text-align: center; text-transform: uppercase; }
+        input:focus { border-color: var(--neon-green); background: rgba(255,255,255,0.15); }
+
         .btn { background: white; color: black; border: none; padding: 18px; border-radius: 50px; font-family: var(--font-display); font-weight: 700; font-size: 1rem; width: 100%; cursor: pointer; transition: transform 0.1s; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .btn:active { transform: scale(0.96); }
         .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
         
         .btn-protest { background: transparent; color: var(--neon-red); border: 2px solid var(--neon-red); font-size: 1.2rem; letter-spacing: 2px; box-shadow: 0 0 10px rgba(255, 70, 70, 0.1); }
         .btn-protest:hover { background: var(--neon-red); color: white; }
@@ -92,14 +95,33 @@
         .data-row { display: flex; align-items: center; margin-bottom: 10px; font-weight: bold; }
 
         .cat-list-wrapper { width: 100%; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
-        .cat-list-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; }
-        .cat-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .cat-list-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .cat-list-item:hover { background: rgba(255,255,255,0.1); border-color: var(--neon-red); }
+        .cat-info { display: flex; flex-direction: column; gap: 4px; flex: 1; padding-right: 10px; }
+        .cat-title { font-weight: bold; font-size: 1rem; line-height: 1.2; }
+        .cat-ctx { font-family: var(--font-data); font-size: 0.75rem; opacity: 0.6; text-transform: uppercase; }
+        .tag-win { background: rgba(30, 215, 96, 0.2); color: var(--neon-green); border: 1px solid var(--neon-green); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .tag-lose { background: rgba(255,255,255,0.1); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
         
-        .protest-vs-container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 70, 70, 0.3); border-radius: 24px; padding: 30px 20px; backdrop-filter: blur(15px); }
+        .protest-vs-container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 70, 70, 0.3); border-radius: 24px; padding: 30px 20px; backdrop-filter: blur(15px); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
         .protest-fighters { display: flex; align-items: center; justify-content: space-around; width: 100%; margin: 30px 0; }
         .fighter { display: flex; flex-direction: column; align-items: center; width: 40%; }
         .fighter-av { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); color: white; border: 3px solid white; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; margin-bottom: 10px; }
         .vs-sign { font-size: 2rem; font-weight: 900; font-style: italic; color: var(--neon-red); text-shadow: 0 0 15px red; }
+
+        /* Modal Share */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; display: none; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
+        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); color: white; }
+        .btn-opt { padding: 15px; margin-top: 10px; width: 100%; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+
+        /* Export Canvas */
+        #export-canvas { position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; background: #fff; color: #000; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .ex-cat { font-family: var(--font-data); font-size: 2.5rem; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 40px; }
+        .ex-winner { font-size: 9rem; font-weight: 900; line-height: 0.9; margin: 40px 0; text-transform: uppercase; word-break: break-word;}
+        .ex-roast { font-size: 3.5rem; font-weight: 700; margin-bottom: 80px; line-height: 1.2; }
+        .ex-match-ui { display: none; flex-direction: row; align-items: center; justify-content: center; gap: 40px; margin: 50px 0; }
+        .ex-white-ui { display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .ex-intro-ui { display: none; flex-direction: column; align-items: center; justify-content: center; }
 
         #screen-protest-wait { justify-content: center; align-items: center; text-align: center; }
         @keyframes popIn { to { transform: scale(1); opacity: 1; } }
@@ -253,7 +275,14 @@
         <button id="btn-protest-action" class="btn btn-outline" style="margin-top: 20px; width: auto; padding: 15px 40px;"></button>
     </div>
 
-    <div id="share-modal" class="modal"><div class="modal-content"><h2>Compartilhar</h2><button class="btn-opt" onclick="processShare('native')">Enviar</button><button class="btn-opt" onclick="processShare('download')">Baixar</button><button onclick="closeShareModal()" style="background:none;border:none;color:white;margin-top:10px;">Cancelar</button></div></div>
+    <div id="share-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Compartilhar</h2>
+            <button class="btn-opt" onclick="processShare('native')">Enviar</button>
+            <button class="btn-opt" onclick="processShare('download')">Baixar</button>
+            <button onclick="closeShareModal()" style="background:none;border:none;color:white;margin-top:10px;">Cancelar</button>
+        </div>
+    </div>
 
 </div>
 
@@ -706,10 +735,57 @@
     let pendingBlob = null;
     async function shareSlide() {
         isPaused = true; clearTimeout(timer);
+        const activeNav = document.querySelector('.nav-fill.active'); if(activeNav) activeNav.classList.add('paused');
         const canvasEl = document.getElementById('export-canvas');
-        document.getElementById('export-canvas').style.display = 'flex'; // Fix display block for html2canvas
-        // ... (Mesma lógica de preenchimento do canvas dos exemplos anteriores)
-        // Simplificado para brevidade, usar o mesmo bloco de share já aprovado.
+        document.getElementById('export-canvas').style.display = 'flex'; 
+        
+        const isAwardPhase = slideIdx >= questions.length;
+        document.getElementById('ex-standard-ui').style.display = 'none';
+        document.getElementById('ex-match-ui').style.display = 'none';
+        document.getElementById('ex-match-text').style.display = 'none';
+        document.getElementById('ex-white-ui').style.display = 'none';
+        document.getElementById('ex-intro-ui').style.display = 'none';
+
+        if(isAwardPhase) {
+            const award = awardSlides[slideIdx - questions.length];
+            if(award.type === 'cover') {
+                canvasEl.style.backgroundColor = "black"; canvasEl.style.color = "white";
+                document.getElementById('ex-cat').innerText = ""; 
+                document.getElementById('ex-intro-ui').style.display = 'flex';
+            } else {
+                canvasEl.style.backgroundColor = "white"; canvasEl.style.color = "black";
+                document.getElementById('ex-cat').innerText = award.cat;
+                const wUi = document.getElementById('ex-white-ui');
+                wUi.style.display = 'flex';
+                document.getElementById('ex-w-name').innerText = award.name;
+                document.getElementById('ex-w-desc').innerText = award.desc;
+                document.getElementById('ex-w-icon').className = `fa-solid ${award.icon} ex-w-icon`;
+            }
+        } else {
+            canvasEl.style.backgroundColor = currentTheme; canvasEl.style.color = "black"; 
+            const q = questions[slideIdx];
+            document.getElementById('ex-cat').innerText = q.q;
+            const results = finalResults[slideIdx] || {};
+            const sorted = Object.entries(results).sort((a,b) => b[1] - a[1]);
+            if(q.type === 'match') {
+                document.getElementById('ex-match-ui').style.display = 'flex';
+                document.getElementById('ex-match-text').style.display = 'block';
+                const p1 = sorted[0] ? sorted[0][0] : "Ninguém";
+                const p2 = sorted[1] ? sorted[1][0] : "Ninguém";
+                document.getElementById('ex-m-p1').innerText = p1[0] || "?";
+                document.getElementById('ex-m-p2').innerText = p2[0] || "?";
+                document.getElementById('ex-match-text').innerText = q.roast[1];
+            } else {
+                document.getElementById('ex-standard-ui').style.display = 'block';
+                document.getElementById('ex-winner').innerText = document.getElementById('res-winner').innerText;
+                document.getElementById('ex-roast').innerText = document.getElementById('res-roast').innerText;
+                const dataHTML = document.getElementById('res-data').innerHTML;
+                const exData = document.getElementById('ex-data');
+                exData.innerHTML = dataHTML;
+                exData.querySelectorAll('.data-row').forEach(row => { row.style.fontSize = '2rem'; row.style.marginBottom = '20px'; row.style.fontWeight = 'bold'; });
+                exData.querySelectorAll('.data-bar-fill').forEach(bar => { bar.style.backgroundColor = 'black'; });
+            }
+        }
         try { const canvas = await html2canvas(canvasEl, { scale: 2 }); canvas.toBlob(blob => { pendingBlob = blob; document.getElementById('share-modal').style.display = 'flex'; }); } catch(e) { closeShareModal(); }
         document.getElementById('export-canvas').style.display = 'none';
     }
