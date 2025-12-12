@@ -26,7 +26,6 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
@@ -82,6 +81,7 @@
         .avatar { width: 45px; height: 45px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; }
         .vote-card:active .avatar { background: black; color: white; }
 
+        /* STORIES */
         .story-nav { display: flex; gap: 4px; margin: 10px 0 20px 0; width: 100%; z-index: 50; }
         .nav-fill { height: 4px; background: white; width: 0%; border-radius: 2px; }
         .nav-fill.active { width: 100%; transition: width 5.5s linear; }
@@ -104,6 +104,7 @@
         .match-name { font-weight: 900; font-size: 1.2rem; text-transform: uppercase; }
         .match-icon { font-size: 3.5rem; color: var(--dynamic-color); animation: pulse 1s infinite; margin-top: -30px;}
 
+        /* PROTESTO UI */
         .cat-list-wrapper { width: 100%; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
         .cat-list-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
         .cat-list-item:hover { background: rgba(255,255,255,0.1); border-color: var(--neon-red); }
@@ -119,7 +120,6 @@
         .fighter-av { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); color: white; border: 3px solid white; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; margin-bottom: 10px; }
         .vs-sign { font-size: 2rem; font-weight: 900; font-style: italic; color: var(--neon-red); text-shadow: 0 0 15px red; }
 
-        /* WHITE SLIDES */
         #res-white-container { display: none; text-align: center; color: black; flex-direction: column; justify-content: center; height: 100%; }
         .white-cat { font-family: var(--font-data); text-transform: uppercase; letter-spacing: 4px; font-size: 1.2rem; margin-bottom: 20px; opacity: 0.6; }
         .white-winner { font-size: clamp(4rem, 10vw, 6rem); font-weight: 900; line-height: 0.9; text-transform: uppercase; margin-bottom: 20px; color: black; animation: popIn 0.5s; }
@@ -130,12 +130,10 @@
         .intro-title { font-size: clamp(3rem, 10vw, 5rem); font-weight: 900; color: white; text-transform: uppercase; line-height: 1; margin-bottom: 20px; }
         .intro-sub { font-size: 1.5rem; color: var(--neon-gold); font-family: var(--font-data); letter-spacing: 3px; opacity: 0.8; }
 
-        /* Modal Share */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; display: none; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); color: white; }
         .btn-opt { padding: 15px; margin-top: 10px; width: 100%; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
-        /* Export Canvas */
         #export-canvas { position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; background: #fff; color: #000; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .ex-cat { font-family: var(--font-data); font-size: 2.5rem; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 40px; }
         .ex-winner { font-size: 9rem; font-weight: 900; line-height: 0.9; margin: 40px 0; text-transform: uppercase; word-break: break-word;}
@@ -249,17 +247,23 @@
     <div id="screen-end" class="screen" style="background: black; justify-content: center; align-items: center; text-align: center;">
         <h1 style="margin-bottom: 20px;">FIM DO WRAPPED</h1>
         <p>Obrigado por participar.</p>
-        <button class="btn btn-protest" style="width: auto; padding: 20px 40px; margin-top: 30px;" onclick="goToProtestSelection()">
-            <i class="fa-solid fa-gavel"></i> PROTESTO
+        
+        <button id="btn-start-trials" class="btn" style="width: auto; padding: 20px 40px; margin-top: 30px; background: var(--neon-gold); color: black; display: none;" onclick="startProtestTrials()">
+            INICIAR JULGAMENTOS
         </button>
-        <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.6;">Acha que rolou injustiça? Entre na fila.</p>
-        <div id="protest-queue-info" style="color: var(--neon-gold); margin-top: 10px; font-weight: bold; display: none;"></div>
+
+        <button class="btn btn-protest" style="width: auto; padding: 20px 40px; margin-top: 30px;" onclick="goToProtestSelection()">
+            <i class="fa-solid fa-gavel"></i> QUERO PROTESTAR
+        </button>
+        <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.6;">Entre na fila para reclamar seu título.</p>
+        <div id="protest-status-msg" style="color: var(--neon-green); font-weight: bold; margin-top: 10px;"></div>
     </div>
 
     <div id="screen-protest-select" class="screen">
         <div style="width: 100%; text-align: center;">
             <h2 style="color: var(--neon-red);">QUAL A INJUSTIÇA?</h2>
             <div id="protest-cat-list" class="cat-list-wrapper"></div>
+            <button class="btn btn-outline" onclick="showScreen('screen-end')" style="margin-top:20px;">Voltar</button>
         </div>
     </div>
 
@@ -271,10 +275,11 @@
         </div>
     </div>
 
-    <div id="screen-protest-wait" class="screen" style="background: white; color: black;">
-        <h1 id="wait-msg-title">AGUARDANDO...</h1>
-        <p id="wait-msg-desc">Júri decidindo seu destino.</p>
-        <div style="font-size:3rem;">⚖️</div>
+    <div id="screen-protest-lobby" class="screen" style="background: black; color: white; justify-content: center; align-items: center; text-align: center;">
+        <h1 style="color: var(--neon-gold);">TRIBUNAL</h1>
+        <p>Aguardando o início dos julgamentos...</p>
+        <div style="font-size:3rem; margin: 20px 0;">⚖️</div>
+        <div id="protest-queue-count" style="opacity: 0.7;">0 pessoas na fila</div>
     </div>
 
     <div id="screen-protest-duel" class="screen" style="justify-content: center; align-items: center; background: radial-gradient(circle, #500 0%, #000 90%);">
@@ -282,24 +287,25 @@
             <h2 style="color: var(--neon-red); margin:0;">DUELO</h2>
             <p style="text-align:center; opacity:0.8;" id="duel-cat-name">Categoria</p>
             <div class="protest-fighters">
-                <div class="fighter" onclick="castProtestVote('challenger')">
+                <div class="fighter" id="btn-vote-p1" onclick="castProtestVote('challenger')">
                     <div class="fighter-av" id="duel-p1-av">A</div>
                     <div class="fighter-name" id="duel-p1-name">NOME</div>
                 </div>
                 <div class="vs-sign">VS</div>
-                <div class="fighter" onclick="castProtestVote('rival')">
+                <div class="fighter" id="btn-vote-p2" onclick="castProtestVote('rival')">
                     <div class="fighter-av" id="duel-p2-av">B</div>
                     <div class="fighter-name" id="duel-p2-name">NOME</div>
                 </div>
             </div>
-            <p style="text-align:center;">Toque no avatar para votar!</p>
+            <p style="text-align:center;" id="duel-instruct">Toque no avatar para votar!</p>
         </div>
     </div>
 
     <div id="screen-protest-result" class="screen" style="justify-content: center; align-items: center; text-align: center;">
         <h1 id="p-res-title">...</h1>
         <p id="p-res-desc" style="font-size:1.2rem;">...</p>
-        <button id="btn-protest-action" class="btn btn-outline" style="margin-top: 20px; width: auto; padding: 15px 40px;"></button>
+        <button id="btn-protest-next" class="btn btn-outline" style="margin-top: 20px; width: auto; padding: 15px 40px; display: none;">PRÓXIMO</button>
+        <p id="msg-waiting-next" style="margin-top: 20px; opacity: 0.5;">Aguardando Juiz...</p>
     </div>
 
     <div id="share-modal" class="modal" style="display: none;">
@@ -330,7 +336,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- DADOS ---
     const questions = [
         { type: 'vote', q: "Quem seria preso por engano?" },
         { type: 'vote', q: "Quem dá PT em todo rolê?" },
@@ -355,10 +360,8 @@
     ];
     const themes = ["#1ed760", "#ff4632", "#2d46b9", "#f2e205", "#f573a0"];
 
-    // --- ESTADO GLOBAL (DECLARADO NO TOPO) ---
     let myId = localStorage.getItem('wrapped_uid') || Math.random().toString(36).substr(2, 9);
     localStorage.setItem('wrapped_uid', myId);
-    
     let myName = "";
     let roomCode = "";
     let amIHost = false;
@@ -370,17 +373,15 @@
     let timer;
     let isPaused = false;
     let currentTheme = "";
-    let localQIdx = 0; // CORRIGIDO: Declarado aqui
+    let localQIdx = 0; 
 
     // Protest State
-    let protestQueue = [];
-    let currentProtester = "";
-    let protestRival = "";
     let protestCategory = "";
+    let protestRival = "";
     let amIWinningProtest = false;
-    let pendingBlob = null; // CORRIGIDO: Declarado apenas aqui
+    let pendingBlob = null; 
 
-    // --- EXPOR FUNÇÕES PARA O HTML ---
+    // Globals
     window.goToMenu = goToMenu;
     window.createRoomReal = createRoomReal;
     window.showJoinInput = showJoinInput;
@@ -392,19 +393,15 @@
     window.confirmProtest = confirmProtest;
     window.selectAccuser = selectAccuser;
     window.castProtestVote = castProtestVote;
-    window.startProtestVoting = startProtestVoting; // Exposto
+    window.startProtestTrials = startProtestTrials; 
     window.nextProtestTurn = nextProtestTurn;
-    window.initProtestSequence = initProtestSequence;
     window.shareSlide = shareSlide;
     window.processShare = processShare;
     window.closeShareModal = closeShareModal;
+    window.showScreen = showScreen;
 
-    // --- NAV ---
     function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => { 
-            s.classList.remove('active'); 
-            s.style.display = 'none'; 
-        });
+        document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
         const target = document.getElementById(id);
         target.style.display = 'flex';
         setTimeout(() => target.classList.add('active'), 10);
@@ -419,7 +416,6 @@
     }
     function showJoinInput() { document.getElementById('join-area').style.display = 'block'; }
 
-    // --- FIREBASE LOBBY ---
     function createRoomReal() {
         roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         amIHost = true;
@@ -482,12 +478,30 @@
                     startWrapped();
                 }
             }
+            else if (data.status === 'protest_selection') {
+                // Host vê botão de iniciar, outros veem espera
+                if(document.getElementById('screen-end').style.display === 'none') {
+                    // Se não estiver no final, forçar ida para end ou lobby de espera
+                    // Aqui vamos apenas atualizar a UI do END SCREEN
+                }
+                const btnTrials = document.getElementById('btn-start-trials');
+                if(amIHost) btnTrials.style.display = 'block';
 
-            handleProtestState(data);
+                // Se eu já me inscrevi, mostrar status
+                if(data.protestQueue) {
+                    const myEntry = Object.values(data.protestQueue).find(i => i.challenger === myName);
+                    if(myEntry) {
+                        document.getElementById('protest-status-msg').innerText = "VOCÊ ESTÁ NA FILA! AGUARDE.";
+                        document.querySelector('.btn-protest').style.display = 'none';
+                    }
+                }
+            }
+            else if (data.status === 'protest_voting') {
+                handleProtestState(data);
+            }
         });
     }
 
-    // --- VOTING LOGIC ---
     function startGameReal() { update(roomRef, { status: 'voting' }); }
 
     function startLocalVoting() {
@@ -499,7 +513,6 @@
     function loadQuestionLocal() {
         const q = questions[localQIdx];
         const theme = themes[localQIdx % themes.length];
-        
         document.getElementById('q-text').innerText = q.q;
         document.getElementById('vote-count').innerText = `${localQIdx+1}/${questions.length}`;
         document.getElementById('vote-bar').style.width = `${((localQIdx+1)/questions.length)*100}%`;
@@ -519,14 +532,11 @@
 
     function castVote(target) {
         set(ref(db, `rooms/${roomCode}/votes/${localQIdx}/${myId}`), target);
-        
         if(localQIdx < questions.length - 1) {
             localQIdx++;
             loadQuestionLocal();
         } else {
-            // CORREÇÃO CRÍTICA (Erro 2): usar set para valor booleano
             set(ref(db, `rooms/${roomCode}/finishedPlayers/${myId}`), true);
-            
             showScreen('screen-wait-others');
             if(amIHost) checkAllFinished();
         }
@@ -537,10 +547,7 @@
         const data = snap.val();
         const total = Object.keys(data.players).length;
         const finished = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
-        
-        if(finished >= total) {
-            calculateResults(data);
-        }
+        if(finished >= total) calculateResults(data);
     }
 
     function calculateResults(data) {
@@ -597,7 +604,14 @@
     function loadSlide() {
         if(isPaused) return;
         const total = questions.length + awardSlides.length;
-        if(slideIdx >= total) { showScreen('screen-end'); return; }
+        if(slideIdx >= total) { 
+            showScreen('screen-end');
+            // Ao chegar no fim, Host muda status para 'protest_selection' se ainda não mudou
+            if(amIHost) {
+                 update(roomRef, { status: 'protest_selection' });
+            }
+            return; 
+        }
         
         clearTimeout(timer);
         for(let i=0; i<total; i++) {
@@ -673,14 +687,7 @@
         else { slideIdx++; loadSlide(); }
     }
 
-    // --- PROTESTO REAL (QUEUE) ---
-    function initProtestSequence() {
-        const potentialProtesters = Object.values(currentPlayers).filter(name => name !== myName);
-        protestQueue = potentialProtesters.filter(() => Math.random() > 0.4); 
-        currentProtester = myName; 
-        goToProtestSelection();
-    }
-
+    // --- PROTESTO REAL ---
     function goToProtestSelection() {
         const list = document.getElementById('protest-cat-list');
         list.innerHTML = '';
@@ -723,24 +730,23 @@
             isDefending: isDefending,
             timestamp: Date.now()
         });
-        document.getElementById('wait-msg-title').innerText = "NA FILA...";
-        document.getElementById('wait-msg-desc').innerText = "Aguardando sua vez.";
-        showScreen('screen-protest-wait');
+        // Volta para a tela final (Lobby de Protesto)
+        showScreen('screen-end');
+    }
+
+    // Host inicia os trabalhos
+    function startProtestTrials() {
+        if(!amIHost) return;
+        update(roomRef, { status: 'protest_voting' });
     }
 
     function handleProtestState(data) {
         const active = data.activeProtest;
         const queue = data.protestQueue;
 
-        if(queue && !active) {
-            const myQueueItem = Object.values(queue).find(i => i.challenger === myName);
-            if(myQueueItem) {
-                document.getElementById('protest-queue-info').innerText = "Você está na fila! Aguarde.";
-                document.getElementById('protest-queue-info').style.display = 'block';
-            }
-        }
-
-        if(amIHost && !active && queue) {
+        // Se sou HOST e não tem ativo mas tem fila -> Ativar próximo
+        // Mas só se o status da sala for 'protest_voting' (ou seja, Host deu start)
+        if(data.status === 'protest_voting' && amIHost && !active && queue) {
             const keys = Object.keys(queue).sort((a,b) => queue[a].timestamp - queue[b].timestamp); // FIFO
             const nextKey = keys[0];
             update(roomRef, {
@@ -751,6 +757,7 @@
         }
 
         if(active) {
+            // Se tem duelo ativo, mostra pra geral
             if(active.phase === 'result') {
                 showScreen('screen-protest-result');
                 const iWon = active.winner === active.challenger;
@@ -769,14 +776,21 @@
 
                 if(queue) {
                     btn.innerText = "PRÓXIMO CAPUZ";
-                    if(amIHost) btn.onclick = () => update(roomRef, { activeProtest: null });
-                    else btn.onclick = null;
+                    document.getElementById('msg-waiting-next').innerText = amIHost ? "" : "Aguardando o Juiz...";
+                    if(amIHost) {
+                        btn.style.display = 'inline-block';
+                        btn.onclick = nextProtestTurn;
+                    } else {
+                        btn.style.display = 'none';
+                    }
                 } else {
-                    btn.innerText = "ENCERRAR";
+                    btn.style.display = 'inline-block';
+                    btn.innerText = "ENCERRAR TUDO";
                     btn.onclick = () => location.reload();
                 }
 
             } else {
+                // VOTAÇÃO
                 if(active.challenger === myName || active.rival === myName) {
                     showScreen('screen-protest-wait');
                     document.getElementById('wait-msg-title').innerText = "JÚRI VOTANDO";
@@ -790,7 +804,18 @@
                     document.getElementById('duel-p2-av').innerText = active.rival[0];
                     document.querySelector('.fighter:nth-child(1)').onclick = () => castProtestVote(active.challenger);
                     document.querySelector('.fighter:nth-child(3)').onclick = () => castProtestVote(active.rival);
+                    document.getElementById('duel-instruct').innerText = "Toque no avatar para votar!";
                 }
+            }
+        } else if (data.status === 'protest_voting') {
+            // Se entrou no modo votação mas não tem ninguem ativo (acabou fila ou inicio)
+            if(!queue) {
+                // Fim de tudo
+                // alert("Todos os casos encerrados.");
+            } else {
+                 showScreen('screen-protest-lobby');
+                 const qCount = Object.keys(queue).length;
+                 document.getElementById('protest-queue-count').innerText = `${qCount} casos na fila`;
             }
         }
     }
@@ -820,12 +845,6 @@
 
     function nextProtestTurn() {
         update(roomRef, { activeProtest: null });
-    }
-
-    async function startProtestVoting() {
-        showScreen('screen-wait');
-        document.querySelector('#screen-wait h1').innerText = "DUELO INICIADO";
-        document.querySelector('#screen-wait p').innerText = `O tribunal está em sessão.`;
     }
 
     // --- SHARE ---
