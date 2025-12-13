@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Final Fixed</title>
+    <title>Wrapped 2025 - Painel Host</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -145,6 +145,14 @@
 
         #screen-protest-wait { justify-content: center; align-items: center; text-align: center; }
         #screen-protest-lobby { justify-content: center; align-items: center; text-align: center; }
+        /* Cards do Host para selecionar protesto */
+        .admin-protest-card {
+            background: #333; border: 1px solid #555; padding: 15px; margin: 5px; 
+            border-radius: 8px; cursor: pointer; text-transform: uppercase; font-weight: bold;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .admin-protest-card:hover { background: #444; border-color: white; }
+        
         @keyframes popIn { to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
@@ -250,16 +258,20 @@
         <h1 style="margin-bottom: 20px;">FIM DO WRAPPED</h1>
         <p>Obrigado por participar.</p>
         
-        <button id="btn-start-trials" class="btn" style="width: auto; padding: 20px 40px; margin-top: 30px; background: var(--neon-gold); color: black; display: none;" onclick="startProtestTrials()">
-            INICIAR JULGAMENTOS
-        </button>
+        <div id="host-admin-panel" style="width: 100%; display: none; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px;">
+            <h3 style="color: var(--neon-gold);">PAINEL DO JUIZ (HOST)</h3>
+            <p style="font-size: 0.8rem;">Toque em um nome para iniciar o julgamento.</p>
+            <div id="host-protest-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto;"></div>
+        </div>
 
-        <button class="btn btn-protest" style="width: auto; padding: 20px 40px; margin-top: 30px;" onclick="goToProtestSelection()">
-            <i class="fa-solid fa-gavel"></i> QUERO PROTESTAR
-        </button>
-        <button class="btn btn-safe" style="width: auto; padding: 20px 40px; margin-top: 10px;" onclick="joinSafeZone()">
-            <i class="fa-solid fa-shield-halved"></i> TÔ SAFE
-        </button>
+        <div id="player-actions">
+            <button class="btn btn-protest" style="width: auto; padding: 20px 40px; margin-top: 10px;" onclick="goToProtestSelection()">
+                <i class="fa-solid fa-gavel"></i> QUERO PROTESTAR
+            </button>
+            <button class="btn btn-safe" style="width: auto; padding: 20px 40px; margin-top: 10px;" onclick="joinSafeZone()">
+                <i class="fa-solid fa-shield-halved"></i> TÔ SAFE
+            </button>
+        </div>
         
         <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.6;">Entre na fila para reclamar seu título.</p>
         <div id="protest-status-msg" style="color: var(--neon-green); font-weight: bold; margin-top: 10px;"></div>
@@ -283,9 +295,8 @@
 
     <div id="screen-protest-lobby" class="screen" style="background: black; color: white; justify-content: center; align-items: center; text-align: center;">
         <h1 style="color: var(--neon-gold);">TRIBUNAL</h1>
-        <p>Aguardando o início dos julgamentos...</p>
+        <p>Aguardando o Juiz chamar o próximo caso...</p>
         <div style="font-size:3rem; margin: 20px 0;">⚖️</div>
-        <div id="protest-queue-count" style="opacity: 0.7;">0 pessoas na fila</div>
     </div>
 
     <div id="screen-protest-duel" class="screen" style="justify-content: center; align-items: center; background: radial-gradient(circle, #500 0%, #000 90%);">
@@ -316,8 +327,10 @@
     <div id="screen-protest-result" class="screen" style="justify-content: center; align-items: center; text-align: center;">
         <h1 id="p-res-title">...</h1>
         <p id="p-res-desc" style="font-size:1.2rem;">...</p>
-        <button id="btn-protest-next" class="btn btn-outline" style="margin-top: 20px; width: auto; padding: 15px 40px; display: none;">PRÓXIMO</button>
-        <p id="msg-waiting-next" style="margin-top: 20px; opacity: 0.5;">Aguardando Juiz...</p>
+        
+        <button id="btn-host-close-case" class="btn" style="margin-top: 20px; width: auto; padding: 15px 40px; display: none; background: white; color: black;" onclick="hostCloseCase()">ENCERRAR CASO</button>
+        
+        <p id="msg-waiting-next" style="margin-top: 20px; opacity: 0.5;">Aguardando Juiz encerrar...</p>
     </div>
 
     <div id="share-modal" class="modal" style="display: none;">
@@ -391,13 +404,11 @@
     let pendingBlob = null;
 
     // Protest State
-    let protestQueue = [];
-    let currentProtester = "";
-    let protestRival = "";
     let protestCategory = "";
+    let protestRival = "";
     let amIWinningProtest = false;
 
-    // EXPOSE TO WINDOW (Fixes ReferenceError)
+    // EXPOSE TO WINDOW
     window.goToMenu = goToMenu;
     window.createRoomReal = createRoomReal;
     window.showJoinInput = showJoinInput;
@@ -409,14 +420,13 @@
     window.confirmProtest = confirmProtest;
     window.selectAccuser = selectAccuser;
     window.castProtestVote = castProtestVote;
-    window.startProtestTrials = startProtestTrials; 
-    window.nextProtestTurn = nextProtestTurn;
-    window.initProtestSequence = initProtestSequence;
     window.shareSlide = shareSlide;
     window.processShare = processShare;
     window.closeShareModal = closeShareModal;
     window.joinSafeZone = joinSafeZone;
     window.showScreen = showScreen;
+    window.hostStartProtest = hostStartProtest; // Nova função do Host
+    window.hostCloseCase = hostCloseCase; // Nova função do Host
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { 
@@ -483,7 +493,7 @@
             if(data.host === myId) { amIHost = true; btnStart.style.display = 'inline-block'; msgWait.style.display='none'; }
             else { btnStart.style.display='none'; msgWait.style.display='block'; }
 
-            // 1. Voting logic (Host driven check)
+            // 1. Voting logic
             if(data.status === 'voting') {
                 if(data.finishedPlayers && data.finishedPlayers[myId]) {
                     showScreen('screen-wait-others');
@@ -496,7 +506,7 @@
                     }
                 }
                 
-                // HOST LOGIC: Check if everyone finished
+                // HOST LOGIC
                 if(amIHost) {
                     const total = Object.keys(currentPlayers).length;
                     const finished = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
@@ -511,30 +521,48 @@
                 }
             }
             else if (data.status === 'protest_selection') {
-                // Se o usuário ainda não escolheu "protestar" ou "safe", mostra a tela final
+                // Configuração da Tela Final para o Protesto
                 if(document.getElementById('screen-protest-lobby').style.display === 'none' && 
-                   document.getElementById('screen-protest-wait').style.display === 'none') {
+                   document.getElementById('screen-protest-wait').style.display === 'none' &&
+                   document.getElementById('screen-protest-duel').style.display === 'none') {
                     showScreen('screen-end');
                 }
                 
-                const btnTrials = document.getElementById('btn-start-trials');
-                if(amIHost) btnTrials.style.display = 'block';
+                // Se sou Host, mostro o painel de administração com os cards
+                if(amIHost) {
+                    document.getElementById('host-admin-panel').style.display = 'block';
+                    const qList = document.getElementById('host-protest-list');
+                    qList.innerHTML = '';
+                    if(data.protestQueue) {
+                        Object.entries(data.protestQueue).forEach(([key, item]) => {
+                            qList.innerHTML += `
+                                <div class="admin-protest-card" onclick="hostStartProtest('${key}')">
+                                    <span>${item.challenger}</span>
+                                    <i class="fa-solid fa-play"></i>
+                                </div>`;
+                        });
+                    } else {
+                        qList.innerHTML = '<p style="font-size:0.8rem; opacity:0.5;">Nenhum protesto enviado ainda.</p>';
+                    }
+                }
 
-                // Se eu já me inscrevi, mostrar status
+                // Se eu já me inscrevi
                 if(data.protestQueue) {
                     const myEntry = Object.values(data.protestQueue).find(i => i.challenger === myName);
                     if(myEntry) {
-                        document.getElementById('protest-status-msg').innerText = "VOCÊ ESTÁ NA FILA! AGUARDE.";
-                        document.querySelector('.btn-protest').style.display = 'none';
-                        document.querySelector('.btn-safe').style.display = 'none';
+                        document.getElementById('protest-status-msg').innerText = "ENVIADO AO JUIZ! AGUARDE.";
+                        document.querySelector('#player-actions').style.display = 'none';
                     }
-                    // Atualiza contador do lobby para quem tá safe
-                    const qCount = Object.keys(data.protestQueue).length;
-                    document.getElementById('protest-queue-count').innerText = `${qCount} casos na fila`;
                 }
             }
-            else if (data.status === 'protest_voting') {
-                handleProtestState(data);
+            
+            // Monitoramento de Duelo Ativo (Para todos)
+            if(data.activeProtest) {
+                handleProtestState(data.activeProtest);
+            } else if (data.status === 'protest_selection' && document.getElementById('screen-protest-duel').style.display !== 'none') {
+                // Se acabou o duelo e voltou para seleção, force a tela correta
+                if(amIHost) showScreen('screen-end');
+                else joinSafeZone(); 
             }
         });
     }
@@ -551,7 +579,6 @@
     function loadQuestionLocal() {
         const q = questions[localQIdx];
         const theme = themes[localQIdx % themes.length];
-        
         document.getElementById('q-text').innerText = q.q;
         document.getElementById('vote-count').innerText = `${localQIdx+1}/${questions.length}`;
         document.getElementById('vote-bar').style.width = `${((localQIdx+1)/questions.length)*100}%`;
@@ -570,14 +597,11 @@
     }
 
     function castVote(target) {
-        // Envia voto
         set(ref(db, `rooms/${roomCode}/votes/${localQIdx}/${myId}`), target);
-        
         if(localQIdx < questions.length - 1) {
             localQIdx++;
             loadQuestionLocal();
         } else {
-            // CORREÇÃO: Set true para marcar fim
             set(ref(db, `rooms/${roomCode}/finishedPlayers/${myId}`), true);
             showScreen('screen-wait-others');
         }
@@ -639,7 +663,6 @@
         const total = questions.length + awardSlides.length;
         if(slideIdx >= total) { 
             showScreen('screen-end');
-            // Ao chegar no fim, Host muda status para 'protest_selection' se ainda não mudou
             if(amIHost) {
                  update(roomRef, { status: 'protest_selection' });
             }
@@ -720,14 +743,7 @@
         else { slideIdx++; loadSlide(); }
     }
 
-    // --- PROTESTO REAL (QUEUE) ---
-    function initProtestSequence() {
-        const potentialProtesters = Object.values(currentPlayers).filter(name => name !== myName);
-        protestQueue = potentialProtesters.filter(() => Math.random() > 0.4); 
-        currentProtester = myName; 
-        goToProtestSelection();
-    }
-
+    // --- PROTESTO: SUBMISSÃO ---
     function goToProtestSelection() {
         const list = document.getElementById('protest-cat-list');
         list.innerHTML = '';
@@ -770,100 +786,74 @@
             isDefending: isDefending,
             timestamp: Date.now()
         });
-        // Volta para tela final esperando
         showScreen('screen-end');
-        document.getElementById('protest-status-msg').innerText = "VOCÊ ESTÁ NA FILA! AGUARDE.";
-        document.querySelector('.btn-protest').style.display = 'none';
-        document.querySelector('.btn-safe').style.display = 'none';
+        // A UI atualiza via listener
     }
 
     function joinSafeZone() {
         showScreen('screen-protest-lobby');
     }
 
-    // Host inicia os trabalhos
-    function startProtestTrials() {
-        if(!amIHost) return;
-        update(roomRef, { status: 'protest_voting' });
+    // --- PROTESTO: CONTROLE DO HOST ---
+    async function hostStartProtest(key) {
+        // Pega o protesto da fila
+        const snap = await get(ref(db, `rooms/${roomCode}/protestQueue/${key}`));
+        const protestData = snap.val();
+        
+        // Joga para activeProtest e remove da fila
+        update(roomRef, {
+            activeProtest: { ...protestData, votes: {} },
+            [`protestQueue/${key}`]: null
+        });
     }
 
-    function handleProtestState(data) {
-        const active = data.activeProtest;
-        const queue = data.protestQueue;
+    function hostCloseCase() {
+        update(roomRef, { activeProtest: null });
+    }
 
-        // Host gerencia fila
-        if(amIHost && !active && queue) {
-            const keys = Object.keys(queue).sort((a,b) => queue[a].timestamp - queue[b].timestamp); // FIFO
-            const nextKey = keys[0];
-            update(roomRef, {
-                activeProtest: { ...queue[nextKey], votes: {} },
-                [`protestQueue/${nextKey}`]: null
-            });
-            return;
-        }
+    // --- PROTESTO: O JOGO ---
+    function handleProtestState(active) {
+        // Se tem duelo ativo, mostra pra geral
+        if(active.phase === 'result') {
+            showScreen('screen-protest-result');
+            const iWon = active.winner === active.challenger;
+            const h1 = document.getElementById('p-res-title');
+            const desc = document.getElementById('p-res-desc');
+            const btn = document.getElementById('btn-host-close-case');
 
-        if(active) {
-            // Se sou Host e estamos em votação (não resultado), checa se acabou a cada update
-            if(amIHost && active.phase !== 'result') {
-                checkProtestEnd(active);
-            }
-
-            // Se tem duelo ativo, mostra pra geral (PRIORIDADE: RESULTADO > VOTAÇÃO)
-            if(active.phase === 'result') {
-                showScreen('screen-protest-result');
-                const iWon = active.winner === active.challenger;
-                const h1 = document.getElementById('p-res-title');
-                const desc = document.getElementById('p-res-desc');
-                const btn = document.getElementById('btn-protest-action');
-
-                if(active.challenger === myName) {
-                    if(iWon) { h1.innerText = active.isDefending ? "INOCENTADO!" : "JUSTIÇA FEITA!"; document.body.style.backgroundColor="#1ed760"; document.body.style.color="black"; }
-                    else { h1.innerText = active.isDefending ? "NEGADO!" : "SEM MORAL!"; document.body.style.backgroundColor="#ff4646"; document.body.style.color="white"; }
-                } else {
-                    h1.innerText = `${active.winner} VENCEU`;
-                    desc.innerText = `Decisão final sobre: ${active.category}`;
-                    document.body.style.backgroundColor="#333"; document.body.style.color="white";
-                }
-
-                if(queue) {
-                    btn.innerText = "PRÓXIMO CAPUZ";
-                    document.getElementById('msg-waiting-next').innerText = amIHost ? "" : "Aguardando o Juiz...";
-                    if(amIHost) {
-                        btn.style.display = 'inline-block';
-                        btn.onclick = nextProtestTurn;
-                    } else {
-                        btn.style.display = 'none';
-                    }
-                } else {
-                    btn.style.display = 'inline-block';
-                    btn.innerText = "ENCERRAR TUDO";
-                    btn.onclick = () => location.reload();
-                }
-
+            if(active.challenger === myName) {
+                if(iWon) { h1.innerText = active.isDefending ? "INOCENTADO!" : "JUSTIÇA FEITA!"; document.body.style.backgroundColor="#1ed760"; document.body.style.color="black"; }
+                else { h1.innerText = active.isDefending ? "NEGADO!" : "SEM MORAL!"; document.body.style.backgroundColor="#ff4646"; document.body.style.color="white"; }
             } else {
-                // VOTAÇÃO ATIVA
-                if(active.challenger === myName || active.rival === myName) {
-                    showScreen('screen-protest-wait');
-                    document.getElementById('wait-msg-title').innerText = "JÚRI VOTANDO";
-                    document.getElementById('wait-msg-desc').innerText = `Você vs ${active.challenger === myName ? active.rival : active.challenger}`;
-                } else {
-                    showScreen('screen-protest-duel');
-                    document.getElementById('duel-cat-name').innerText = active.category;
-                    document.getElementById('duel-p1-name').innerText = active.challenger;
-                    document.getElementById('duel-p1-av').innerText = active.challenger[0];
-                    document.getElementById('duel-p2-name').innerText = active.rival;
-                    document.getElementById('duel-p2-av').innerText = active.rival[0];
-                    document.querySelector('#btn-vote-p1').onclick = () => castProtestVote(active.challenger);
-                    document.querySelector('#btn-vote-p2').onclick = () => castProtestVote(active.rival);
-                    document.getElementById('duel-instruct').innerText = "Toque no avatar para votar!";
-                }
+                h1.innerText = `${active.winner} VENCEU`;
+                desc.innerText = `Decisão final sobre: ${active.category}`;
+                document.body.style.backgroundColor="#333"; document.body.style.color="white";
             }
-        } else if (data.status === 'protest_voting') {
-            // Ninguém na ativa, mostrando lobby de espera para quem tá safe ou esperando vez
-            if(!active && !document.getElementById('screen-end').classList.contains('active')) {
-                 showScreen('screen-protest-lobby');
-                 const qCount = queue ? Object.keys(queue).length : 0;
-                 document.getElementById('protest-queue-count').innerText = `${qCount} casos na fila`;
+
+            if(amIHost) {
+                btn.style.display = 'inline-block';
+                document.getElementById('msg-waiting-next').style.display = 'none';
+            } else {
+                btn.style.display = 'none';
+                document.getElementById('msg-waiting-next').style.display = 'block';
+            }
+
+        } else {
+            // VOTAÇÃO
+            if(active.challenger === myName || active.rival === myName) {
+                showScreen('screen-protest-wait');
+                document.getElementById('wait-msg-title').innerText = "JÚRI VOTANDO";
+                document.getElementById('wait-msg-desc').innerText = `Você vs ${active.challenger === myName ? active.rival : active.challenger}`;
+            } else {
+                showScreen('screen-protest-duel');
+                document.getElementById('duel-cat-name').innerText = active.category;
+                document.getElementById('duel-p1-name').innerText = active.challenger;
+                document.getElementById('duel-p1-av').innerText = active.challenger[0];
+                document.getElementById('duel-p2-name').innerText = active.rival;
+                document.getElementById('duel-p2-av').innerText = active.rival[0];
+                document.querySelector('#btn-vote-p1').onclick = () => castProtestVote(active.challenger);
+                document.querySelector('#btn-vote-p2').onclick = () => castProtestVote(active.rival);
+                document.getElementById('duel-instruct').innerText = "Toque no avatar para votar!";
             }
         }
     }
@@ -873,9 +863,15 @@
         showScreen('screen-protest-wait');
         document.getElementById('wait-msg-title').innerText = "VOTO REGISTRADO";
         document.getElementById('wait-msg-desc').innerText = "Aguardando outros juízes...";
+        // Host checka automaticamente
+        if(amIHost) checkProtestEnd();
     }
 
-    async function checkProtestEnd(active) {
+    async function checkProtestEnd() {
+        const snap = await get(ref(db, `rooms/${roomCode}/activeProtest`));
+        const active = snap.val();
+        if(!active || active.phase === 'result') return; // Já acabou ou não existe
+        
         const votes = active.votes || {};
         const totalVoters = Math.max(1, Object.keys(currentPlayers).length - 2); 
         
@@ -885,10 +881,6 @@
             const winner = cScore > rScore ? active.challenger : active.rival;
             update(roomRef, { activeProtest: { ...active, phase: 'result', winner: winner } });
         }
-    }
-
-    function nextProtestTurn() {
-        update(roomRef, { activeProtest: null });
     }
 
     // --- SHARE ---
