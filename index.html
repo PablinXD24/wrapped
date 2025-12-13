@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Clean</title>
+    <title>Wrapped 2025 - Com Protesto</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -40,6 +40,7 @@
             align-items: center; justify-content: center;
         }
 
+        /* EFEITOS VISUAIS ORIGINAIS */
         .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.05; pointer-events: none; z-index: 999; }
         .ambilight-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; filter: blur(90px); background: radial-gradient(circle at 50% 50%, #333, #000); transition: background 0.8s ease; }
         
@@ -114,6 +115,7 @@
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); color: white; }
         .btn-opt { padding: 15px; margin-top: 10px; width: 100%; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
+        /* EXPORT E PROTEST STYLES */
         #export-canvas { position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; background: #fff; color: #000; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .ex-cat { font-family: var(--font-data); font-size: 2.5rem; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 40px; }
         .ex-winner { font-size: 9rem; font-weight: 900; line-height: 0.9; margin: 40px 0; text-transform: uppercase; word-break: break-word;}
@@ -122,6 +124,58 @@
         .ex-white-ui { display: none; flex-direction: column; align-items: center; justify-content: center; }
         .ex-intro-ui { display: none; flex-direction: column; align-items: center; justify-content: center; }
 
+        /* --- PROTESTO STYLES (NOVO) --- */
+        .btn-protest {
+            background: var(--neon-red);
+            color: white;
+            border: 2px solid white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px var(--neon-red);
+            animation: pulse-red 1s infinite;
+            display: none; /* Só aparece pro culpado */
+            position: absolute;
+            bottom: 100px;
+            z-index: 95;
+            cursor: pointer;
+        }
+        .btn-protest:active { transform: scale(0.9); }
+
+        .chaos-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 998;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(255, 0, 0, 0.2);
+            mix-blend-mode: hard-light;
+        }
+
+        .chaos-stamp {
+            font-size: clamp(3rem, 15vw, 6rem);
+            font-weight: 900;
+            color: red;
+            border: 8px solid red;
+            padding: 10px 30px;
+            transform: rotate(-15deg);
+            text-transform: uppercase;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            animation: stampIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 2px 2px 0px white;
+            box-shadow: 10px 10px 0 rgba(0,0,0,0.5);
+        }
+
+        /* Animações de Caos */
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 70, 70, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 70, 70, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 70, 70, 0); } }
+        @keyframes stampIn { from { opacity: 0; transform: scale(3) rotate(0deg); } to { opacity: 1; transform: scale(1) rotate(-15deg); } }
+        
+        .shake-screen { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-4px, 0, 0); } 20%, 80% { transform: translate3d(6px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0); } 40%, 60% { transform: translate3d(8px, 0, 0); } }
+
+        .glitch-effect { filter: contrast(1.5) hue-rotate(90deg); }
+        
         @keyframes popIn { to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
@@ -131,7 +185,11 @@
 <div class="ambilight-bg" id="ambilight"></div>
 <div id="export-canvas" style="display: none;"></div> 
 
-<div class="app-container">
+<div id="chaos-overlay" class="chaos-overlay">
+    <div class="chaos-stamp" id="chaos-text">FAKE NEWS</div>
+</div>
+
+<div class="app-container" id="main-app">
 
     <div id="screen-home" class="screen active">
         <div style="width: 100%; text-align: center;">
@@ -185,7 +243,7 @@
 
     <div id="screen-wrapped" class="screen">
         <div class="story-nav" id="story-nav"></div>
-        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; width: 100%;">
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; align-items: center;">
             <p id="res-cat" class="res-cat">CATEGORIA</p>
             
             <div id="res-standard-container" style="display: flex; flex-direction: column; justify-content: center; width: 100%;">
@@ -214,6 +272,10 @@
                 <div id="white-winner" class="white-winner">NOME</div>
                 <div id="white-desc" class="white-desc">Desc</div>
             </div>
+            
+            <button id="btn-protest" class="btn-protest" onclick="triggerProtest()">
+                <i class="fa-solid fa-bullhorn"></i> ISSO É MENTIRA!
+            </button>
         </div>
         
         <div style="position: absolute; bottom: 30px; right: 30px; z-index: 90;">
@@ -281,7 +343,7 @@
     ];
     const themes = ["#1ed760", "#ff4632", "#2d46b9", "#f2e205", "#f573a0"];
 
-    // GLOBAL VARIABLES (TOP OF SCRIPT)
+    // GLOBAL VARIABLES
     let myId = localStorage.getItem('wrapped_uid') || Math.random().toString(36).substr(2, 9);
     localStorage.setItem('wrapped_uid', myId);
     
@@ -298,6 +360,7 @@
     let currentTheme = "";
     let localQIdx = 0; 
     let pendingBlob = null;
+    let lastProtestTime = 0; // Para controlar protestos
 
     // EXPOSE TO WINDOW
     window.goToMenu = goToMenu;
@@ -311,6 +374,7 @@
     window.processShare = processShare;
     window.closeShareModal = closeShareModal;
     window.showScreen = showScreen;
+    window.triggerProtest = triggerProtest;
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { 
@@ -377,6 +441,12 @@
             if(data.host === myId) { amIHost = true; btnStart.style.display = 'inline-block'; msgWait.style.display='none'; }
             else { btnStart.style.display='none'; msgWait.style.display='block'; }
 
+            // PROTEST LISTENER (Novo)
+            if(data.protest && data.protest.timestamp > lastProtestTime) {
+                lastProtestTime = data.protest.timestamp;
+                activateChaosMode();
+            }
+
             // 1. Voting logic
             if(data.status === 'voting') {
                 if(data.finishedPlayers && data.finishedPlayers[myId]) {
@@ -405,6 +475,41 @@
                 }
             }
         });
+    }
+
+    // --- PROTEST LOGIC ---
+    function triggerProtest() {
+        // Atualiza firebase para todos verem
+        update(roomRef, {
+            protest: {
+                timestamp: Date.now(),
+                by: myName
+            }
+        });
+        document.getElementById('btn-protest').style.display = 'none'; // Esconde botão após clique
+    }
+
+    function activateChaosMode() {
+        // EFEITO VISUAL PARA TODOS
+        const container = document.getElementById('main-app');
+        const overlay = document.getElementById('chaos-overlay');
+        const stamps = ["FAKE NEWS", "CALÚNIA", "MENTIRA", "INJUSTO", "ROUBADO"];
+        
+        // Random Text
+        document.getElementById('chaos-text').innerText = stamps[Math.floor(Math.random() * stamps.length)];
+
+        container.classList.add('shake-screen');
+        container.classList.add('glitch-effect');
+        overlay.style.display = 'flex';
+        
+        // Tocar vibração se mobile suportar
+        if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+        setTimeout(() => {
+            container.classList.remove('shake-screen');
+            container.classList.remove('glitch-effect');
+            overlay.style.display = 'none';
+        }, 3000); // 3 segundos de caos
     }
 
     // --- VOTING LOGIC ---
@@ -530,6 +635,7 @@
         document.getElementById('res-match-container').style.display='none';
         document.getElementById('res-intro-container').style.display='none';
         document.getElementById('res-white-container').style.display='none';
+        document.getElementById('btn-protest').style.display = 'none'; // Esconde botão por padrão
 
         if(isAward) {
             const aw = awardSlides[slideIdx - questions.length];
@@ -563,9 +669,18 @@
                 document.getElementById('m-name-2').innerText = sorted[1] ? sorted[1][0] : "?";
             } else {
                 document.getElementById('res-standard-container').style.display='flex';
-                document.getElementById('res-winner').innerText = sorted[0] ? sorted[0][0] : "Ninguém";
+                const winnerName = sorted[0] ? sorted[0][0] : "Ninguém";
+                document.getElementById('res-winner').innerText = winnerName;
                 document.getElementById('res-roast').innerText = q.roast[1] || "...";
                 
+                // --- LOGICA DE PROTESTO ---
+                // Se eu sou o vencedor E não é match (sozinho), mostro botão
+                if(winnerName === myName) {
+                    setTimeout(() => {
+                        document.getElementById('btn-protest').style.display = 'block';
+                    }, 1000); // Aparece 1s depois do slide
+                }
+
                 const box = document.getElementById('res-data');
                 box.innerHTML = '';
                 sorted.slice(0,3).forEach(([name, count]) => {
@@ -581,10 +696,13 @@
                 });
             }
         }
-        timer = setTimeout(() => { slideIdx++; loadSlide(); }, 5000);
+        timer = setTimeout(() => { slideIdx++; loadSlide(); }, 6000); // Tempo aumentado um pouco para dar chance de protesto
     }
 
     function handleStoryClick(e) {
+        // Bloqueia clique se estiver clicando no botão de protesto (z-index cuida disso, mas segurança extra)
+        if(e.target.id === 'btn-protest') return;
+
         const w = window.innerWidth;
         if(e.clientX < w*0.3) { if(slideIdx>0) {slideIdx--; loadSlide();} }
         else { slideIdx++; loadSlide(); }
