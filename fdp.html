@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FDP - Multiplayer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+        :root {
+            --neon-green: #0aff60; --neon-purple: #b537f2; --neon-pink: #ff2a6d; --neon-yellow: #f5e625;
+            --bg-dark: #050505; --card-black: rgba(20, 20, 20, 0.85); --card-white: rgba(255, 255, 255, 0.95);
+            --font-display: 'Space Grotesk', sans-serif; --font-data: 'Space Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-dark); color: white; height: 100vh; width: 100vw; overflow: hidden; font-family: var(--font-display); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.04; pointer-events: none; z-index: 0; }
+        .ambilight-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.5; filter: blur(100px); background: radial-gradient(circle at 50% 30%, #333, #000); transition: background 2s ease; }
+        
+        .app-container { position: relative; width: 100%; height: 100%; max-width: 500px; z-index: 10; display: flex; flex-direction: column; padding: 10px; }
+        
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-bottom: 10px; }
+        .room-tag { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; font-family: var(--font-data); font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .fdp-card {
+            padding: 20px; border-radius: 18px; font-weight: 700; font-size: 1.1rem; line-height: 1.3;
+            min-height: 180px; display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; transition: 0.3s; backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .card-black { background: var(--card-black); color: white; border: 1px solid rgba(255,255,255,0.15); margin-bottom: 15px; }
+        .card-white { background: var(--card-white); color: #111; border: none; cursor: pointer; transform-origin: center bottom; }
+        
+        .hand-area {
+            margin-top: auto; display: flex; gap: 0; padding: 20px 0; overflow-x: auto; scrollbar-width: none;
+            margin-left: -10px; margin-right: -10px; padding-left: 20px; padding-right: 20px;
+        }
+        .hand-card { min-width: 140px; width: 140px; height: 200px; font-size: 0.95rem; margin-right: -50px; transform: rotate(4deg); transition: 0.3s; border: 1px solid rgba(0,0,0,0.2); }
+        .hand-card:last-child { margin-right: 0; }
+        .hand-card:hover, .hand-card.selected { transform: translateY(-30px) rotate(0deg) scale(1.1); z-index: 100; margin-right: 10px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .hand-card.selected { border: 4px solid var(--neon-green); }
+
+        .table-area { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 40vh; overflow-y: auto; padding: 5px; }
+        .table-card { min-height: 120px; font-size: 0.9rem; animation: popIn 0.4s backwards; }
+        
+        .btn { background: var(--neon-green); color: black; border: none; padding: 15px; border-radius: 50px; font-weight: 800; font-size: 1rem; width: 100%; text-transform: uppercase; cursor: pointer; margin-top: 10px; box-shadow: 0 0 20px rgba(10, 255, 96, 0.3); }
+        .status-msg { text-align: center; color: var(--neon-pink); font-family: var(--font-data); font-size: 0.9rem; margin: 10px 0; text-transform: uppercase; letter-spacing: 1px; min-height: 20px;}
+        
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 30px; text-align: center; }
+        
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        #loading { position: fixed; inset:0; background:black; z-index:999; display:flex; justify-content:center; align-items:center; color:white; font-family:var(--font-data); }
+    </style>
+</head>
+<body>
+
+<div id="loading">CONECTANDO AO MUNDO SUBTERRÂNEO...</div>
+<div class="noise"></div>
+<div class="ambilight-bg" id="ambilight"></div>
+
+<div class="app-container">
+    <div class="top-bar">
+        <div class="room-tag" id="room-display">SALA: ????</div>
+        <div class="room-tag" id="score-display">PTS: 0</div>
+    </div>
+
+    <div>
+        <div class="status-msg" id="game-status">AGUARDANDO O PATRÃO...</div>
+        <div id="black-card" class="fdp-card card-black">
+            <span id="black-text">...</span>
+            <div style="margin-top:auto; display:flex; justify-content:space-between; align-items:flex-end;">
+                <span id="judge-name" style="font-size:0.8rem; opacity:0.6; font-family:var(--font-data);">JUIZ: ...</span>
+                <i class="fa-solid fa-masks-theater" style="opacity: 0.5;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div id="table-area" class="table-area"></div>
+
+    <div id="hand-area" class="hand-area"></div>
+
+    <div style="position: absolute; bottom: 20px; left: 0; width: 100%; padding: 0 20px; z-index: 150;">
+        <button id="btn-action" class="btn" style="display: none;">CONFIRMAR</button>
+    </div>
+</div>
+
+<div id="winner-modal" class="modal">
+    <h2 style="color:var(--neon-yellow); margin-bottom:20px;">VENCEDOR DA RODADA</h2>
+    <div id="winner-card-display" class="fdp-card card-white" style="width:100%; max-width:300px; transform:rotate(-2deg); margin-bottom:30px;">
+        ...
+    </div>
+    <h1 id="winner-name" style="font-size:2.5rem; text-transform:uppercase;">NOME</h1>
+    <p id="next-round-timer" style="margin-top:20px; font-family:var(--font-data);">Próxima rodada em 5s...</p>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update, push, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
+        authDomain: "wrapped-fad94.firebaseapp.com",
+        databaseURL: "https://wrapped-fad94-default-rtdb.firebaseio.com",
+        projectId: "wrapped-fad94",
+        storageBucket: "wrapped-fad94.firebasestorage.app",
+        messagingSenderId: "360236097664",
+        appId: "1:360236097664:web:76777f529c18623bf1c665"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get('room');
+    const myId = localStorage.getItem('wrapped_uid');
+    
+    if(!roomCode || !myId) {
+        alert("Erro de conexão. Volte para o Wrapped.");
+        window.location.href = 'index.html';
+    }
+
+    let myName = "Eu";
+    let isHost = false;
+    let currentJudgeId = "";
+    let selectedCardIdx = -1;
+    let hand = [];
+    
+    // --- DATABASE COMPLETA (150+ CARTAS) ---
+    const blackCards = [
+        "Para fazer amor gostoso, eu preciso de _____.",
+        "O que o Bolsonaro esconde no cofre?",
+        "Minha mãe chorou quando viu _____.",
+        "Qual é o segredo para uma vida feliz?",
+        "O que deu errado na minha vida sexual?",
+        "Brasileiro gosta mesmo é de _____.",
+        "Em um mundo perfeito, não existiria _____.",
+        "O novo sabor de Doritos é: _____.",
+        "A causa da minha morte será _____.",
+        "O que eu trouxe da minha viagem ao Paraguai?",
+        "Desculpe, professor, não fiz o dever porque estava ocupado com _____.",
+        "O que o Padre Marcelo Rossi toma no café da manhã?",
+        "Qual é o cheiro do transporte público às 18h?",
+        "O Brasil só vai para frente quando liberarem _____.",
+        "Em briga de marido e mulher, ninguém mete _____.",
+        "O que a Anitta vai lançar no próximo clipe?",
+        "No meu velório, eu quero que sirvam _____.",
+        "Minha fantasia de carnaval esse ano é _____.",
+        "O que eu faria por um iPhone 15?",
+        "O verdadeiro motivo do fim do mundo é _____.",
+        "O que eu encontrei no histórico do navegador do meu pai?",
+        "A nova política da empresa proíbe _____ no escritório.",
+        "O que me faz questionar minha heterossexualidade?",
+        "A única coisa que me acalma é _____.",
+        "O presente perfeito para o Dia das Mães é _____.",
+        "Por que eu fui demitido do McDonald's?",
+        "O que o Faustão guarda na churrasqueira?",
+        "A solução para a crise econômica é _____.",
+        "Qual é o superpoder mais inútil?",
+        "O que eu disse para o policial quando fui parado?",
+        "A Xuxa fez um pacto com _____.",
+        "O que não pode faltar no almoço de domingo?",
+        "Motivo do meu último término: _____.",
+        "O médico receitou _____ para a minha ansiedade.",
+        "O que a vizinha fofoqueira viu pela janela?",
+        "Harry Potter e o mistério de _____.",
+        "O que me impede de ser rico?",
+        "Qual o nome do grupo da família no WhatsApp?",
+        "O que eu faria se fosse invisível por uma hora?",
+        "Deus perdoa, mas _____ não."
+    ];
+
+    const whiteCards = [
+        "Um anão bombado.",
+        "O Lula com 10 dedos.",
+        "Tráfico de órgãos.",
+        "Uma cenoura.",
+        "Fingir orgasmo.",
+        "A piroca do Kid Bengala.",
+        "Fazer uma chuca mal feita.",
+        "Um golden shower surpresa.",
+        "Bater na avó.",
+        "Um teste de gravidez positivo.",
+        "Pablo Marçal num coach motivacional.",
+        "A grávida de Taubaté.",
+        "Dívida no Serasa.",
+        "Um Fiat Marea Turbo pegando fogo.",
+        "Comer o cu de quem tá lendo.",
+        "Um cadáver fresco.",
+        "Pagar pensão alimentícia.",
+        "Um travesti de 2 metros.",
+        "Cheirar cocaína no pau de um palhaço.",
+        "Oito litros de Corote.",
+        "Demitir o estagiário.",
+        "Calcinha comestível sabor bacon.",
+        "Minha dignidade.",
+        "Um peido silencioso e mortal.",
+        "Vender foto do pé no OnlyFans.",
+        "O Agostinho Carrara.",
+        "Gemidão do Zap no volume máximo.",
+        "Chutar mendigo.",
+        "A harmonização facial do demônio.",
+        "Vira-lata caramelo.",
+        "Boleto vencido.",
+        "Café frio e cigarro.",
+        "Uma coxinha mordida.",
+        "O véio da Havan.",
+        "Um áudio de 5 minutos da sua mãe.",
+        "Arroz com uva passa.",
+        "Pavê ou pacumê.",
+        "Um Palio 98 rebaixado.",
+        "Churrasco de gato.",
+        "Três reais de pão.",
+        "A sandália Havaiana da sua mãe voando.",
+        "Um PM de folga.",
+        "Dois caras numa moto.",
+        "O filme do Pelé.",
+        "Uma garrafa pet com água no relógio de luz.",
+        "Filtro de barro.",
+        "Mendingar like no Instagram.",
+        "Uma Capivara raivosa.",
+        "O Louro José (Saudades).",
+        "Ana Maria Braga bêbada.",
+        "Silvio Santos jogando aviãozinho.",
+        "Um soco na costela.",
+        "Rinha de Galo.",
+        "Jogo do Bicho.",
+        "Sogra de biquíni.",
+        "Tio do pavê.",
+        "Primo rico que vende Hinode.",
+        "Luva de Pedreiro.",
+        "Bora Bill!",
+        "Caneta Azul.",
+        "Calvo do Campari.",
+        "Um vídeo do Felipe Neto.",
+        "Banheira de Nutella.",
+        "Podcast de maromba.",
+        "Fake News no grupo da igreja.",
+        "Travar o Zap.",
+        "Um nude vazado.",
+        "A cabeleireira Leila.",
+        "Vazar o print.",
+        "Stalkear o ex.",
+        "Webnamoro.",
+        "Jogar Free Fire no banheiro.",
+        "Fazer dancinha no TikTok.",
+        "Reagir com foguinho no story.",
+        "Herpes labial.",
+        "Candidíase.",
+        "Viagra vencido.",
+        "Boneca inflável furada.",
+        "Sexo na praia (com areia).",
+        "Mamar no sigilo.",
+        "Um vibrador movido a diesel.",
+        "Fetiche em pés sujos.",
+        "Suruba na terceira idade.",
+        "Um travesti anão.",
+        "Incesto (Game of Thrones style).",
+        "Aborto caseiro.",
+        "Necrofilia leve.",
+        "Garganta profunda.",
+        "Cagar de porta aberta.",
+        "Limpar a bunda com lixa.",
+        "Hitler de calcinha.",
+        "Jesus Cristo numa moto.",
+        "Um tubarão com lasers.",
+        "Falar mal de K-Pop.",
+        "A inexistência do Acre.",
+        "O Mundial do Palmeiras.",
+        "Um ataque de diarreia em público.",
+        "Colocar feijão embaixo do arroz.",
+        "Pizza de Strogonoff.",
+        "Comer borda de pizza.",
+        "Ketchup na pizza.",
+        "Veganos chatos.",
+        "Crossfiteiro.",
+        "Coach quântico.",
+        "Bater palmas quando o avião pousa.",
+        "Aplaudir o pôr do sol.",
+        "Usar sapatênis.",
+        "Camisa polo com gola levantada.",
+        "O Patriota do caminhão.",
+        "Urach cuspindo na cara.",
+        "Inês Brasil.",
+        "Gretchen rebolando.",
+        "Um gol da Alemanha.",
+        "O menino Neymar caindo.",
+        "Sonegar impostos.",
+        "Orelha do Van Gogh.",
+        "Um rim saudável.",
+        "Vender a alma pro diabo.",
+        "Tomar banho de chinelo.",
+        "Secar o saco com secador.",
+        "Depilação a cera.",
+        "Um boleto pago.",
+        "A senha da Netflix do vizinho."
+    ];
+
+    // --- LÓGICA DO JOGO ---
+    const roomRef = ref(db, `rooms/${roomCode}`);
+    const fdpRef = ref(db, `rooms/${roomCode}/fdp_match`);
+
+    document.getElementById('room-display').innerText = `SALA: ${roomCode}`;
+
+    onValue(roomRef, (snap) => {
+        document.getElementById('loading').style.display = 'none';
+        const data = snap.val();
+        if(!data) return;
+
+        if(data.host === myId) isHost = true;
+        if(data.players && data.players[myId]) {
+            myName = data.players[myId].name;
+            const score = data.players[myId].score_fdp || 0;
+            document.getElementById('score-display').innerText = `PTS: ${score}`;
+        }
+
+        if(data.fdp_match) {
+            updateGameInterface(data.fdp_match, data.players);
+        } else if(isHost) {
+            startNewRound(Object.keys(data.players));
+        }
+    });
+
+    function updateGameInterface(matchData, players) {
+        const isJudge = (matchData.judgeId === myId);
+        currentJudgeId = matchData.judgeId;
+        const judgeName = players[matchData.judgeId]?.name || "Desconhecido";
+        
+        document.getElementById('black-text').innerText = matchData.blackCard;
+        document.getElementById('judge-name').innerText = `PATRÃO: ${judgeName}`;
+
+        const colors = ['#0aff60', '#b537f2', '#ff2a6d', '#f2e205'];
+        const color = colors[matchData.roundCount % colors.length] || colors[0];
+        document.getElementById('ambilight').style.background = `radial-gradient(circle at 50% 30%, ${color}, #000)`;
+
+        if(matchData.state === 'PICKING') {
+            document.getElementById('winner-modal').style.display = 'none';
+            document.getElementById('table-area').innerHTML = ''; 
+            
+            if(isJudge) {
+                document.getElementById('game-status').innerText = "VOCÊ É O PATRÃO. AGUARDE...";
+                document.getElementById('hand-area').style.display = 'none';
+                document.getElementById('btn-action').style.display = 'none';
+                
+                if(matchData.table) {
+                    const count = Object.keys(matchData.table).length;
+                    document.getElementById('game-status').innerText = `AGUARDANDO (${count} JOGARAM)...`;
+                    renderTableHidden(count);
+                }
+            } else {
+                const myPlay = matchData.table ? matchData.table[myId] : null;
+                if(myPlay) {
+                    document.getElementById('game-status').innerText = "RESPOSTA ENVIADA.";
+                    document.getElementById('hand-area').style.display = 'none';
+                    document.getElementById('btn-action').style.display = 'none';
+                } else {
+                    document.getElementById('game-status').innerText = "SUA VEZ! ESCOLHA UMA CARTA.";
+                    document.getElementById('hand-area').style.display = 'flex';
+                    renderHand(players[myId].hand_fdp || []);
+                }
+            }
+        }
+        else if (matchData.state === 'JUDGING') {
+            document.getElementById('hand-area').style.display = 'none';
+            document.getElementById('btn-action').style.display = 'none';
+            
+            if(isJudge) document.getElementById('game-status').innerText = "ESCOLHA A VENCEDORA!";
+            else document.getElementById('game-status').innerText = `${judgeName} ESTÁ JULGANDO...`;
+            
+            renderTableRevealed(matchData.table, isJudge);
+        }
+    }
+
+    function renderHand(handArray) {
+        hand = handArray || [];
+        const container = document.getElementById('hand-area');
+        container.innerHTML = '';
+        
+        hand.forEach((text, idx) => {
+            const div = document.createElement('div');
+            div.className = 'hand-card card-white';
+            div.innerText = text;
+            div.onclick = () => selectCard(idx, div);
+            container.appendChild(div);
+        });
+    }
+
+    function selectCard(idx, el) {
+        document.querySelectorAll('.hand-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedCardIdx = idx;
+        const btn = document.getElementById('btn-action');
+        btn.style.display = 'block';
+        btn.innerText = "JOGAR CARTA";
+        btn.onclick = submitCard;
+    }
+
+    function submitCard() {
+        if(selectedCardIdx === -1) return;
+        const cardText = hand[selectedCardIdx];
+        const newHand = [...hand];
+        newHand.splice(selectedCardIdx, 1);
+        const newCard = whiteCards[Math.floor(Math.random() * whiteCards.length)];
+        newHand.push(newCard);
+        
+        update(ref(db, `rooms/${roomCode}/players/${myId}`), { hand_fdp: newHand });
+        update(ref(db, `rooms/${roomCode}/fdp_match/table/${myId}`), { text: cardText, ownerName: myName, ownerId: myId });
+        checkAllPlayed();
+    }
+
+    function renderTableHidden(count) {
+        const container = document.getElementById('table-area');
+        container.innerHTML = '';
+        for(let i=0; i<count; i++) {
+            const div = document.createElement('div');
+            div.className = 'fdp-card card-black';
+            div.style.justifyContent = 'center'; 
+            div.style.alignItems = 'center';
+            div.innerHTML = '<i class="fa-solid fa-layer-group fa-2x"></i>';
+            container.appendChild(div);
+        }
+    }
+
+    function renderTableRevealed(tableData, iAmJudge) {
+        const container = document.getElementById('table-area');
+        container.innerHTML = '';
+        if(!tableData) return;
+
+        Object.entries(tableData).forEach(([uid, cardData]) => {
+            const div = document.createElement('div');
+            div.className = 'fdp-card card-white table-card';
+            div.innerText = cardData.text;
+            if(iAmJudge) div.onclick = () => confirmWinner(uid, cardData);
+            container.appendChild(div);
+        });
+    }
+
+    function confirmWinner(winnerId, cardData) {
+        if(confirm(`Escolher "${cardData.text}"?`)) {
+            update(ref(db, `rooms/${roomCode}/fdp_match`), {
+                state: 'WINNER',
+                winner: { name: cardData.ownerName, text: cardData.text, black: document.getElementById('black-text').innerText }
+            });
+
+            get(ref(db, `rooms/${roomCode}/players/${winnerId}/score_fdp`)).then(snap => {
+                const current = snap.val() || 0;
+                update(ref(db, `rooms/${roomCode}/players/${winnerId}`), { score_fdp: current + 1 });
+            });
+
+            setTimeout(() => {
+                get(ref(db, `rooms/${roomCode}/players`)).then(snap => { startNewRound(Object.keys(snap.val())); });
+            }, 5000);
+        }
+    }
+
+    async function startNewRound(playerIds) {
+        if(!isHost) return;
+        const matchRef = ref(db, `rooms/${roomCode}/fdp_match`);
+        const snap = await get(matchRef);
+        const currentData = snap.val() || { roundCount: 0 };
+        
+        let nextJudgeIdx = 0;
+        if(currentData.judgeId) {
+            const currIdx = playerIds.indexOf(currentData.judgeId);
+            nextJudgeIdx = (currIdx + 1) % playerIds.length;
+        }
+        
+        const nextJudgeId = playerIds[nextJudgeIdx];
+        const nextBlack = blackCards[Math.floor(Math.random() * blackCards.length)];
+
+        update(ref(db, `rooms/${roomCode}/fdp_match`), {
+            state: 'PICKING',
+            judgeId: nextJudgeId,
+            blackCard: nextBlack,
+            table: null,
+            winner: null,
+            roundCount: (currentData.roundCount || 0) + 1
+        });
+        update(ref(db, `rooms/${roomCode}`), { status: 'game_fdp' });
+    }
+
+    async function checkAllPlayed() {
+        if(!isHost) return;
+        const snap = await get(ref(db, `rooms/${roomCode}`));
+        const data = snap.val();
+        const players = Object.keys(data.players);
+        const played = data.fdp_match.table ? Object.keys(data.fdp_match.table).length : 0;
+        if(played >= (players.length - 1) && players.length > 1) {
+            update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'JUDGING' });
+        }
+    }
+    
+    onValue(ref(db, `rooms/${roomCode}/fdp_match/winner`), (snap) => {
+        const winData = snap.val();
+        if(winData) {
+            document.getElementById('winner-modal').style.display = 'flex';
+            document.getElementById('winner-name').innerText = winData.name;
+            document.getElementById('winner-card-display').innerHTML = `<div style="font-size:0.8rem; opacity:0.6; margin-bottom:10px; border-bottom:1px solid #ccc; padding-bottom:5px;">${winData.black}</div>${winData.text}`;
+        } else {
+            document.getElementById('winner-modal').style.display = 'none';
+        }
+    });
+
+    setTimeout(() => {
+        get(ref(db, `rooms/${roomCode}/players/${myId}/hand_fdp`)).then(snap => {
+            if(!snap.exists()) {
+                const initialHand = [];
+                for(let i=0; i<7; i++) initialHand.push(whiteCards[Math.floor(Math.random() * whiteCards.length)]);
+                update(ref(db, `rooms/${roomCode}/players/${myId}`), { hand_fdp: initialHand });
+                hand = initialHand;
+            }
+        });
+    }, 1000);
+</script>
+</body>
+</html>
