@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Court Queue Edition (Fixed)</title>
+    <title>Wrapped 2025 - Court Results Edition</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -414,6 +414,8 @@
     let pendingBlob = null;
     let fullRoomData = null; 
     let protestCatSelected = ""; 
+    let currentMode = 'standard'; // 'standard' or 'protest_results'
+    let protestHistoryArray = [];
 
     // EXPOSE TO WINDOW
     window.goToMenu = goToMenu;
@@ -513,7 +515,7 @@
 
             // GAME STATUS ROUTING
             if(data.status === 'voting') {
-                resetGameUI(); // Kill timer
+                resetGameUI(); 
                 if(data.finishedPlayers && data.finishedPlayers[myId]) {
                     showScreen('screen-wait-others');
                     const finishedCount = Object.keys(data.finishedPlayers).length;
@@ -531,27 +533,35 @@
                 }
             } 
             else if (data.status === 'results') {
+                resetGameUI();
                 finalResults = data.finalResults || {};
                 awardSlides = data.awards || [];
-                // Only start wrapped if we are not already in end screen
-                if(document.getElementById('screen-wrapped').style.display === 'none' && 
-                   document.getElementById('screen-end').style.display === 'none' &&
-                   document.getElementById('screen-tribunal').style.display === 'none' &&
-                   document.getElementById('screen-court-lobby').style.display === 'none') {
-                    startWrapped();
-                }
+                currentMode = 'standard';
+                startWrapped();
             }
             else if (data.status === 'court_lobby') {
-                resetGameUI(); // Kill timer immediately!
+                resetGameUI(); 
                 renderCourtLobby(data.protestQueue || {});
             }
             else if (data.status === 'tribunal') {
-                resetGameUI(); // Kill timer immediately!
+                resetGameUI(); 
                 if(data.currentCase) {
                     handleProtestUpdate(data.currentCase);
                 } else {
-                    // Fallback if data is missing
                     update(ref(db, `rooms/${roomCode}`), { status: 'court_lobby' });
+                }
+            }
+            // NOVO STATUS: RESULTADOS DO PROTESTO
+            else if (data.status === 'protest_results') {
+                resetGameUI();
+                const history = data.protestHistory ? Object.values(data.protestHistory) : [];
+                if(history.length > 0) {
+                    currentMode = 'protest_results';
+                    protestHistoryArray = history;
+                    startProtestWrapped();
+                } else {
+                    // Se não teve protestos, vai direto pro fim
+                    showScreen('screen-end');
                 }
             }
         });
@@ -649,7 +659,7 @@
         update(roomRef, { finalResults: calcRes, awards: awards, status: 'results' });
     }
 
-    // --- WRAPPED ---
+    // --- WRAPPED STANDARD ---
     function startWrapped() {
         slideIdx = 0;
         const total = questions.length + awardSlides.length;
@@ -659,13 +669,8 @@
     }
 
     function loadSlide() {
-        if(isPaused) return;
-        // IMPORTANT: Safety check to stop zombie timers
-        if(document.getElementById('screen-wrapped').style.display === 'none') {
-            clearTimeout(timer);
-            return; 
-        }
-
+        if(isPaused || currentMode !== 'standard') return;
+        
         const total = questions.length + awardSlides.length;
         if(slideIdx >= total) { 
             showScreen('screen-end');
@@ -740,10 +745,70 @@
         timer = setTimeout(() => { slideIdx++; loadSlide(); }, 5000);
     }
 
+    // --- WRAPPED PROTEST RESULTS (NEW) ---
+    function startProtestWrapped() {
+        slideIdx = 0;
+        const total = protestHistoryArray.length;
+        document.getElementById('story-nav').innerHTML = Array(total).fill(0).map((_,i)=>`<div class="nav-dash"><div id="nav-${i}" class="nav-fill"></div></div>`).join('');
+        showScreen('screen-wrapped');
+        loadProtestSlide();
+    }
+
+    function loadProtestSlide() {
+        if(isPaused || currentMode !== 'protest_results') return;
+        
+        const total = protestHistoryArray.length;
+        if(slideIdx >= total) {
+            showScreen('screen-end');
+            return;
+        }
+
+        clearTimeout(timer);
+        for(let i=0; i<total; i++) {
+            const el = document.getElementById(`nav-${i}`);
+            if(i<slideIdx) el.className='nav-fill done';
+            else if(i===slideIdx) el.className='nav-fill active';
+            else el.className='nav-fill';
+        }
+
+        const data = protestHistoryArray[slideIdx];
+        const screenWrap = document.getElementById('screen-wrapped');
+        
+        // Hide standard containers
+        document.getElementById('res-standard-container').style.display='none';
+        document.getElementById('res-match-container').style.display='none';
+        document.getElementById('res-intro-container').style.display='none';
+        
+        // Use White Container with Custom Styling for "Court Theme"
+        document.getElementById('res-white-container').style.display='flex';
+        screenWrap.classList.add('white-mode');
+        
+        // Dark Red / Black Theme for Court Results
+        document.body.style.backgroundColor = "#1a0000"; 
+        document.body.style.color = "white";
+        // Override white mode text colors just for this mode
+        document.getElementById('res-white-container').style.color = "white";
+        document.getElementById('white-icon').style.color = "#ff4646";
+        document.getElementById('white-winner').style.color = "white";
+
+        document.getElementById('white-icon').className = "white-icon fa-solid fa-gavel";
+        document.getElementById('white-cat').innerText = `VEREDICTO: ${data.category}`;
+        document.getElementById('white-winner').innerText = data.winner;
+        document.getElementById('white-desc').innerText = `Venceu ${data.loser} no tribunal.\nPlacar: ${data.score}`;
+
+        timer = setTimeout(() => { slideIdx++; loadProtestSlide(); }, 5000);
+    }
+
+
     function handleStoryClick(e) {
         const w = window.innerWidth;
-        if(e.clientX < w*0.3) { if(slideIdx>0) {slideIdx--; loadSlide();} }
-        else { slideIdx++; loadSlide(); }
+        if(currentMode === 'standard') {
+            if(e.clientX < w*0.3) { if(slideIdx>0) {slideIdx--; loadSlide();} }
+            else { slideIdx++; loadSlide(); }
+        } else if (currentMode === 'protest_results') {
+            if(e.clientX < w*0.3) { if(slideIdx>0) {slideIdx--; loadProtestSlide();} }
+            else { slideIdx++; loadProtestSlide(); }
+        }
     }
 
     // --- PROTEST & TRIBUNAL LOGIC ---
@@ -906,8 +971,9 @@
     }
 
     function closeCourtSession() {
-        if(confirm("Encerrar todas as atividades?")) {
-            update(ref(db, `rooms/${roomCode}`), { status: 'results' }); // or lobby
+        if(confirm("Encerrar sessão e mostrar vencedores?")) {
+            // Change status to trigger the new slide sequence
+            update(ref(db, `rooms/${roomCode}`), { status: 'protest_results', currentCase: null });
         }
     }
 
@@ -1000,7 +1066,19 @@
     }
 
     function endTribunal(scores, pData) {
+        const winnerKey = scores.accuser > scores.defendant ? 'accuser' : 'defendant';
         const winnerName = scores.accuser > scores.defendant ? pData.accuserName : pData.defendantName;
+        const loserName = scores.accuser > scores.defendant ? pData.defendantName : pData.accuserName;
+        
+        // SAVE HISTORY for the final wrapped
+        const historyItem = {
+            winner: winnerName,
+            loser: loserName,
+            category: pData.category,
+            score: `${scores.accuser} - ${scores.defendant}`
+        };
+        push(ref(db, `rooms/${roomCode}/protestHistory`), historyItem);
+
         // Remove from queue
         if(pData.queueKey) {
             remove(ref(db, `rooms/${roomCode}/protestQueue/${pData.queueKey}`));
@@ -1008,7 +1086,7 @@
         
         // Return to Lobby
         update(ref(db, `rooms/${roomCode}`), { status: 'court_lobby', currentCase: null });
-        alert(`FIM DO TRIBUNAL!\n${pData.accuserName}: ${scores.accuser}\n${pData.defendantName}: ${scores.defendant}\nVENCEDOR: ${winnerName}`);
+        alert(`VENCEDOR DO PROCESSO: ${winnerName}`);
     }
 
     // --- SHARE ---
@@ -1026,7 +1104,19 @@
         document.getElementById('ex-white-ui').style.display = 'none';
         document.getElementById('ex-intro-ui').style.display = 'none';
 
-        if(isAwardPhase) {
+        if(currentMode === 'protest_results') {
+             // Custom Export for Protest Results
+             canvasEl.style.backgroundColor = "#1a0000"; canvasEl.style.color = "white";
+             const data = protestHistoryArray[slideIdx];
+             document.getElementById('ex-cat').innerText = `VEREDICTO: ${data.category}`;
+             const wUi = document.getElementById('ex-white-ui');
+             wUi.style.display = 'flex';
+             document.getElementById('ex-w-name').innerText = data.winner;
+             document.getElementById('ex-w-desc').innerText = `Venceu ${data.loser} no tribunal.\nPlacar: ${data.score}`;
+             document.getElementById('ex-w-icon').className = `fa-solid fa-gavel ex-w-icon`;
+             document.getElementById('ex-w-icon').style.color = "#ff4646";
+
+        } else if(isAwardPhase) {
             const award = awardSlides[slideIdx - questions.length];
             if(award.type === 'cover') {
                 canvasEl.style.backgroundColor = "black"; canvasEl.style.color = "white";
@@ -1069,7 +1159,9 @@
         try { const canvas = await html2canvas(canvasEl, { scale: 2 }); canvas.toBlob(blob => { pendingBlob = blob; document.getElementById('share-modal').style.display = 'flex'; }); } catch(e) { closeShareModal(); }
         document.getElementById('export-canvas').style.display = 'none';
     }
-    function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { slideIdx++; loadSlide(); }, 2000); }
+    function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { 
+        if(currentMode === 'protest_results') loadProtestSlide(); else loadSlide(); 
+    }, 2000); }
 </script>
 </body>
 </html>
