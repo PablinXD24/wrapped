@@ -188,9 +188,12 @@
         <div class="room-code" id="lobby-code">ABCD</div>
         <p>Aguardando amigos...</p>
         <div id="lobby-list"></div>
-        <div style="margin-top: auto; width: 100%;">
-            <p id="simulation-status" style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 20px;">...</p>
-            <button id="btn-start-game" class="btn" style="background: var(--neon-green); display:none;" onclick="startGameReal()">INICIAR VOTAÇÃO</button>
+        <div style="margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 10px;">
+            <p id="simulation-status" style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 10px;">...</p>
+            
+            <button id="btn-start-game" class="btn" style="background: var(--neon-green); display:none;" onclick="startGameReal()">INICIAR WRAPPED</button>
+            <button id="btn-start-fdp" class="btn" style="background: var(--neon-purple); display:none; color: white;" onclick="startFDP()">JOGAR FDP 🔞</button>
+
             <div id="msg-waiting-host" style="display:none; color: #666;">Aguardando dono da sala...</div>
         </div>
     </div>
@@ -439,11 +442,16 @@
     window.closeCourtSession = closeCourtSession;
     window.backFromProtestMenu = backFromProtestMenu;
 
-    // HELPER TO CLEAR TIMERS AND STATE WHEN SWITCHING
+    // --- NOVA FUNÇÃO DE INÍCIO FDP ---
+    window.startFDP = function() {
+        if(confirm("Iniciar modo FDP (Cartas)? Isso vai redirecionar todos.")) {
+            update(roomRef, { status: 'redirecting_to_fdp' });
+        }
+    };
+
     function resetGameUI() {
         clearTimeout(timer);
         isPaused = false;
-        // Hide story navs
         const nav = document.getElementById('story-nav');
         if(nav) nav.innerHTML = '';
         document.body.style.backgroundColor = 'var(--bg-dark)';
@@ -500,6 +508,12 @@
             if(!data) return;
             fullRoomData = data; 
 
+            // REDIRECIONAMENTO FDP
+            if(data.status === 'redirecting_to_fdp') {
+                window.location.href = `fdp.html?room=${roomCode}`;
+                return;
+            }
+
             currentPlayers = {};
             const list = document.getElementById('lobby-list');
             list.innerHTML = '';
@@ -511,13 +525,24 @@
             }
             
             const btnStart = document.getElementById('btn-start-game');
+            const btnStartFDP = document.getElementById('btn-start-fdp');
             const msgWait = document.getElementById('msg-waiting-host');
-            if(data.host === myId) { amIHost = true; btnStart.style.display = 'inline-block'; msgWait.style.display='none'; }
-            else { btnStart.style.display='none'; msgWait.style.display='block'; }
+            
+            if(data.host === myId) { 
+                amIHost = true; 
+                btnStart.style.display = 'block'; 
+                btnStartFDP.style.display = 'block'; // Mostra botão FDP
+                msgWait.style.display='none'; 
+            }
+            else { 
+                btnStart.style.display='none'; 
+                btnStartFDP.style.display='none';
+                msgWait.style.display='block'; 
+            }
 
-            // GAME STATUS ROUTING
+            // GAME STATUS ROUTING (WRAPPED)
             if(data.status === 'voting') {
-                resetGameUI(); // Kill timer
+                resetGameUI(); 
                 if(data.finishedPlayers && data.finishedPlayers[myId]) {
                     showScreen('screen-wait-others');
                     const finishedCount = Object.keys(data.finishedPlayers).length;
@@ -537,7 +562,6 @@
             else if (data.status === 'results') {
                 finalResults = data.finalResults || {};
                 awardSlides = data.awards || [];
-                // Only start wrapped if we are not already in end screen
                 if(document.getElementById('screen-wrapped').style.display === 'none' && 
                    document.getElementById('screen-end').style.display === 'none' &&
                    document.getElementById('screen-tribunal').style.display === 'none' &&
@@ -546,18 +570,17 @@
                 }
             }
             else if (data.status === 'court_lobby') {
-                resetGameUI(); // Kill timer immediately!
+                resetGameUI();
                 renderCourtLobby(data.protestQueue || {});
             }
             else if (data.status === 'tribunal') {
-                resetGameUI(); // Kill timer immediately!
+                resetGameUI();
                 if(data.currentCase) {
                     handleProtestUpdate(data.currentCase);
                 } else {
                     update(ref(db, `rooms/${roomCode}`), { status: 'court_lobby' });
                 }
             }
-            // NEW STATUS FOR RECAP
             else if (data.status === 'court_recap') {
                 resetGameUI();
                 startCourtRecap(data.courtHistory);
@@ -750,10 +773,8 @@
             showScreen('screen-end');
             return;
         }
-        courtHistoryData = Object.values(historyObj); // Convert Firebase obj to array
+        courtHistoryData = Object.values(historyObj);
         courtSlideIdx = 0;
-        
-        // Reuse wrapped screen but customized
         showScreen('screen-wrapped');
         document.getElementById('story-nav').innerHTML = Array(courtHistoryData.length).fill(0).map((_,i)=>`<div class="nav-dash"><div id="nav-c-${i}" class="nav-fill"></div></div>`).join('');
         loadCourtSlide();
@@ -769,7 +790,6 @@
         }
 
         clearTimeout(timer);
-        // Update Nav
         for(let i=0; i<courtHistoryData.length; i++) {
             const el = document.getElementById(`nav-c-${i}`);
             if(i<courtSlideIdx) el.className='nav-fill done';
@@ -777,19 +797,16 @@
             else el.className='nav-fill';
         }
 
-        // Apply Dark Red Theme
         document.body.style.backgroundColor = "#2a0000"; 
         document.body.style.color = "white";
         const screenWrap = document.getElementById('screen-wrapped');
         screenWrap.classList.remove('white-mode');
         
-        // Hide standard containers
         document.getElementById('res-match-container').style.display='none';
         document.getElementById('res-intro-container').style.display='none';
         document.getElementById('res-white-container').style.display='none';
-        document.getElementById('res-standard-container').style.display='flex'; // Reuse this one
+        document.getElementById('res-standard-container').style.display='flex';
 
-        // Fill Data
         const item = courtHistoryData[courtSlideIdx];
         document.getElementById('res-cat').innerText = `VEREDICTO: ${item.category}`;
         document.getElementById('res-winner').innerText = item.winner;
@@ -811,12 +828,9 @@
         timer = setTimeout(() => { courtSlideIdx++; loadCourtSlide(); }, 6000);
     }
 
-
     function handleStoryClick(e) {
-        // Handle normal vs court clicks
         const isRecap = (document.getElementById('res-cat').innerText.includes("VEREDICTO"));
         const w = window.innerWidth;
-
         if(isRecap) {
              if(e.clientX < w*0.3) { if(courtSlideIdx>0) {courtSlideIdx--; loadCourtSlide();} }
              else { courtSlideIdx++; loadCourtSlide(); }
@@ -826,9 +840,7 @@
         }
     }
 
-    // --- PROTEST & TRIBUNAL LOGIC ---
-    
-    // 1. Selection Screen: Show categories I won
+    // --- PROTEST LOGIC ---
     function startProtestSelection() {
         const list = document.getElementById('protest-cat-list');
         list.innerHTML = '';
@@ -851,27 +863,23 @@
         });
 
         if(!found) {
-            list.innerHTML = "<p>Você não ganhou nada para protestar. Parabéns?</p>";
+            list.innerHTML = "<p>Você não ganhou nada para protestar.</p>";
         }
         showScreen('screen-protest-menu');
     }
 
     function backFromProtestMenu() {
-        // If queue exists, go to lobby, else go to end
         get(ref(db, `rooms/${roomCode}/status`)).then(s => {
             if(s.val() === 'court_lobby') showScreen('screen-court-lobby');
             else showScreen('screen-end');
         });
     }
 
-    // 2. Offenders Screen: Show who voted for me in that cat
     function showOffenders(qIdx, catName) {
         protestCatSelected = catName;
         const list = document.getElementById('offenders-list');
         list.innerHTML = '';
         const allVotes = fullRoomData.votes[qIdx] || {};
-        
-        // Find voter IDs who voted for ME
         const culprits = [];
         Object.entries(allVotes).forEach(([voterId, targetName]) => {
             if(targetName === myName) {
@@ -879,10 +887,7 @@
             }
         });
 
-        if(culprits.length === 0) {
-            alert("Estranho... ninguém votou em você aqui."); 
-            return;
-        }
+        if(culprits.length === 0) { alert("Ninguém votou em você aqui."); return; }
 
         culprits.forEach(uid => {
             const pName = fullRoomData.players[uid].name;
@@ -892,11 +897,9 @@
             div.onclick = () => queueProtest(uid, pName);
             list.appendChild(div);
         });
-        
         showScreen('screen-protest-reveal');
     }
 
-    // 3. Queue Protest: Push to Firebase Queue
     function queueProtest(defendantId, defendantName) {
         if(confirm(`Processar ${defendantName} por "${protestCatSelected}"?`)) {
             const queueData = {
@@ -907,31 +910,21 @@
                 category: protestCatSelected,
                 timestamp: Date.now()
             };
-            
             push(ref(db, `rooms/${roomCode}/protestQueue`), queueData);
-            
-            // If status is not yet lobby, set it.
             update(ref(db, `rooms/${roomCode}`), { status: 'court_lobby' });
             showScreen('screen-court-lobby');
         }
     }
 
-    // 4. Render Court Lobby (Queue)
     function renderCourtLobby(queue) {
         showScreen('screen-court-lobby');
         const list = document.getElementById('court-queue-list');
         list.innerHTML = '';
-        
         const controls = document.getElementById('host-controls');
         const msgWait = document.getElementById('msg-waiting-judge');
         
-        if(amIHost) {
-            controls.style.display = 'block';
-            msgWait.style.display = 'none';
-        } else {
-            controls.style.display = 'none';
-            msgWait.style.display = 'block';
-        }
+        if(amIHost) { controls.style.display = 'block'; msgWait.style.display = 'none'; } 
+        else { controls.style.display = 'none'; msgWait.style.display = 'block'; }
 
         const entries = Object.entries(queue);
         if(entries.length === 0) {
@@ -942,72 +935,41 @@
         entries.forEach(([key, item]) => {
             const div = document.createElement('div');
             div.className = 'queue-item';
-            
             let actionBtn = "";
             if(amIHost) {
                 actionBtn = `<button class="btn btn-sm" style="background:var(--neon-green); color:black;" onclick="startCourtCase('${key}')">INICIAR</button>`;
             }
-
-            div.innerHTML = `
-                <div>
-                    <div class="queue-names">${item.accuserName} vs ${item.defendantName}</div>
-                    <div class="queue-reason">Motivo: ${item.category}</div>
-                </div>
-                ${actionBtn}
-            `;
+            div.innerHTML = `<div><div class="queue-names">${item.accuserName} vs ${item.defendantName}</div><div class="queue-reason">${item.category}</div></div>${actionBtn}`;
             list.appendChild(div);
         });
     }
 
-    // 5. Start a specific Case (Host Only)
     function startCourtCase(key) {
-        // Read the case data from queue
         get(child(ref(db, `rooms/${roomCode}/protestQueue`), key)).then(snapshot => {
             if(snapshot.exists()) {
                 const caseData = snapshot.val();
-                
-                // Set as current Active Case with game state
-                const activeCase = {
-                    ...caseData,
-                    isActive: true,
-                    round: 0,
-                    votes: {},
-                    scores: { accuser: 0, defendant: 0 },
-                    lastUpdate: Date.now(),
-                    queueKey: key // Keep track to remove later
-                };
-
-                update(ref(db, `rooms/${roomCode}`), { 
-                    status: 'tribunal', 
-                    currentCase: activeCase 
-                });
+                const activeCase = { ...caseData, isActive: true, round: 0, votes: {}, scores: { accuser: 0, defendant: 0 }, lastUpdate: Date.now(), queueKey: key };
+                update(ref(db, `rooms/${roomCode}`), { status: 'tribunal', currentCase: activeCase });
             }
         });
     }
 
     function closeCourtSession() {
         if(confirm("Encerrar Sessão e mostrar Veredictos?")) {
-            // Check if there is history first
             get(ref(db, `rooms/${roomCode}/courtHistory`)).then(snap => {
-                if(snap.exists()) {
-                    update(ref(db, `rooms/${roomCode}`), { status: 'court_recap' });
-                } else {
-                    update(ref(db, `rooms/${roomCode}`), { status: 'results' }); // Or end directly
-                }
+                if(snap.exists()) update(ref(db, `rooms/${roomCode}`), { status: 'court_recap' });
+                else update(ref(db, `rooms/${roomCode}`), { status: 'results' });
             });
         }
     }
 
-    // 6. Handle Tribunal Updates (The Loop)
     function handleProtestUpdate(pData) {
         if(!pData || !pData.isActive) return;
-
         showScreen('screen-tribunal');
         const isAccuser = (myId === pData.accuser);
         const isDefendant = (myId === pData.defendant);
         const isJury = !isAccuser && !isDefendant;
 
-        // Populate UI
         document.getElementById('tribunal-round-info').innerText = `PERGUNTA ${pData.round + 1}/5`;
         document.getElementById('tribunal-q').innerText = duelQuestions[pData.round];
         
@@ -1015,7 +977,6 @@
         document.getElementById('vs-name-1').innerText = pData.accuserName;
         document.getElementById('vs-av-2').innerText = pData.defendantName[0];
         document.getElementById('vs-name-2').innerText = pData.defendantName;
-
         document.getElementById('btn-av-1').innerText = pData.accuserName[0];
         document.getElementById('btn-name-1').innerText = pData.accuserName;
         document.getElementById('btn-av-2').innerText = pData.defendantName[0];
@@ -1023,10 +984,8 @@
 
         const vsCard1 = document.getElementById('vs-card-1');
         const vsCard2 = document.getElementById('vs-card-2');
-        vsCard1.className = 'vs-card';
-        vsCard2.className = 'vs-card';
+        vsCard1.className = 'vs-card'; vsCard2.className = 'vs-card';
 
-        // Visibility Logic
         if(isJury) {
             const myVote = (pData.votes && pData.votes[pData.round]) ? pData.votes[pData.round][myId] : null;
             if(myVote) {
@@ -1039,14 +998,12 @@
                 document.getElementById('silence-area').style.display = 'none';
             }
         } else {
-            // Accuser or Defendant
             document.getElementById('jury-area').style.display = 'none';
             document.getElementById('silence-area').style.display = 'flex';
             document.querySelector('#silence-area h2').innerText = "SILÊNCIO!";
             document.querySelector('#silence-area p').innerText = "O júri está decidindo seu destino...";
         }
 
-        // Host Logic: Check for round completion
         if(amIHost) {
             const currentVotes = (pData.votes && pData.votes[pData.round]) ? pData.votes[pData.round] : {};
             const juryCount = Object.keys(fullRoomData.players).length - 2; 
@@ -1055,18 +1012,12 @@
             if(votesCast >= juryCount && juryCount > 0) {
                 let aCount = 0; let dCount = 0;
                 Object.values(currentVotes).forEach(v => v === 'accuser' ? aCount++ : dCount++);
-                
                 const winner = aCount > dCount ? 'accuser' : 'defendant';
-                
                 setTimeout(() => {
                     const newScores = pData.scores || { accuser: 0, defendant: 0 };
                     newScores[winner]++;
-                    
                     if(pData.round < 4) {
-                        update(ref(db, `rooms/${roomCode}/currentCase`), {
-                            round: pData.round + 1,
-                            scores: newScores
-                        });
+                        update(ref(db, `rooms/${roomCode}/currentCase`), { round: pData.round + 1, scores: newScores });
                     } else {
                         endTribunal(newScores, pData);
                     }
@@ -1076,7 +1027,6 @@
     }
 
     function castTribunalVote(target) {
-        // target is 'accuser' or 'defendant'
         const pRef = ref(db, `rooms/${roomCode}/currentCase`);
         get(pRef).then(snap => {
             const p = snap.val();
@@ -1086,8 +1036,6 @@
 
     function endTribunal(scores, pData) {
         const winnerName = scores.accuser > scores.defendant ? pData.accuserName : pData.defendantName;
-        
-        // SAVE HISTORY
         const caseResult = {
             winner: winnerName,
             loser: (winnerName === pData.accuserName ? pData.defendantName : pData.accuserName),
@@ -1095,18 +1043,11 @@
             category: pData.category
         };
         push(ref(db, `rooms/${roomCode}/courtHistory`), caseResult);
-
-        // Remove from queue
-        if(pData.queueKey) {
-            remove(ref(db, `rooms/${roomCode}/protestQueue/${pData.queueKey}`));
-        }
-        
-        // Return to Lobby
+        if(pData.queueKey) remove(ref(db, `rooms/${roomCode}/protestQueue/${pData.queueKey}`));
         update(ref(db, `rooms/${roomCode}`), { status: 'court_lobby', currentCase: null });
         alert(`JULGAMENTO ENCERRADO!`);
     }
 
-    // --- SHARE ---
     async function processShare(type) { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); };
     async function shareSlide() {
         isPaused = true; clearTimeout(timer);
@@ -1117,7 +1058,6 @@
         const isAwardPhase = slideIdx >= questions.length;
         document.getElementById('ex-standard-ui').style.display = 'none';
         document.getElementById('ex-match-ui').style.display = 'none';
-        document.getElementById('ex-match-text').style.display = 'none';
         document.getElementById('ex-white-ui').style.display = 'none';
         document.getElementById('ex-intro-ui').style.display = 'none';
 
