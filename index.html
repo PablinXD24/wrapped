@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Final Version</title>
+    <title>Wrapped 2025 - Clean</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -69,12 +69,6 @@
         .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; }
         .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
         
-        .btn-protest { background: transparent; color: var(--neon-red); border: 2px solid var(--neon-red); font-size: 1.2rem; letter-spacing: 2px; box-shadow: 0 0 10px rgba(255, 70, 70, 0.1); }
-        .btn-protest:hover { background: var(--neon-red); color: white; }
-        
-        .btn-safe { background: transparent; color: var(--neon-green); border: 2px solid var(--neon-green); font-size: 1rem; margin-top: 10px; }
-        .btn-safe:hover { background: var(--neon-green); color: black; }
-
         .room-code { font-size: 3.5rem; font-weight: 900; letter-spacing: 8px; color: var(--neon-green); background: rgba(0,0,0,0.3); padding: 15px; border-radius: 20px; margin: 20px 0; border: 2px dashed rgba(255,255,255,0.2); }
         .chip { background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 50px; margin: 5px; display: inline-block; font-weight: bold; }
 
@@ -106,29 +100,6 @@
         .match-name { font-weight: 900; font-size: 1.2rem; text-transform: uppercase; }
         .match-icon { font-size: 3.5rem; color: var(--dynamic-color); animation: pulse 1s infinite; margin-top: -30px;}
 
-        .cat-list-wrapper { width: 100%; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
-        .cat-list-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
-        .cat-list-item:hover { background: rgba(255,255,255,0.1); border-color: var(--neon-red); }
-        .cat-info { display: flex; flex-direction: column; gap: 4px; flex: 1; padding-right: 10px; }
-        .cat-title { font-weight: bold; font-size: 1rem; line-height: 1.2; }
-        .cat-ctx { font-family: var(--font-data); font-size: 0.75rem; opacity: 0.6; text-transform: uppercase; }
-        .tag-win { background: rgba(30, 215, 96, 0.2); color: var(--neon-green); border: 1px solid var(--neon-green); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .tag-lose { background: rgba(255,255,255,0.1); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        
-        .protest-vs-container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 70, 70, 0.3); border-radius: 24px; padding: 30px 20px; backdrop-filter: blur(15px); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .protest-fighters { display: flex; align-items: center; justify-content: space-around; width: 100%; margin: 30px 0; }
-        .fighter { display: flex; flex-direction: column; align-items: center; width: 40%; }
-        .fighter-av { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); color: white; border: 3px solid white; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; margin-bottom: 10px; }
-        .vs-sign { font-size: 2rem; font-weight: 900; font-style: italic; color: var(--neon-red); text-shadow: 0 0 15px red; }
-
-        /* HOST ADMIN CARDS */
-        .admin-protest-card {
-            background: #333; border: 1px solid #555; padding: 15px; margin: 5px 0; 
-            border-radius: 8px; cursor: pointer; text-transform: uppercase; font-weight: bold;
-            display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
-        }
-        .admin-protest-card:hover { background: var(--neon-green); color: black; border-color: var(--neon-green); }
-
         #res-white-container { display: none; text-align: center; color: black; flex-direction: column; justify-content: center; height: 100%; }
         .white-cat { font-family: var(--font-data); text-transform: uppercase; letter-spacing: 4px; font-size: 1.2rem; margin-bottom: 20px; opacity: 0.6; }
         .white-winner { font-size: clamp(4rem, 10vw, 6rem); font-weight: 900; line-height: 0.9; text-transform: uppercase; margin-bottom: 20px; color: black; animation: popIn 0.5s; }
@@ -151,8 +122,6 @@
         .ex-white-ui { display: none; flex-direction: column; align-items: center; justify-content: center; }
         .ex-intro-ui { display: none; flex-direction: column; align-items: center; justify-content: center; }
 
-        #screen-protest-wait { justify-content: center; align-items: center; text-align: center; }
-        #screen-protest-lobby { justify-content: center; align-items: center; text-align: center; }
         @keyframes popIn { to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
@@ -257,79 +226,7 @@
     <div id="screen-end" class="screen" style="background: black; justify-content: center; align-items: center; text-align: center;">
         <h1 style="margin-bottom: 20px;">FIM DO WRAPPED</h1>
         <p>Obrigado por participar.</p>
-        
-        <div id="host-admin-panel" style="width: 100%; display: none; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px;">
-            <h3 style="color: var(--neon-gold); margin-bottom: 10px;">PAINEL DO JUIZ</h3>
-            <div id="host-protest-list" style="display: flex; flex-direction: column; width: 100%;"></div>
-        </div>
-
-        <div id="player-actions">
-            <button class="btn btn-protest" style="width: auto; padding: 20px 40px; margin-top: 10px;" onclick="goToProtestSelection()">
-                <i class="fa-solid fa-gavel"></i> QUERO PROTESTAR
-            </button>
-            <button class="btn btn-safe" style="width: auto; padding: 20px 40px; margin-top: 10px;" onclick="joinSafeZone()">
-                <i class="fa-solid fa-shield-halved"></i> TÔ SAFE
-            </button>
-        </div>
-        
-        <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.6;">Entre na fila para reclamar seu título.</p>
-        <div id="protest-status-msg" style="color: var(--neon-green); font-weight: bold; margin-top: 10px;"></div>
-    </div>
-
-    <div id="screen-protest-select" class="screen">
-        <div style="width: 100%; text-align: center;">
-            <h2 style="color: var(--neon-red);">QUAL A INJUSTIÇA?</h2>
-            <div id="protest-cat-list" class="cat-list-wrapper"></div>
-            <button class="btn btn-outline" onclick="showScreen('screen-end')" style="margin-top:20px;">Voltar</button>
-        </div>
-    </div>
-
-    <div id="screen-protest-accusers" class="screen">
-        <div style="width: 100%; text-align: center;">
-            <h2 style="color: var(--neon-red);">QUEM TE TRAIU?</h2>
-            <p>Escolha quem você quer enfrentar.</p>
-            <div id="accuser-list" class="vote-grid" style="margin-top: 20px;"></div>
-        </div>
-    </div>
-
-    <div id="screen-protest-lobby" class="screen" style="background: black; color: white; justify-content: center; align-items: center; text-align: center;">
-        <h1 style="color: var(--neon-gold);">TRIBUNAL</h1>
-        <p>Aguardando o Juiz chamar o próximo caso...</p>
-        <div style="font-size:3rem; margin: 20px 0;">⚖️</div>
-    </div>
-
-    <div id="screen-protest-duel" class="screen" style="justify-content: center; align-items: center; background: radial-gradient(circle, #500 0%, #000 90%);">
-        <div class="protest-vs-container">
-            <h2 style="color: var(--neon-red); margin:0;">DUELO</h2>
-            <p style="text-align:center; opacity:0.8;" id="duel-cat-name">Categoria</p>
-            <div class="protest-fighters">
-                <div class="fighter" id="btn-vote-p1" onclick="castProtestVote('challenger')">
-                    <div class="fighter-av" id="duel-p1-av">A</div>
-                    <div class="fighter-name" id="duel-p1-name">NOME</div>
-                </div>
-                <div class="vs-sign">VS</div>
-                <div class="fighter" id="btn-vote-p2" onclick="castProtestVote('rival')">
-                    <div class="fighter-av" id="duel-p2-av">B</div>
-                    <div class="fighter-name" id="duel-p2-name">NOME</div>
-                </div>
-            </div>
-            <p style="text-align:center;" id="duel-instruct">Toque no avatar para votar!</p>
-        </div>
-    </div>
-
-    <div id="screen-protest-wait" class="screen" style="background: white; color: black; justify-content: center; align-items: center; text-align: center;">
-        <h1 id="wait-msg-title">AGUARDANDO...</h1>
-        <p id="wait-msg-desc">Júri decidindo seu destino.</p>
-        <div style="font-size:3rem;">⚖️</div>
-    </div>
-
-    <div id="screen-protest-result" class="screen" style="justify-content: center; align-items: center; text-align: center;">
-        <h1 id="p-res-title">...</h1>
-        <p id="p-res-desc" style="font-size:1.2rem;">...</p>
-        
-        <button id="btn-host-close-case" class="btn" style="margin-top: 20px; width: auto; padding: 15px 40px; display: none; background: white; color: black;" onclick="hostCloseCase()">ENCERRAR CASO</button>
-        
-        <p id="msg-waiting-next" style="margin-top: 20px; opacity: 0.5;">Aguardando Juiz encerrar...</p>
+        <button class="btn btn-outline" style="margin-top: 30px;" onclick="location.reload()">JOGAR NOVAMENTE</button>
     </div>
 
     <div id="share-modal" class="modal" style="display: none;">
@@ -402,14 +299,7 @@
     let localQIdx = 0; 
     let pendingBlob = null;
 
-    // Protest State
-    let protestQueue = [];
-    let currentProtester = "";
-    let protestRival = "";
-    let protestCategory = "";
-    let amIWinningProtest = false;
-
-    // EXPOSE TO WINDOW (Fixes ReferenceError)
+    // EXPOSE TO WINDOW
     window.goToMenu = goToMenu;
     window.createRoomReal = createRoomReal;
     window.showJoinInput = showJoinInput;
@@ -417,16 +307,9 @@
     window.startGameReal = startGameReal;
     window.castVote = castVote;
     window.handleStoryClick = handleStoryClick;
-    window.goToProtestSelection = goToProtestSelection;
-    window.confirmProtest = confirmProtest;
-    window.selectAccuser = selectAccuser;
-    window.castProtestVote = castProtestVote;
-    window.hostStartProtest = hostStartProtest;
-    window.hostCloseCase = hostCloseCase; 
     window.shareSlide = shareSlide;
     window.processShare = processShare;
     window.closeShareModal = closeShareModal;
-    window.joinSafeZone = joinSafeZone;
     window.showScreen = showScreen;
 
     function showScreen(id) {
@@ -521,45 +404,6 @@
                     startWrapped();
                 }
             }
-            else if (data.status === 'protest_selection') {
-                // Se existe protesto ativo, ignora a tela de seleção
-                if(data.activeProtest) {
-                    handleProtestState(data.activeProtest);
-                    return;
-                }
-
-                // Se não tem protesto ativo, mostra a tela de seleção/lobby
-                if(document.getElementById('screen-end').style.display === 'none') {
-                    showScreen('screen-end');
-                }
-                
-                // Se sou Host, mostro o painel de administração com os cards
-                if(amIHost) {
-                    document.getElementById('host-admin-panel').style.display = 'block';
-                    const qList = document.getElementById('host-protest-list');
-                    qList.innerHTML = '';
-                    if(data.protestQueue) {
-                        Object.entries(data.protestQueue).forEach(([key, item]) => {
-                            qList.innerHTML += `
-                                <div class="admin-protest-card" onclick="hostStartProtest('${key}')">
-                                    <span>${item.challenger}</span>
-                                    <i class="fa-solid fa-play"></i>
-                                </div>`;
-                        });
-                    } else {
-                        qList.innerHTML = '<p style="font-size:0.8rem; opacity:0.5;">Nenhum protesto enviado ainda.</p>';
-                    }
-                }
-
-                // Se eu já me inscrevi
-                if(data.protestQueue) {
-                    const myEntry = Object.values(data.protestQueue).find(i => i.challenger === myName);
-                    if(myEntry) {
-                        document.getElementById('protest-status-msg').innerText = "ENVIADO AO JUIZ! AGUARDE.";
-                        document.querySelector('#player-actions').style.display = 'none';
-                    }
-                }
-            }
         });
     }
 
@@ -575,6 +419,7 @@
     function loadQuestionLocal() {
         const q = questions[localQIdx];
         const theme = themes[localQIdx % themes.length];
+        
         document.getElementById('q-text').innerText = q.q;
         document.getElementById('vote-count').innerText = `${localQIdx+1}/${questions.length}`;
         document.getElementById('vote-bar').style.width = `${((localQIdx+1)/questions.length)*100}%`;
@@ -668,9 +513,6 @@
         const total = questions.length + awardSlides.length;
         if(slideIdx >= total) { 
             showScreen('screen-end');
-            if(amIHost) {
-                 update(roomRef, { status: 'protest_selection' });
-            }
             return; 
         }
         
@@ -746,150 +588,6 @@
         const w = window.innerWidth;
         if(e.clientX < w*0.3) { if(slideIdx>0) {slideIdx--; loadSlide();} }
         else { slideIdx++; loadSlide(); }
-    }
-
-    // --- PROTESTO: SUBMISSÃO ---
-    function goToProtestSelection() {
-        const list = document.getElementById('protest-cat-list');
-        list.innerHTML = '';
-        questions.forEach((q, idx) => {
-            const res = finalResults[idx] || {};
-            const sorted = Object.entries(res).sort((a,b)=>b[1]-a[1]);
-            const winner = sorted[0] ? sorted[0][0] : "Ninguém";
-            const isMe = winner === myName;
-            
-            list.innerHTML += `
-                <div class="cat-list-item" onclick="confirmProtest('${winner}', ${idx})">
-                    <div class="cat-info"><span class="cat-title">${q.q}</span></div>
-                    <span class="${isMe?'tag-win':'tag-lose'}">${isMe?'VOCÊ':'VENCEDOR: '+winner}</span>
-                </div>`;
-        });
-        showScreen('screen-protest-select');
-    }
-
-    function confirmProtest(winner, qIdx) {
-        protestCategory = questions[qIdx].q;
-        if(winner === myName) {
-            const list = document.getElementById('accuser-list');
-            list.innerHTML = '';
-            Object.entries(currentPlayers).forEach(([id, name]) => {
-                if(name !== myName) list.innerHTML += `<div class="vote-card" onclick="selectAccuser('${name}')"><div class="avatar">${name[0]}</div><span>${name}</span></div>`;
-            });
-            showScreen('screen-protest-accusers');
-        } else {
-            submitProtestQueue(winner, false);
-        }
-    }
-
-    function selectAccuser(name) { submitProtestQueue(name, true); }
-
-    function submitProtestQueue(rival, isDefending) {
-        push(ref(db, `rooms/${roomCode}/protestQueue`), {
-            challenger: myName,
-            rival: rival,
-            category: protestCategory,
-            isDefending: isDefending,
-            timestamp: Date.now()
-        });
-        showScreen('screen-end');
-        document.getElementById('protest-status-msg').innerText = "ENVIADO AO JUIZ! AGUARDE.";
-        document.querySelector('#player-actions').style.display = 'none';
-    }
-
-    function joinSafeZone() {
-        document.getElementById('protest-status-msg').innerText = "VOCÊ ESTÁ SAFE. AGUARDE.";
-        document.querySelector('#player-actions').style.display = 'none';
-    }
-
-    // --- PROTESTO: CONTROLE DO HOST ---
-    async function hostStartProtest(key) {
-        // Pega o protesto da fila
-        const snap = await get(ref(db, `rooms/${roomCode}/protestQueue/${key}`));
-        const protestData = snap.val();
-        
-        // Joga para activeProtest e remove da fila
-        update(roomRef, {
-            activeProtest: { ...protestData, votes: {} },
-            [`protestQueue/${key}`]: null
-        });
-    }
-
-    function hostCloseCase() {
-        update(roomRef, { activeProtest: null });
-    }
-
-    // --- PROTESTO: O JOGO ---
-    function handleProtestState(active) {
-        // Se sou Host e estamos em votação (não resultado), checa se acabou a cada update
-        if(amIHost && active.phase !== 'result') {
-            checkProtestEnd(active);
-        }
-
-        // Se tem duelo ativo, mostra pra geral (PRIORIDADE: RESULTADO > VOTAÇÃO)
-        if(active.phase === 'result') {
-            showScreen('screen-protest-result');
-            const iWon = active.winner === active.challenger;
-            const h1 = document.getElementById('p-res-title');
-            const desc = document.getElementById('p-res-desc');
-            const btn = document.getElementById('btn-host-close-case');
-
-            if(active.challenger === myName) {
-                if(iWon) { h1.innerText = active.isDefending ? "INOCENTADO!" : "JUSTIÇA FEITA!"; document.body.style.backgroundColor="#1ed760"; document.body.style.color="black"; }
-                else { h1.innerText = active.isDefending ? "NEGADO!" : "SEM MORAL!"; document.body.style.backgroundColor="#ff4646"; document.body.style.color="white"; }
-            } else {
-                h1.innerText = `${active.winner} VENCEU`;
-                desc.innerText = `Decisão final sobre: ${active.category}`;
-                document.body.style.backgroundColor="#333"; document.body.style.color="white";
-            }
-
-            if(amIHost) {
-                btn.style.display = 'inline-block';
-                document.getElementById('msg-waiting-next').style.display = 'none';
-            } else {
-                btn.style.display = 'none';
-                document.getElementById('msg-waiting-next').style.display = 'block';
-            }
-
-        } else {
-            // VOTAÇÃO
-            if(active.challenger === myName || active.rival === myName) {
-                showScreen('screen-protest-wait');
-                document.getElementById('wait-msg-title').innerText = "JÚRI VOTANDO";
-                document.getElementById('wait-msg-desc').innerText = `Você vs ${active.challenger === myName ? active.rival : active.challenger}`;
-            } else {
-                showScreen('screen-protest-duel');
-                document.getElementById('duel-cat-name').innerText = active.category;
-                document.getElementById('duel-p1-name').innerText = active.challenger;
-                document.getElementById('duel-p1-av').innerText = active.challenger[0];
-                document.getElementById('duel-p2-name').innerText = active.rival;
-                document.getElementById('duel-p2-av').innerText = active.rival[0];
-                document.querySelector('#btn-vote-p1').onclick = () => castProtestVote(active.challenger);
-                document.querySelector('#btn-vote-p2').onclick = () => castProtestVote(active.rival);
-                document.getElementById('duel-instruct').innerText = "Toque no avatar para votar!";
-            }
-        }
-    }
-
-    function castProtestVote(votedName) {
-        set(ref(db, `rooms/${roomCode}/activeProtest/votes/${myId}`), votedName);
-        showScreen('screen-protest-wait');
-        document.getElementById('wait-msg-title').innerText = "VOTO REGISTRADO";
-        document.getElementById('wait-msg-desc').innerText = "Aguardando outros juízes...";
-        // Host checka automaticamente
-        if(amIHost) checkProtestEnd();
-    }
-
-    async function checkProtestEnd(active) {
-        // Usa o objeto local 'active'
-        const votes = active.votes || {};
-        const totalVoters = Math.max(1, Object.keys(currentPlayers).length - 2); 
-        
-        if(Object.keys(votes).length >= totalVoters) {
-            let cScore = 0; let rScore = 0;
-            Object.values(votes).forEach(v => { if(v===active.challenger) cScore++; else rScore++; });
-            const winner = cScore > rScore ? active.challenger : active.rival;
-            update(roomRef, { activeProtest: { ...active, phase: 'result', winner: winner } });
-        }
     }
 
     // --- SHARE ---
