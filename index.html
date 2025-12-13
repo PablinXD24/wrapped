@@ -860,7 +860,8 @@
         const pRef = ref(db, `rooms/${roomCode}/protest`);
         get(pRef).then(snap => {
             const p = snap.val();
-            update(ref(db, `rooms/${roomCode}/protest/votes/${p.round}/${myId}`), target);
+            // CORREÇÃO: Trocado 'update' por 'set' para salvar a string diretamente
+            set(ref(db, `rooms/${roomCode}/protest/votes/${p.round}/${myId}`), target);
         });
     }
 
