@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Final Queue</title>
+    <title>Wrapped 2025 - Final Fixed</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -481,6 +481,7 @@
             if(data.host === myId) { amIHost = true; btnStart.style.display = 'inline-block'; msgWait.style.display='none'; }
             else { btnStart.style.display='none'; msgWait.style.display='block'; }
 
+            // 1. Voting logic (Host driven check)
             if(data.status === 'voting') {
                 if(data.finishedPlayers && data.finishedPlayers[myId]) {
                     showScreen('screen-wait-others');
@@ -491,6 +492,13 @@
                     if(document.getElementById('screen-voting').style.display === 'none') {
                         startLocalVoting();
                     }
+                }
+                
+                // HOST LOGIC: Check if everyone finished
+                if(amIHost) {
+                    const total = Object.keys(currentPlayers).length;
+                    const finished = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
+                    if(finished >= total && total > 0) calculateResults(data);
                 }
             } 
             else if (data.status === 'results') {
@@ -570,18 +578,6 @@
             // CORREÇÃO: Set true para marcar fim
             set(ref(db, `rooms/${roomCode}/finishedPlayers/${myId}`), true);
             showScreen('screen-wait-others');
-            if(amIHost) checkAllFinished();
-        }
-    }
-
-    async function checkAllFinished() {
-        const snap = await get(roomRef);
-        const data = snap.val();
-        const total = Object.keys(data.players).length;
-        const finished = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
-        
-        if(finished >= total) {
-            calculateResults(data);
         }
     }
 
@@ -793,8 +789,8 @@
         const active = data.activeProtest;
         const queue = data.protestQueue;
 
-        // Se sou HOST e não tem ativo mas tem fila -> Ativar próximo
-        if(data.status === 'protest_voting' && amIHost && !active && queue) {
+        // Host gerencia fila
+        if(amIHost && !active && queue) {
             const keys = Object.keys(queue).sort((a,b) => queue[a].timestamp - queue[b].timestamp); // FIFO
             const nextKey = keys[0];
             update(roomRef, {
