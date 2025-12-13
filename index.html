@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Court Queue Edition</title>
+    <title>Wrapped 2025 - Court Queue Edition (Fixed)</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -412,8 +412,8 @@
     let currentTheme = "";
     let localQIdx = 0; 
     let pendingBlob = null;
-    let fullRoomData = null; // Store full data for protest logic
-    let protestCatSelected = ""; // To store selected category for queue
+    let fullRoomData = null; 
+    let protestCatSelected = ""; 
 
     // EXPOSE TO WINDOW
     window.goToMenu = goToMenu;
@@ -434,6 +434,16 @@
     window.startCourtCase = startCourtCase;
     window.closeCourtSession = closeCourtSession;
     window.backFromProtestMenu = backFromProtestMenu;
+
+    // HELPER TO CLEAR TIMERS AND STATE WHEN SWITCHING
+    function resetGameUI() {
+        clearTimeout(timer);
+        isPaused = false;
+        // Hide story navs
+        const nav = document.getElementById('story-nav');
+        if(nav) nav.innerHTML = '';
+        document.body.style.backgroundColor = 'var(--bg-dark)';
+    }
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { 
@@ -484,7 +494,7 @@
         onValue(roomRef, (snap) => {
             const data = snap.val();
             if(!data) return;
-            fullRoomData = data; // Save for protest logic
+            fullRoomData = data; 
 
             currentPlayers = {};
             const list = document.getElementById('lobby-list');
@@ -503,6 +513,7 @@
 
             // GAME STATUS ROUTING
             if(data.status === 'voting') {
+                resetGameUI(); // Kill timer
                 if(data.finishedPlayers && data.finishedPlayers[myId]) {
                     showScreen('screen-wait-others');
                     const finishedCount = Object.keys(data.finishedPlayers).length;
@@ -522,7 +533,7 @@
             else if (data.status === 'results') {
                 finalResults = data.finalResults || {};
                 awardSlides = data.awards || [];
-                // Only start wrapped if we are not already in end screen, court lobby or tribunal
+                // Only start wrapped if we are not already in end screen
                 if(document.getElementById('screen-wrapped').style.display === 'none' && 
                    document.getElementById('screen-end').style.display === 'none' &&
                    document.getElementById('screen-tribunal').style.display === 'none' &&
@@ -531,10 +542,17 @@
                 }
             }
             else if (data.status === 'court_lobby') {
+                resetGameUI(); // Kill timer immediately!
                 renderCourtLobby(data.protestQueue || {});
             }
             else if (data.status === 'tribunal') {
-                handleProtestUpdate(data.currentCase);
+                resetGameUI(); // Kill timer immediately!
+                if(data.currentCase) {
+                    handleProtestUpdate(data.currentCase);
+                } else {
+                    // Fallback if data is missing
+                    update(ref(db, `rooms/${roomCode}`), { status: 'court_lobby' });
+                }
             }
         });
     }
@@ -642,7 +660,11 @@
 
     function loadSlide() {
         if(isPaused) return;
-        if(document.getElementById('screen-wrapped').style.display === 'none') return; 
+        // IMPORTANT: Safety check to stop zombie timers
+        if(document.getElementById('screen-wrapped').style.display === 'none') {
+            clearTimeout(timer);
+            return; 
+        }
 
         const total = questions.length + awardSlides.length;
         if(slideIdx >= total) { 
@@ -984,8 +1006,7 @@
             remove(ref(db, `rooms/${roomCode}/protestQueue/${pData.queueKey}`));
         }
         
-        // Show alert then return to Lobby
-        // We set status back to court_lobby
+        // Return to Lobby
         update(ref(db, `rooms/${roomCode}`), { status: 'court_lobby', currentCase: null });
         alert(`FIM DO TRIBUNAL!\n${pData.accuserName}: ${scores.accuser}\n${pData.defendantName}: ${scores.defendant}\nVENCEDOR: ${winnerName}`);
     }
