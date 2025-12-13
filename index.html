@@ -26,7 +26,6 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
@@ -398,7 +397,7 @@
     let protestCategory = "";
     let amIWinningProtest = false;
 
-    // EXPOSE TO WINDOW
+    // EXPOSE TO WINDOW (Fixes ReferenceError)
     window.goToMenu = goToMenu;
     window.createRoomReal = createRoomReal;
     window.showJoinInput = showJoinInput;
@@ -792,8 +791,8 @@
         const active = data.activeProtest;
         const queue = data.protestQueue;
 
-        // Se sou HOST e não tem ativo mas tem fila -> Ativar próximo
-        if(data.status === 'protest_voting' && amIHost && !active && queue) {
+        // Host gerencia fila
+        if(amIHost && !active && queue) {
             const keys = Object.keys(queue).sort((a,b) => queue[a].timestamp - queue[b].timestamp); // FIFO
             const nextKey = keys[0];
             update(roomRef, {
@@ -809,7 +808,7 @@
                 checkProtestEnd(active);
             }
 
-            // Se tem duelo ativo, mostra pra geral
+            // Se tem duelo ativo, mostra pra geral (PRIORIDADE: RESULTADO > VOTAÇÃO)
             if(active.phase === 'result') {
                 showScreen('screen-protest-result');
                 const iWon = active.winner === active.challenger;
@@ -843,13 +842,11 @@
 
             } else {
                 // VOTAÇÃO ATIVA
-                // Se sou um dos lutadores -> Tela de espera
                 if(active.challenger === myName || active.rival === myName) {
                     showScreen('screen-protest-wait');
                     document.getElementById('wait-msg-title').innerText = "JÚRI VOTANDO";
                     document.getElementById('wait-msg-desc').innerText = `Você vs ${active.challenger === myName ? active.rival : active.challenger}`;
                 } else {
-                    // Sou Júri
                     showScreen('screen-protest-duel');
                     document.getElementById('duel-cat-name').innerText = active.category;
                     document.getElementById('duel-p1-name').innerText = active.challenger;
@@ -879,7 +876,6 @@
     }
 
     async function checkProtestEnd(active) {
-        // Não precisa fetch, usa o objeto local 'active' que veio do listener
         const votes = active.votes || {};
         const totalVoters = Math.max(1, Object.keys(currentPlayers).length - 2); 
         
