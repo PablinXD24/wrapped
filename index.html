@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Final</title>
+    <title>Wrapped 2025 - Final Fixed</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -803,6 +803,11 @@
         }
 
         if(active) {
+            // Se sou Host e estamos em votação (não resultado), checa se acabou a cada update
+            if(amIHost && active.phase !== 'result') {
+                checkProtestEnd(active);
+            }
+
             // Se tem duelo ativo, mostra pra geral
             if(active.phase === 'result') {
                 showScreen('screen-protest-result');
@@ -870,13 +875,10 @@
         showScreen('screen-protest-wait');
         document.getElementById('wait-msg-title').innerText = "VOTO REGISTRADO";
         document.getElementById('wait-msg-desc').innerText = "Aguardando outros juízes...";
-        if(amIHost) checkProtestEnd();
     }
 
-    async function checkProtestEnd() {
-        const snap = await get(ref(db, `rooms/${roomCode}/activeProtest`));
-        const active = snap.val();
-        if(!active) return;
+    async function checkProtestEnd(active) {
+        // Não precisa fetch, usa o objeto local 'active' que veio do listener
         const votes = active.votes || {};
         const totalVoters = Math.max(1, Object.keys(currentPlayers).length - 2); 
         
