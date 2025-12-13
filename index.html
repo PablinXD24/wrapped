@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Painel Host</title>
+    <title>Wrapped 2025 - Final Cycle</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -121,6 +121,14 @@
         .fighter-av { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); color: white; border: 3px solid white; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; margin-bottom: 10px; }
         .vs-sign { font-size: 2rem; font-weight: 900; font-style: italic; color: var(--neon-red); text-shadow: 0 0 15px red; }
 
+        /* HOST ADMIN CARDS */
+        .admin-protest-card {
+            background: #333; border: 1px solid #555; padding: 15px; margin: 5px 0; 
+            border-radius: 8px; cursor: pointer; text-transform: uppercase; font-weight: bold;
+            display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
+        }
+        .admin-protest-card:hover { background: var(--neon-green); color: black; border-color: var(--neon-green); }
+
         #res-white-container { display: none; text-align: center; color: black; flex-direction: column; justify-content: center; height: 100%; }
         .white-cat { font-family: var(--font-data); text-transform: uppercase; letter-spacing: 4px; font-size: 1.2rem; margin-bottom: 20px; opacity: 0.6; }
         .white-winner { font-size: clamp(4rem, 10vw, 6rem); font-weight: 900; line-height: 0.9; text-transform: uppercase; margin-bottom: 20px; color: black; animation: popIn 0.5s; }
@@ -145,14 +153,6 @@
 
         #screen-protest-wait { justify-content: center; align-items: center; text-align: center; }
         #screen-protest-lobby { justify-content: center; align-items: center; text-align: center; }
-        /* Cards do Host para selecionar protesto */
-        .admin-protest-card {
-            background: #333; border: 1px solid #555; padding: 15px; margin: 5px; 
-            border-radius: 8px; cursor: pointer; text-transform: uppercase; font-weight: bold;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .admin-protest-card:hover { background: #444; border-color: white; }
-        
         @keyframes popIn { to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
@@ -259,9 +259,8 @@
         <p>Obrigado por participar.</p>
         
         <div id="host-admin-panel" style="width: 100%; display: none; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px;">
-            <h3 style="color: var(--neon-gold);">PAINEL DO JUIZ (HOST)</h3>
-            <p style="font-size: 0.8rem;">Toque em um nome para iniciar o julgamento.</p>
-            <div id="host-protest-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto;"></div>
+            <h3 style="color: var(--neon-gold); margin-bottom: 10px;">PAINEL DO JUIZ</h3>
+            <div id="host-protest-list" style="display: flex; flex-direction: column; width: 100%;"></div>
         </div>
 
         <div id="player-actions">
@@ -362,26 +361,26 @@
     const db = getDatabase(app);
 
     const questions = [
-        { type: 'vote', q: "Quem seria preso por engano?" },
-        { type: 'vote', q: "Quem dá PT em todo rolê?" },
-        { type: 'match', q: "Dupla no Crime" }, 
-        { type: 'vote', q: "Quem vai ficar rico?" },
-        { type: 'match', q: "Alma Gêmea Bêbada" }, 
-        { type: 'vote', q: "Quem é o maior fofoqueiro?" },
-        { type: 'vote', q: "Quem vive de TBT?" },
-        { type: 'match', q: "Casal de Idosos do Grupo" },
-        { type: 'vote', q: "Quem é o maior gado?" },
-        { type: 'vote', q: "Quem dirige melhor?" },
-        { type: 'match', q: "Os Pais do Grupo" },
-        { type: 'vote', q: "Quem some sem avisar?" },
-        { type: 'vote', q: "Quem vira Influencer falido?" },
-        { type: 'match', q: "Inimigos Mortais (Amor e Ódio)" },
-        { type: 'vote', q: "Quem chora por tudo?" },
-        { type: 'vote', q: "Quem é o maior Talarico(a)?" },
-        { type: 'vote', q: "Quem mente pra caramba?" },
-        { type: 'vote', q: "Quem é o maior Caloteiro?" },
-        { type: 'match', q: "Casal do Ano" },
-        { type: 'vote', q: "Quem seria o Vilão da Novela?" }
+        { type: 'vote', q: "Quem seria preso por engano?", roast: ["Cara de culpado(a).", "Advogado, corre!", "Ficha criminal pronta."] },
+        { type: 'vote', q: "Quem dá PT em todo rolê?", roast: ["Fígado pede socorro.", "SAMU no speed dial.", "Inimigo do fim."] },
+        { type: 'match', q: "Dupla no Crime", roast: ["Parceria fechada.", "Bonnie & Clyde.", "Ninguém segura."] }, 
+        { type: 'vote', q: "Quem vai ficar rico?", roast: ["Mente milionária.", "Paga o churrasco.", "O golpe tá aí."] },
+        { type: 'match', q: "Alma Gêmea Bêbada", roast: ["Separados no nascimento.", "Só fazem merda juntos.", "Dupla do apocalipse."] }, 
+        { type: 'vote', q: "Quem é o maior fofoqueiro?", roast: ["Sabe de tudo.", "Print de tudo.", "A própria Choquei."] },
+        { type: 'vote', q: "Quem vive de TBT?", roast: ["Vive no passado.", "Nostalgia pura.", "Supera logo."] },
+        { type: 'match', q: "Casal de Idosos do Grupo", roast: ["Só reclamam.", "Dor nas costas.", "Dormem às 22h."] },
+        { type: 'vote', q: "Quem é o maior gado?", roast: ["Muuu.", "Rei do gado.", "Chifre pesado."] },
+        { type: 'vote', q: "Quem dirige melhor?", roast: ["Piloto de fuga.", "Uber do grupo.", "Sem multas."] },
+        { type: 'match', q: "Os Pais do Grupo", roast: ["Responsáveis.", "Cuidam dos bêbados.", "Juízo da galera."] },
+        { type: 'vote', q: "Quem some sem avisar?", roast: ["Mestre dos magos.", "Ninja da fumaça.", "Só aparece ano que vem."] },
+        { type: 'vote', q: "Quem vira Influencer falido?", roast: ["Arrasta pra cima.", "Permuta de coxinha.", "Blogueirinho(a)."] },
+        { type: 'match', q: "Inimigos Mortais (Amor e Ódio)", roast: ["Brigam por tudo.", "Tapas e beijos.", "Caos puro."] },
+        { type: 'vote', q: "Quem chora por tudo?", roast: ["Haja lencinho.", "Drama queen.", "Coração de manteiga."] },
+        { type: 'vote', q: "Quem é o maior Talarico(a)?", roast: ["Olho gordo.", "Fura olho.", "Esconde o namorado(a)."] },
+        { type: 'vote', q: "Quem mente pra caramba?", roast: ["Pinóquio.", "Aumenta tudo.", "Nem sente vergonha."] },
+        { type: 'vote', q: "Quem é o maior Caloteiro?", roast: ["Deve a todos.", "Esqueceu a carteira.", "Paga o lanche ai."] },
+        { type: 'match', q: "Casal do Ano", roast: ["Meta de relacionamento.", "Lindos.", "Shippamos."] },
+        { type: 'vote', q: "Quem seria o Vilão da Novela?", roast: ["Mente maligna.", "Planeja o caos.", "Risada maléfica."] }
     ];
     const themes = ["#1ed760", "#ff4632", "#2d46b9", "#f2e205", "#f573a0"];
 
@@ -404,8 +403,10 @@
     let pendingBlob = null;
 
     // Protest State
-    let protestCategory = "";
+    let protestQueue = [];
+    let currentProtester = "";
     let protestRival = "";
+    let protestCategory = "";
     let amIWinningProtest = false;
 
     // EXPOSE TO WINDOW
@@ -420,13 +421,13 @@
     window.confirmProtest = confirmProtest;
     window.selectAccuser = selectAccuser;
     window.castProtestVote = castProtestVote;
+    window.hostStartProtest = hostStartProtest;
+    window.hostCloseCase = hostCloseCase; 
     window.shareSlide = shareSlide;
     window.processShare = processShare;
     window.closeShareModal = closeShareModal;
     window.joinSafeZone = joinSafeZone;
     window.showScreen = showScreen;
-    window.hostStartProtest = hostStartProtest; // Nova função do Host
-    window.hostCloseCase = hostCloseCase; // Nova função do Host
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { 
@@ -522,9 +523,15 @@
             }
             else if (data.status === 'protest_selection') {
                 // Configuração da Tela Final para o Protesto
-                if(document.getElementById('screen-protest-lobby').style.display === 'none' && 
-                   document.getElementById('screen-protest-wait').style.display === 'none' &&
-                   document.getElementById('screen-protest-duel').style.display === 'none') {
+                
+                // Se existe protesto ativo, ignora a tela de seleção
+                if(data.activeProtest) {
+                    handleProtestState(data.activeProtest);
+                    return;
+                }
+
+                // Se não tem protesto ativo, mostra a tela de seleção/lobby
+                if(document.getElementById('screen-end').style.display === 'none') {
                     showScreen('screen-end');
                 }
                 
@@ -554,15 +561,6 @@
                         document.querySelector('#player-actions').style.display = 'none';
                     }
                 }
-            }
-            
-            // Monitoramento de Duelo Ativo (Para todos)
-            if(data.activeProtest) {
-                handleProtestState(data.activeProtest);
-            } else if (data.status === 'protest_selection' && document.getElementById('screen-protest-duel').style.display !== 'none') {
-                // Se acabou o duelo e voltou para seleção, force a tela correta
-                if(amIHost) showScreen('screen-end');
-                else joinSafeZone(); 
             }
         });
     }
@@ -604,7 +602,16 @@
         } else {
             set(ref(db, `rooms/${roomCode}/finishedPlayers/${myId}`), true);
             showScreen('screen-wait-others');
+            if(amIHost) checkAllFinished();
         }
+    }
+
+    async function checkAllFinished() {
+        const snap = await get(roomRef);
+        const data = snap.val();
+        const total = Object.keys(data.players).length;
+        const finished = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
+        if(finished >= total) calculateResults(data);
     }
 
     function calculateResults(data) {
@@ -791,7 +798,8 @@
     }
 
     function joinSafeZone() {
-        showScreen('screen-protest-lobby');
+        // Apenas para efeito visual, não precisa fazer nada no banco
+        document.getElementById('player-actions').innerHTML = '<p>Você está safe! Pegue a pipoca.</p>';
     }
 
     // --- PROTESTO: CONTROLE DO HOST ---
