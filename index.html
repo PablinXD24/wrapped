@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Final Fixed</title>
+    <title>Wrapped 2025 - Final</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -424,8 +424,10 @@
             s.style.display = 'none'; 
         });
         const target = document.getElementById(id);
-        target.style.display = 'flex';
-        setTimeout(() => target.classList.add('active'), 10);
+        if(target) {
+            target.style.display = 'flex';
+            setTimeout(() => target.classList.add('active'), 10);
+        }
     }
 
     function goToMenu() {
@@ -789,8 +791,8 @@
         const active = data.activeProtest;
         const queue = data.protestQueue;
 
-        // Host gerencia fila
-        if(amIHost && !active && queue) {
+        // Se sou HOST e não tem ativo mas tem fila -> Ativar próximo
+        if(data.status === 'protest_voting' && amIHost && !active && queue) {
             const keys = Object.keys(queue).sort((a,b) => queue[a].timestamp - queue[b].timestamp); // FIFO
             const nextKey = keys[0];
             update(roomRef, {
