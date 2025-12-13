@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Com Protesto</title>
+    <title>Wrapped 2025 - Tribunal Edition</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -22,6 +22,7 @@
             --bg-dark: #080808;
             --font-display: 'Space Grotesk', sans-serif;
             --font-data: 'Space Mono', monospace;
+            --dynamic-color: #1ed760;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -40,7 +41,6 @@
             align-items: center; justify-content: center;
         }
 
-        /* EFEITOS VISUAIS ORIGINAIS */
         .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.05; pointer-events: none; z-index: 999; }
         .ambilight-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; filter: blur(90px); background: radial-gradient(circle at 50% 50%, #333, #000); transition: background 0.8s ease; }
         
@@ -69,6 +69,7 @@
         .btn:active { transform: scale(0.96); }
         .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; }
         .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
+        .btn-danger { background: var(--neon-red); color: white; box-shadow: 0 0 15px rgba(255, 70, 70, 0.4); }
         
         .room-code { font-size: 3.5rem; font-weight: 900; letter-spacing: 8px; color: var(--neon-green); background: rgba(0,0,0,0.3); padding: 15px; border-radius: 20px; margin: 20px 0; border: 2px dashed rgba(255,255,255,0.2); }
         .chip { background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 50px; margin: 5px; display: inline-block; font-weight: bold; }
@@ -79,6 +80,7 @@
         .avatar { width: 45px; height: 45px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; }
         .vote-card:active .avatar { background: black; color: white; }
 
+        /* Story Styles */
         .story-nav { display: flex; gap: 4px; margin: 10px 0 20px 0; width: 100%; z-index: 50; }
         .nav-fill { height: 4px; background: white; width: 0%; border-radius: 2px; }
         .nav-fill.active { width: 100%; transition: width 5.5s linear; }
@@ -101,6 +103,27 @@
         .match-name { font-weight: 900; font-size: 1.2rem; text-transform: uppercase; }
         .match-icon { font-size: 3.5rem; color: var(--dynamic-color); animation: pulse 1s infinite; margin-top: -30px;}
 
+        /* Protest/Tribunal Styles */
+        .protest-mode { background: #300 !important; }
+        .cat-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 20px; border-radius: 16px; margin-bottom: 15px; width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; font-family: var(--font-display); font-weight: bold; cursor: pointer; }
+        .cat-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--neon-red); }
+        
+        .offender-row { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s; }
+        .offender-row:hover { background: rgba(255,0,0,0.1); }
+        .offender-row:last-child { border: none; }
+        
+        .vs-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 30px 0; }
+        .vs-card { display: flex; flex-direction: column; align-items: center; opacity: 0.5; transition: 0.3s; transform: scale(0.9); }
+        .vs-card.winner { opacity: 1; transform: scale(1.1); }
+        .vs-card.loser { opacity: 0.3; filter: grayscale(1); }
+        .vs-av { width: 80px; height: 80px; border-radius: 50%; background: #222; border: 3px solid #444; display: flex; justify-content: center; align-items: center; font-size: 2rem; margin-bottom: 10px; font-weight: 900; }
+        .vs-text { font-size: 2.5rem; font-weight: 900; color: var(--neon-red); font-style: italic; }
+
+        .tribunal-vote-btn { height: 180px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .tribunal-vote-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+        .gavel-anim { font-size: 5rem; animation: hammer 0.5s infinite alternate; color: var(--neon-red); margin-bottom: 20px; }
+        @keyframes hammer { from { transform: rotate(-20deg); } to { transform: rotate(20deg); } }
+
         #res-white-container { display: none; text-align: center; color: black; flex-direction: column; justify-content: center; height: 100%; }
         .white-cat { font-family: var(--font-data); text-transform: uppercase; letter-spacing: 4px; font-size: 1.2rem; margin-bottom: 20px; opacity: 0.6; }
         .white-winner { font-size: clamp(4rem, 10vw, 6rem); font-weight: 900; line-height: 0.9; text-transform: uppercase; margin-bottom: 20px; color: black; animation: popIn 0.5s; }
@@ -115,7 +138,6 @@
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); color: white; }
         .btn-opt { padding: 15px; margin-top: 10px; width: 100%; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
-        /* EXPORT E PROTEST STYLES */
         #export-canvas { position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; background: #fff; color: #000; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .ex-cat { font-family: var(--font-data); font-size: 2.5rem; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 40px; }
         .ex-winner { font-size: 9rem; font-weight: 900; line-height: 0.9; margin: 40px 0; text-transform: uppercase; word-break: break-word;}
@@ -124,58 +146,6 @@
         .ex-white-ui { display: none; flex-direction: column; align-items: center; justify-content: center; }
         .ex-intro-ui { display: none; flex-direction: column; align-items: center; justify-content: center; }
 
-        /* --- PROTESTO STYLES (NOVO) --- */
-        .btn-protest {
-            background: var(--neon-red);
-            color: white;
-            border: 2px solid white;
-            padding: 15px 25px;
-            border-radius: 50px;
-            font-weight: 900;
-            font-size: 1.2rem;
-            text-transform: uppercase;
-            box-shadow: 0 0 20px var(--neon-red);
-            animation: pulse-red 1s infinite;
-            display: none; /* Só aparece pro culpado */
-            position: absolute;
-            bottom: 100px;
-            z-index: 95;
-            cursor: pointer;
-        }
-        .btn-protest:active { transform: scale(0.9); }
-
-        .chaos-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 998;
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(255, 0, 0, 0.2);
-            mix-blend-mode: hard-light;
-        }
-
-        .chaos-stamp {
-            font-size: clamp(3rem, 15vw, 6rem);
-            font-weight: 900;
-            color: red;
-            border: 8px solid red;
-            padding: 10px 30px;
-            transform: rotate(-15deg);
-            text-transform: uppercase;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            animation: stampIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-shadow: 2px 2px 0px white;
-            box-shadow: 10px 10px 0 rgba(0,0,0,0.5);
-        }
-
-        /* Animações de Caos */
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 70, 70, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 70, 70, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 70, 70, 0); } }
-        @keyframes stampIn { from { opacity: 0; transform: scale(3) rotate(0deg); } to { opacity: 1; transform: scale(1) rotate(-15deg); } }
-        
-        .shake-screen { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite; }
-        @keyframes shake { 10%, 90% { transform: translate3d(-4px, 0, 0); } 20%, 80% { transform: translate3d(6px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0); } 40%, 60% { transform: translate3d(8px, 0, 0); } }
-
-        .glitch-effect { filter: contrast(1.5) hue-rotate(90deg); }
-        
         @keyframes popIn { to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
@@ -185,11 +155,7 @@
 <div class="ambilight-bg" id="ambilight"></div>
 <div id="export-canvas" style="display: none;"></div> 
 
-<div id="chaos-overlay" class="chaos-overlay">
-    <div class="chaos-stamp" id="chaos-text">FAKE NEWS</div>
-</div>
-
-<div class="app-container" id="main-app">
+<div class="app-container">
 
     <div id="screen-home" class="screen active">
         <div style="width: 100%; text-align: center;">
@@ -243,7 +209,7 @@
 
     <div id="screen-wrapped" class="screen">
         <div class="story-nav" id="story-nav"></div>
-        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; align-items: center;">
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; width: 100%;">
             <p id="res-cat" class="res-cat">CATEGORIA</p>
             
             <div id="res-standard-container" style="display: flex; flex-direction: column; justify-content: center; width: 100%;">
@@ -272,10 +238,6 @@
                 <div id="white-winner" class="white-winner">NOME</div>
                 <div id="white-desc" class="white-desc">Desc</div>
             </div>
-            
-            <button id="btn-protest" class="btn-protest" onclick="triggerProtest()">
-                <i class="fa-solid fa-bullhorn"></i> ISSO É MENTIRA!
-            </button>
         </div>
         
         <div style="position: absolute; bottom: 30px; right: 30px; z-index: 90;">
@@ -286,9 +248,69 @@
     </div>
 
     <div id="screen-end" class="screen" style="background: black; justify-content: center; align-items: center; text-align: center;">
-        <h1 style="margin-bottom: 20px;">FIM DO WRAPPED</h1>
+        <h1 style="margin-bottom: 10px;">FIM DO WRAPPED</h1>
         <p>Obrigado por participar.</p>
-        <button class="btn btn-outline" style="margin-top: 30px;" onclick="location.reload()">JOGAR NOVAMENTE</button>
+        
+        <div style="width: 100%; padding: 20px; background: rgba(255,70,70,0.1); border: 1px solid var(--neon-red); border-radius: 16px; margin: 30px 0;">
+            <h3 style="color: var(--neon-red); margin-bottom: 10px; text-transform: uppercase;">Acha que foi injusto?</h3>
+            <p style="font-size: 0.9rem; margin-bottom: 20px;">Abra um processo contra quem votou em você.</p>
+            <button class="btn btn-danger" onclick="startProtestSelection()">🚨 PROTESTO 🚨</button>
+        </div>
+
+        <button class="btn btn-outline" onclick="location.reload()">JOGAR NOVAMENTE</button>
+    </div>
+
+    <div id="screen-protest-menu" class="screen">
+        <h2 style="color: var(--neon-red); text-align: center;">SELECIONE O CASO</h2>
+        <p style="text-align: center; opacity: 0.7; margin-bottom: 30px;">Qual categoria você ganhou injustamente?</p>
+        <div id="protest-cat-list" style="width: 100%;"></div>
+        <button class="btn btn-outline" style="margin-top: auto;" onclick="showScreen('screen-end')">Cancelar</button>
+    </div>
+
+    <div id="screen-protest-reveal" class="screen">
+        <h2 style="color: var(--neon-red); text-align: center;">OS CULPADOS</h2>
+        <p style="text-align: center;">Essas pessoas votaram em você.<br>Escolha seu adversário.</p>
+        <div id="offenders-list" style="width: 100%; margin-top: 20px;"></div>
+        <button class="btn btn-outline" style="margin-top: auto;" onclick="showScreen('screen-protest-menu')">Voltar</button>
+    </div>
+
+    <div id="screen-tribunal" class="screen" style="text-align: center; border: 4px solid var(--neon-red);">
+        <div style="background: var(--neon-red); color: white; padding: 5px 15px; border-radius: 50px; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-weight: bold; font-size: 0.8rem;">TRIBUNAL EM SESSÃO</div>
+        
+        <h3 id="tribunal-round-info" style="margin-top: 50px; opacity: 0.7;">PERGUNTA 1/5</h3>
+        <h1 id="tribunal-q" style="font-size: 1.5rem; margin: 20px 0; min-height: 60px;">...</h1>
+        
+        <div class="vs-container">
+            <div class="vs-card" id="vs-card-1">
+                <div class="vs-av" id="vs-av-1">A</div>
+                <span id="vs-name-1">VOCÊ</span>
+            </div>
+            <div class="vs-text">VS</div>
+            <div class="vs-card" id="vs-card-2">
+                <div class="vs-av" id="vs-av-2">B</div>
+                <span id="vs-name-2">RÉU</span>
+            </div>
+        </div>
+
+        <div id="jury-area" style="display: none; width: 100%;">
+            <p style="margin-bottom: 10px;">Quem ganha?</p>
+            <div class="vote-grid">
+                <div class="tribunal-vote-btn" onclick="castTribunalVote('accuser')">
+                    <div class="avatar" id="btn-av-1">A</div>
+                    <span id="btn-name-1">NOME 1</span>
+                </div>
+                <div class="tribunal-vote-btn" onclick="castTribunalVote('defendant')">
+                    <div class="avatar" id="btn-av-2">B</div>
+                    <span id="btn-name-2">NOME 2</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="silence-area" style="display: none; width: 100%; flex-direction: column; align-items: center; justify-content: center; height: 200px;">
+            <i class="fa-solid fa-gavel gavel-anim"></i>
+            <h2>SILÊNCIO!</h2>
+            <p>O júri está decidindo seu destino...</p>
+        </div>
     </div>
 
     <div id="share-modal" class="modal" style="display: none;">
@@ -341,6 +363,15 @@
         { type: 'match', q: "Casal do Ano", roast: ["Meta de relacionamento.", "Lindos.", "Shippamos."] },
         { type: 'vote', q: "Quem seria o Vilão da Novela?", roast: ["Mente maligna.", "Planeja o caos.", "Risada maléfica."] }
     ];
+
+    const duelQuestions = [
+        "Quem venderia o outro por um iPhone?",
+        "Quem sobreviveria a um apocalipse zumbi?",
+        "Quem chora assistindo comercial de margarina?",
+        "Quem tem o pior histórico de pesquisa?",
+        "Quem seria preso primeiro em Vegas?"
+    ];
+
     const themes = ["#1ed760", "#ff4632", "#2d46b9", "#f2e205", "#f573a0"];
 
     // GLOBAL VARIABLES
@@ -360,7 +391,7 @@
     let currentTheme = "";
     let localQIdx = 0; 
     let pendingBlob = null;
-    let lastProtestTime = 0; // Para controlar protestos
+    let fullRoomData = null; // Store full data for protest logic
 
     // EXPOSE TO WINDOW
     window.goToMenu = goToMenu;
@@ -374,7 +405,10 @@
     window.processShare = processShare;
     window.closeShareModal = closeShareModal;
     window.showScreen = showScreen;
-    window.triggerProtest = triggerProtest;
+    window.startProtestSelection = startProtestSelection;
+    window.showOffenders = showOffenders;
+    window.initiateTribunal = initiateTribunal;
+    window.castTribunalVote = castTribunalVote;
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { 
@@ -425,6 +459,7 @@
         onValue(roomRef, (snap) => {
             const data = snap.val();
             if(!data) return;
+            fullRoomData = data; // Save for protest logic
 
             currentPlayers = {};
             const list = document.getElementById('lobby-list');
@@ -441,13 +476,7 @@
             if(data.host === myId) { amIHost = true; btnStart.style.display = 'inline-block'; msgWait.style.display='none'; }
             else { btnStart.style.display='none'; msgWait.style.display='block'; }
 
-            // PROTEST LISTENER (Novo)
-            if(data.protest && data.protest.timestamp > lastProtestTime) {
-                lastProtestTime = data.protest.timestamp;
-                activateChaosMode();
-            }
-
-            // 1. Voting logic
+            // GAME STATUS ROUTING
             if(data.status === 'voting') {
                 if(data.finishedPlayers && data.finishedPlayers[myId]) {
                     showScreen('screen-wait-others');
@@ -459,8 +488,6 @@
                         startLocalVoting();
                     }
                 }
-                
-                // HOST LOGIC
                 if(amIHost) {
                     const total = Object.keys(currentPlayers).length;
                     const finished = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
@@ -470,46 +497,17 @@
             else if (data.status === 'results') {
                 finalResults = data.finalResults || {};
                 awardSlides = data.awards || [];
-                if(document.getElementById('screen-wrapped').style.display === 'none') {
+                // Only start wrapped if we are not already in end screen or protesting
+                if(document.getElementById('screen-wrapped').style.display === 'none' && 
+                   document.getElementById('screen-end').style.display === 'none' &&
+                   document.getElementById('screen-tribunal').style.display === 'none') {
                     startWrapped();
                 }
             }
-        });
-    }
-
-    // --- PROTEST LOGIC ---
-    function triggerProtest() {
-        // Atualiza firebase para todos verem
-        update(roomRef, {
-            protest: {
-                timestamp: Date.now(),
-                by: myName
+            else if (data.status === 'protest') {
+                handleProtestUpdate(data.protest);
             }
         });
-        document.getElementById('btn-protest').style.display = 'none'; // Esconde botão após clique
-    }
-
-    function activateChaosMode() {
-        // EFEITO VISUAL PARA TODOS
-        const container = document.getElementById('main-app');
-        const overlay = document.getElementById('chaos-overlay');
-        const stamps = ["FAKE NEWS", "CALÚNIA", "MENTIRA", "INJUSTO", "ROUBADO"];
-        
-        // Random Text
-        document.getElementById('chaos-text').innerText = stamps[Math.floor(Math.random() * stamps.length)];
-
-        container.classList.add('shake-screen');
-        container.classList.add('glitch-effect');
-        overlay.style.display = 'flex';
-        
-        // Tocar vibração se mobile suportar
-        if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
-
-        setTimeout(() => {
-            container.classList.remove('shake-screen');
-            container.classList.remove('glitch-effect');
-            overlay.style.display = 'none';
-        }, 3000); // 3 segundos de caos
     }
 
     // --- VOTING LOGIC ---
@@ -615,6 +613,8 @@
 
     function loadSlide() {
         if(isPaused) return;
+        if(document.getElementById('screen-wrapped').style.display === 'none') return; // Stop if left wrapped
+
         const total = questions.length + awardSlides.length;
         if(slideIdx >= total) { 
             showScreen('screen-end');
@@ -635,7 +635,6 @@
         document.getElementById('res-match-container').style.display='none';
         document.getElementById('res-intro-container').style.display='none';
         document.getElementById('res-white-container').style.display='none';
-        document.getElementById('btn-protest').style.display = 'none'; // Esconde botão por padrão
 
         if(isAward) {
             const aw = awardSlides[slideIdx - questions.length];
@@ -669,18 +668,9 @@
                 document.getElementById('m-name-2').innerText = sorted[1] ? sorted[1][0] : "?";
             } else {
                 document.getElementById('res-standard-container').style.display='flex';
-                const winnerName = sorted[0] ? sorted[0][0] : "Ninguém";
-                document.getElementById('res-winner').innerText = winnerName;
+                document.getElementById('res-winner').innerText = sorted[0] ? sorted[0][0] : "Ninguém";
                 document.getElementById('res-roast').innerText = q.roast[1] || "...";
                 
-                // --- LOGICA DE PROTESTO ---
-                // Se eu sou o vencedor E não é match (sozinho), mostro botão
-                if(winnerName === myName) {
-                    setTimeout(() => {
-                        document.getElementById('btn-protest').style.display = 'block';
-                    }, 1000); // Aparece 1s depois do slide
-                }
-
                 const box = document.getElementById('res-data');
                 box.innerHTML = '';
                 sorted.slice(0,3).forEach(([name, count]) => {
@@ -696,16 +686,190 @@
                 });
             }
         }
-        timer = setTimeout(() => { slideIdx++; loadSlide(); }, 6000); // Tempo aumentado um pouco para dar chance de protesto
+        timer = setTimeout(() => { slideIdx++; loadSlide(); }, 5000);
     }
 
     function handleStoryClick(e) {
-        // Bloqueia clique se estiver clicando no botão de protesto (z-index cuida disso, mas segurança extra)
-        if(e.target.id === 'btn-protest') return;
-
         const w = window.innerWidth;
         if(e.clientX < w*0.3) { if(slideIdx>0) {slideIdx--; loadSlide();} }
         else { slideIdx++; loadSlide(); }
+    }
+
+    // --- PROTEST & TRIBUNAL LOGIC ---
+    
+    // 1. Selection Screen: Show categories I won
+    function startProtestSelection() {
+        const list = document.getElementById('protest-cat-list');
+        list.innerHTML = '';
+        let found = false;
+
+        questions.forEach((q, idx) => {
+            if(q.type === 'vote' && finalResults[idx]) {
+                const res = finalResults[idx];
+                const sorted = Object.entries(res).sort((a,b)=>b[1]-a[1]);
+                if(sorted.length > 0 && sorted[0][0] === myName) {
+                    found = true;
+                    list.innerHTML += `
+                        <button class="cat-btn" onclick="showOffenders(${idx})">
+                            <span>${q.q}</span>
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    `;
+                }
+            }
+        });
+
+        if(!found) {
+            list.innerHTML = "<p>Você não ganhou nada para protestar. Parabéns?</p>";
+        }
+        showScreen('screen-protest-menu');
+    }
+
+    // 2. Offenders Screen: Show who voted for me in that cat
+    function showOffenders(qIdx) {
+        const list = document.getElementById('offenders-list');
+        list.innerHTML = '';
+        const allVotes = fullRoomData.votes[qIdx] || {};
+        
+        // Find voter IDs who voted for ME
+        const culprits = [];
+        Object.entries(allVotes).forEach(([voterId, targetName]) => {
+            if(targetName === myName) {
+                culprits.push(voterId);
+            }
+        });
+
+        if(culprits.length === 0) {
+            alert("Estranho... ninguém votou em você aqui."); // Should not happen if I won
+            return;
+        }
+
+        culprits.forEach(uid => {
+            const pName = fullRoomData.players[uid].name;
+            const div = document.createElement('div');
+            div.className = 'offender-row';
+            div.innerHTML = `<div class="avatar">${pName[0]}</div><span style="margin-left:15px; font-weight:bold;">${pName}</span>`;
+            div.onclick = () => initiateTribunal(uid, pName);
+            list.appendChild(div);
+        });
+        
+        showScreen('screen-protest-reveal');
+    }
+
+    // 3. Initiate Tribunal: Write to Firebase to sync everyone
+    function initiateTribunal(defendantId, defendantName) {
+        if(confirm(`Tem certeza que quer levar ${defendantName} para o tribunal?`)) {
+            const protestData = {
+                isActive: true,
+                accuser: myId,
+                accuserName: myName,
+                defendant: defendantId,
+                defendantName: defendantName,
+                round: 0,
+                votes: {},
+                scores: { accuser: 0, defendant: 0 },
+                lastUpdate: Date.now()
+            };
+            update(roomRef, { status: 'protest', protest: protestData });
+        }
+    }
+
+    // 4. Handle Tribunal Updates (The Loop)
+    function handleProtestUpdate(pData) {
+        if(!pData || !pData.isActive) return;
+
+        showScreen('screen-tribunal');
+        const isAccuser = (myId === pData.accuser);
+        const isDefendant = (myId === pData.defendant);
+        const isJury = !isAccuser && !isDefendant;
+
+        // Populate UI
+        document.getElementById('tribunal-round-info').innerText = `PERGUNTA ${pData.round + 1}/5`;
+        document.getElementById('tribunal-q').innerText = duelQuestions[pData.round];
+        
+        document.getElementById('vs-av-1').innerText = pData.accuserName[0];
+        document.getElementById('vs-name-1').innerText = pData.accuserName;
+        document.getElementById('vs-av-2').innerText = pData.defendantName[0];
+        document.getElementById('vs-name-2').innerText = pData.defendantName;
+
+        document.getElementById('btn-av-1').innerText = pData.accuserName[0];
+        document.getElementById('btn-name-1').innerText = pData.accuserName;
+        document.getElementById('btn-av-2').innerText = pData.defendantName[0];
+        document.getElementById('btn-name-2').innerText = pData.defendantName;
+
+        const vsCard1 = document.getElementById('vs-card-1');
+        const vsCard2 = document.getElementById('vs-card-2');
+        vsCard1.className = 'vs-card';
+        vsCard2.className = 'vs-card';
+
+        // Visibility Logic
+        if(isJury) {
+            // Check if I already voted in this round
+            const myVote = (pData.votes && pData.votes[pData.round]) ? pData.votes[pData.round][myId] : null;
+            if(myVote) {
+                document.getElementById('jury-area').style.display = 'none';
+                document.getElementById('silence-area').style.display = 'flex';
+                document.querySelector('#silence-area h2').innerText = "VOTO REGISTRADO";
+                document.querySelector('#silence-area p').innerText = "Aguardando veredicto...";
+            } else {
+                document.getElementById('jury-area').style.display = 'block';
+                document.getElementById('silence-area').style.display = 'none';
+            }
+        } else {
+            // Accuser or Defendant
+            document.getElementById('jury-area').style.display = 'none';
+            document.getElementById('silence-area').style.display = 'flex';
+            document.querySelector('#silence-area h2').innerText = "SILÊNCIO!";
+            document.querySelector('#silence-area p').innerText = "O júri está decidindo seu destino...";
+        }
+
+        // Host Logic: Check for round completion
+        if(amIHost) {
+            const currentVotes = (pData.votes && pData.votes[pData.round]) ? pData.votes[pData.round] : {};
+            const juryCount = Object.keys(fullRoomData.players).length - 2; // Total - 2 participants
+            const votesCast = Object.keys(currentVotes).length;
+
+            if(votesCast >= juryCount && juryCount > 0) {
+                // Determine winner of round
+                let aCount = 0; let dCount = 0;
+                Object.values(currentVotes).forEach(v => v === 'accuser' ? aCount++ : dCount++);
+                
+                const winner = aCount > dCount ? 'accuser' : 'defendant';
+                
+                // Wait 2 seconds then next round
+                setTimeout(() => {
+                    const newScores = pData.scores || { accuser: 0, defendant: 0 };
+                    newScores[winner]++;
+                    
+                    if(pData.round < 4) {
+                        update(ref(db, `rooms/${roomCode}/protest`), {
+                            round: pData.round + 1,
+                            scores: newScores
+                        });
+                    } else {
+                        // End of tribunal
+                        endTribunal(newScores, pData);
+                    }
+                }, 1000); // 1s buffer so not instant
+            }
+        }
+    }
+
+    function castTribunalVote(target) {
+        // target is 'accuser' or 'defendant'
+        const pRef = ref(db, `rooms/${roomCode}/protest`);
+        get(pRef).then(snap => {
+            const p = snap.val();
+            update(ref(db, `rooms/${roomCode}/protest/votes/${p.round}/${myId}`), target);
+        });
+    }
+
+    function endTribunal(scores, pData) {
+        const winnerName = scores.accuser > scores.defendant ? pData.accuserName : pData.defendantName;
+        // Reset to end screen or specific win screen. For now, just reset status to lobby/end
+        alert(`FIM DO TRIBUNAL!\n${pData.accuserName}: ${scores.accuser}\n${pData.defendantName}: ${scores.defendant}\nVENCEDOR: ${winnerName}`);
+        update(roomRef, { status: 'lobby' }); // Send everyone back to lobby or handle differently
+        location.reload();
     }
 
     // --- SHARE ---
