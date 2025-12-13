@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Wrapped 2025 - Final Multiplayer</title>
+    <title>Wrapped 2025 - Final Queue</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -95,7 +95,6 @@
         .res-cat { text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 10px; font-size: 1rem; opacity: 0.8; }
         .roast-text { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 700; margin: 20px 0; min-height: 80px; text-align: center; line-height: 1.2; animation: fadeIn 0.5s 0.3s forwards; opacity: 0; }
         .winner-display { font-size: clamp(4rem, 12vw, 6rem); font-weight: 900; line-height: 0.9; color: var(--dynamic-color); margin-bottom: 40px; text-align: center; text-transform: uppercase; animation: popIn 0.6s 0.5s forwards; opacity: 0; transform: scale(0.8); text-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        
         .data-box { background: rgba(0,0,0,0.3); padding: 25px; border-radius: 16px; width: 100%; align-self: center; border: 1px solid rgba(255,255,255,0.05); }
         .data-row { display: flex; align-items: center; margin-bottom: 15px; font-weight: bold; font-size: 1.1rem; }
         .data-bar-bg { flex: 1; height: 12px; background: rgba(255,255,255,0.1); margin: 0 15px; border-radius: 6px; overflow: hidden; }
@@ -145,6 +144,7 @@
         .ex-intro-ui { display: none; flex-direction: column; align-items: center; justify-content: center; }
 
         #screen-protest-wait { justify-content: center; align-items: center; text-align: center; }
+        #screen-protest-lobby { justify-content: center; align-items: center; text-align: center; }
         @keyframes popIn { to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
@@ -261,8 +261,8 @@
             <i class="fa-solid fa-shield-halved"></i> TÔ SAFE
         </button>
         
-        <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.6;">Acha que rolou injustiça? Entre na fila.</p>
-        <div id="protest-queue-info" style="color: var(--neon-gold); margin-top: 10px; font-weight: bold; display: none;"></div>
+        <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.6;">Entre na fila para reclamar seu título.</p>
+        <div id="protest-status-msg" style="color: var(--neon-green); font-weight: bold; margin-top: 10px;"></div>
     </div>
 
     <div id="screen-protest-select" class="screen">
@@ -411,6 +411,7 @@
     window.castProtestVote = castProtestVote;
     window.startProtestTrials = startProtestTrials; 
     window.nextProtestTurn = nextProtestTurn;
+    window.initProtestSequence = initProtestSequence;
     window.shareSlide = shareSlide;
     window.processShare = processShare;
     window.closeShareModal = closeShareModal;
@@ -480,7 +481,6 @@
             if(data.host === myId) { amIHost = true; btnStart.style.display = 'inline-block'; msgWait.style.display='none'; }
             else { btnStart.style.display='none'; msgWait.style.display='block'; }
 
-            // 1. Voting logic (Host driven check)
             if(data.status === 'voting') {
                 if(data.finishedPlayers && data.finishedPlayers[myId]) {
                     showScreen('screen-wait-others');
@@ -491,13 +491,6 @@
                     if(document.getElementById('screen-voting').style.display === 'none') {
                         startLocalVoting();
                     }
-                }
-                
-                // HOST LOGIC: Check if everyone finished
-                if(amIHost) {
-                    const total = Object.keys(currentPlayers).length;
-                    const finished = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
-                    if(finished >= total && total > 0) calculateResults(data);
                 }
             } 
             else if (data.status === 'results') {
@@ -577,6 +570,18 @@
             // CORREÇÃO: Set true para marcar fim
             set(ref(db, `rooms/${roomCode}/finishedPlayers/${myId}`), true);
             showScreen('screen-wait-others');
+            if(amIHost) checkAllFinished();
+        }
+    }
+
+    async function checkAllFinished() {
+        const snap = await get(roomRef);
+        const data = snap.val();
+        const total = Object.keys(data.players).length;
+        const finished = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
+        
+        if(finished >= total) {
+            calculateResults(data);
         }
     }
 
@@ -788,8 +793,8 @@
         const active = data.activeProtest;
         const queue = data.protestQueue;
 
-        // Host gerencia fila
-        if(amIHost && !active && queue) {
+        // Se sou HOST e não tem ativo mas tem fila -> Ativar próximo
+        if(data.status === 'protest_voting' && amIHost && !active && queue) {
             const keys = Object.keys(queue).sort((a,b) => queue[a].timestamp - queue[b].timestamp); // FIFO
             const nextKey = keys[0];
             update(roomRef, {
@@ -800,6 +805,7 @@
         }
 
         if(active) {
+            // Se tem duelo ativo, mostra pra geral
             if(active.phase === 'result') {
                 showScreen('screen-protest-result');
                 const iWon = active.winner === active.challenger;
@@ -866,8 +872,6 @@
         showScreen('screen-protest-wait');
         document.getElementById('wait-msg-title').innerText = "VOTO REGISTRADO";
         document.getElementById('wait-msg-desc').innerText = "Aguardando outros juízes...";
-        
-        // Host checa se acabou (automaticamente via listener, mas forçamos a verificação)
         if(amIHost) checkProtestEnd();
     }
 
@@ -875,18 +879,13 @@
         const snap = await get(ref(db, `rooms/${roomCode}/activeProtest`));
         const active = snap.val();
         if(!active) return;
-        
         const votes = active.votes || {};
-        // Total de votantes = Total de Pessoas - 2 Duelistas
-        // Importante: Math.max(1) para não dar erro se tiver só 2 pessoas (nesse caso não teria juri, buga)
         const totalVoters = Math.max(1, Object.keys(currentPlayers).length - 2); 
         
         if(Object.keys(votes).length >= totalVoters) {
             let cScore = 0; let rScore = 0;
             Object.values(votes).forEach(v => { if(v===active.challenger) cScore++; else rScore++; });
             const winner = cScore > rScore ? active.challenger : active.rival;
-            
-            // Host finaliza a rodada
             update(roomRef, { activeProtest: { ...active, phase: 'result', winner: winner } });
         }
     }
