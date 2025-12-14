@@ -143,28 +143,27 @@
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); color: white; }
         .btn-opt { padding: 15px; margin-top: 10px; width: 100%; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
-        /* --- EXPORT CANVAS (STYLE REDESIGN) --- */
-        /* Isso fica escondido e só é usado para gerar a imagem */
+        /* --- EXPORT CANVAS (ESTÉTICA CORRIGIDA) --- */
         #export-canvas { 
-            position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 120px 80px; 
-            background: #111; color: white; text-align: center; display: flex; flex-direction: column; 
-            justify-content: space-between; align-items: center; font-family: 'Space Grotesk', sans-serif;
-            z-index: -10;
+            position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; 
+            background-color: #080808; /* Fallback */
+            color: white; text-align: center; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; font-family: 'Space Grotesk', sans-serif;
         }
         
-        .ex-header { font-family: 'Space Mono', monospace; letter-spacing: 5px; opacity: 0.6; font-size: 2rem; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 20px; width: 100%; margin-bottom: 60px; }
-        .ex-footer { font-family: 'Space Mono', monospace; font-size: 1.8rem; opacity: 0.5; margin-top: auto; }
+        /* Containers internos do Canvas */
+        .ex-bg-layer { position: absolute; top:0; left:0; width:100%; height:100%; z-index:0; }
+        .ex-content-layer { position: relative; z-index: 10; width: 100%; display: flex; flex-direction: column; align-items: center; }
+
+        .ex-cat { font-family: 'Space Mono', monospace; font-size: 3rem; letter-spacing: 10px; text-transform: uppercase; margin-bottom: 60px; opacity: 0.9; }
+        .ex-winner { font-size: 10rem; font-weight: 900; line-height: 0.9; margin: 50px 0; text-transform: uppercase; word-break: break-word; text-shadow: 0 0 60px rgba(0,0,0,0.5); }
+        .ex-roast { font-size: 4rem; font-weight: 700; margin-bottom: 100px; line-height: 1.3; opacity: 0.9; }
         
-        .ex-cat { font-family: 'Space Mono', monospace; font-size: 2.5rem; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 40px; color: rgba(255,255,255,0.9); }
-        .ex-winner { font-size: 8rem; font-weight: 900; line-height: 0.9; margin: 40px 0; text-transform: uppercase; word-break: break-word; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .ex-roast { font-size: 3rem; font-weight: 700; margin-bottom: 80px; line-height: 1.3; opacity: 0.9; }
+        .ex-match-ui { display: none; flex-direction: row; align-items: center; justify-content: center; gap: 60px; margin: 80px 0; }
+        .ex-match-avatar { width: 250px; height: 250px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 8px solid white; display: flex; justify-content: center; align-items: center; font-size: 8rem; font-weight: 900; }
         
-        /* Layouts internos do export */
-        .ex-match-ui { display: none; flex-direction: row; align-items: center; justify-content: center; gap: 60px; margin: 80px 0; width: 100%; }
-        .ex-match-avatar { width: 250px; height: 250px; border-radius: 50%; border: 8px solid white; font-size: 6rem; background: rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: center; font-weight: 900; }
-        
-        .ex-white-ui { display: none; flex-direction: column; align-items: center; justify-content: center; background: white; color: black; border-radius: 40px; padding: 60px; width: 100%; }
-        .ex-intro-ui { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        .ex-white-ui { display: none; flex-direction: column; align-items: center; justify-content: center; color: black !important; }
+        .ex-intro-ui { display: none; flex-direction: column; align-items: center; justify-content: center; }
 
         @keyframes popIn { to { transform: scale(1); opacity: 1; } }
     </style>
@@ -174,42 +173,36 @@
 <div class="noise"></div>
 <div class="ambilight-bg" id="ambilight"></div>
 
-<div id="export-canvas">
-    <div class="ex-header">WRAPPED 2025</div>
+<div id="export-canvas" style="display: none;">
+    <div id="ex-bg" class="ex-bg-layer"></div>
 
-    <div id="ex-content-area" style="flex: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; align-items: center;">
-        
+    <div class="ex-content-layer">
         <div id="ex-intro-ui" class="ex-intro-ui">
-            <i class="fa-solid fa-trophy" style="font-size: 12rem; margin-bottom: 60px; color: #FFD700; text-shadow: 0 0 50px rgba(255,215,0,0.5);"></i>
-            <h1 style="font-size: 8rem; margin: 0; line-height: 0.9;">THE<br>WRAPPED</h1>
-            <p style="font-family: 'Space Mono'; font-size: 3rem; letter-spacing: 10px; margin-top: 20px;">REALTIME</p>
+            <i class="fa-solid fa-trophy" style="font-size: 15rem; margin-bottom: 80px; color: #FFD700;"></i>
+            <h1 style="font-size: 8rem; margin: 0; line-height: 1;">THE<br>WRAPPED<br>2025</h1>
         </div>
 
-        <div id="ex-standard-ui" style="width: 100%; display: none;">
-            <div id="ex-cat" class="ex-cat">QUEM É MAIS PROVÁVEL...</div>
-            <div id="ex-winner" class="ex-winner">NOME AQUI</div>
-            <div id="ex-roast" class="ex-roast">Frase de efeito aqui.</div>
-            
-            <div id="ex-data" style="width: 100%; text-align: left; background: rgba(0,0,0,0.2); padding: 40px; border-radius: 30px; border: 2px solid rgba(255,255,255,0.1);"></div>
+        <div id="ex-cat" class="ex-cat">CATEGORIA</div>
+
+        <div id="ex-standard-ui" style="width: 100%;">
+            <div id="ex-roast" class="ex-roast">...</div>
+            <div id="ex-winner" class="ex-winner">NOME</div>
+            <div id="ex-data" style="width: 100%; text-align: left; margin-top: 50px; background: rgba(0,0,0,0.3); padding: 40px; border-radius: 30px; border: 2px solid rgba(255,255,255,0.1);"></div>
         </div>
 
         <div id="ex-match-ui" class="ex-match-ui">
             <div class="ex-match-avatar" id="ex-m-p1">A</div>
-            <i class="fa-solid fa-heart" style="font-size: 8rem; color: white; animation: none;"></i>
+            <i class="fa-solid fa-heart" style="font-size: 8rem; color: #1ed760; margin: 0 40px;"></i>
             <div class="ex-match-avatar" id="ex-m-p2">B</div>
         </div>
-        <div id="ex-match-text" style="font-size: 5rem; font-weight: 900; margin-top: 40px; display:none; text-transform: uppercase;">DEU MATCH!</div>
+        <div id="ex-match-text" style="font-size: 5rem; font-weight: 900; margin-top: 50px; display:none; text-transform: uppercase;">DEU MATCH!</div>
 
         <div id="ex-white-ui" class="ex-white-ui">
-            <i id="ex-w-icon" class="ex-w-icon" style="font-size: 8rem; margin-bottom:30px; color: black;"></i>
-            <div id="ex-w-cat" style="font-family: 'Space Mono'; font-size: 2rem; letter-spacing: 5px; opacity: 0.6; text-transform: uppercase;">CATEGORIA</div>
-            <div id="ex-w-name" style="font-size: 7rem; font-weight: 900; margin: 20px 0; line-height: 0.9;">NOME</div>
-            <div id="ex-w-desc" style="font-size: 2.5rem; font-weight: bold; opacity: 0.8; margin-top: 20px;">Descrição do prêmio.</div>
+            <i id="ex-w-icon" class="ex-w-icon" style="font-size: 12rem; margin-bottom:40px; color: black;"></i>
+            <div id="ex-w-name" style="font-size: 9rem; font-weight: 900; margin: 30px 0; line-height: 0.9;">NOME</div>
+            <div id="ex-w-desc" style="font-size: 3rem; opacity: 0.8; font-weight: bold;">Descrição</div>
         </div>
-
     </div>
-
-    <div class="ex-footer">@WRAPPED_APP</div>
 </div>
 
 <div class="app-container">
@@ -1100,12 +1093,11 @@
         alert(`JULGAMENTO ENCERRADO!`);
     }
 
-    /* --- SHARE (CORRIGIDO PARA EVITAR TRAVAMENTO E ESTÉTICA) --- */
-    async function processShare(type) { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); };
-    
+    // --- SHARE FUNCTION UPDATED ---
     async function shareSlide() {
         isPaused = true; 
         clearTimeout(timer);
+        
         const btnShare = document.getElementById('btn-share');
         const oldIcon = btnShare.innerHTML;
         btnShare.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
@@ -1114,28 +1106,30 @@
         if(activeNav) activeNav.classList.add('paused');
         
         const canvasEl = document.getElementById('export-canvas');
-        canvasEl.style.display = 'flex'; 
+        const q = questions[slideIdx];
+        const theme = themes[slideIdx % themes.length];
+
+        // 1. Reset Canvas Content
+        canvasEl.style.display = 'flex';
         
-        // --- Popula os dados no Export Canvas ---
+        // 2. Set Dynamic Background
+        const bgLayer = document.getElementById('ex-bg');
+        if(slideIdx >= questions.length) { // Awards
+             const award = awardSlides[slideIdx - questions.length];
+             if(award.type === 'cover') bgLayer.style.background = '#000';
+             else bgLayer.style.background = '#fff';
+        } else {
+             // Result Gradient
+             bgLayer.style.background = `radial-gradient(circle at 50% 50%, ${theme}, #000)`;
+        }
+
+        // 3. Populate Content
         const isAwardPhase = slideIdx >= questions.length;
         document.getElementById('ex-standard-ui').style.display = 'none';
         document.getElementById('ex-match-ui').style.display = 'none';
+        document.getElementById('ex-match-text').style.display = 'none';
         document.getElementById('ex-white-ui').style.display = 'none';
         document.getElementById('ex-intro-ui').style.display = 'none';
-        document.getElementById('ex-match-text').style.display = 'none';
-
-        // Cores e Background
-        if(isAwardPhase && awardSlides[slideIdx - questions.length].type === 'cover') {
-             canvasEl.style.background = '#000';
-             canvasEl.style.color = 'white';
-        } else if (isAwardPhase) {
-             canvasEl.style.background = '#fff';
-             canvasEl.style.color = 'black';
-        } else {
-             // Gradiente
-             canvasEl.style.background = `radial-gradient(circle at 50% 30%, ${currentTheme}, #000)`;
-             canvasEl.style.color = 'white';
-        }
 
         if(isAwardPhase) {
             const award = awardSlides[slideIdx - questions.length];
@@ -1144,14 +1138,12 @@
                 document.getElementById('ex-intro-ui').style.display = 'flex';
             } else {
                 document.getElementById('ex-cat').innerText = award.cat;
-                const wUi = document.getElementById('ex-white-ui');
-                wUi.style.display = 'flex';
+                document.getElementById('ex-white-ui').style.display = 'flex';
                 document.getElementById('ex-w-name').innerText = award.name;
                 document.getElementById('ex-w-desc').innerText = award.desc;
                 document.getElementById('ex-w-icon').className = `fa-solid ${award.icon} ex-w-icon`;
             }
         } else {
-            const q = questions[slideIdx];
             document.getElementById('ex-cat').innerText = q.q;
             const results = finalResults[slideIdx] || {};
             const sorted = Object.entries(results).sort((a,b) => b[1] - a[1]);
@@ -1166,28 +1158,34 @@
             } else {
                 document.getElementById('ex-standard-ui').style.display = 'block';
                 document.getElementById('ex-winner').innerText = sorted[0] ? sorted[0][0] : "Ninguém";
-                document.getElementById('ex-roast').innerText = "...";
+                document.getElementById('ex-roast').innerText = q.roast[1] || "...";
                 
+                // Clone Bars exactly
                 const dataHTML = document.getElementById('res-data').innerHTML;
                 const exData = document.getElementById('ex-data');
                 exData.innerHTML = dataHTML;
-                // Estilização extra para o gráfico no print
-                exData.querySelectorAll('.data-row').forEach(row => { row.style.fontSize = '2.5rem'; row.style.marginBottom = '30px'; row.style.fontWeight = 'bold'; });
-                exData.querySelectorAll('.data-bar-fill').forEach(bar => { bar.style.backgroundColor = 'white'; });
+                
+                // Styling override for high-res
+                exData.querySelectorAll('.data-row').forEach(row => { 
+                    row.style.fontSize = '3rem'; 
+                    row.style.marginBottom = '40px'; 
+                    row.style.fontWeight = 'bold'; 
+                });
+                exData.querySelectorAll('.data-bar-fill').forEach(bar => { 
+                    bar.style.backgroundColor = 'white'; // White bars for contrast
+                });
             }
         }
 
-        // --- Renderização Otimizada ---
+        // 4. Render
         setTimeout(async () => {
             try {
                 const canvas = await html2canvas(canvasEl, { 
-                    scale: 1, // Impede travamento por memória (Full HD nativo)
+                    scale: 1, 
                     useCORS: true,
                     logging: false, 
-                    allowTaint: true,
-                    backgroundColor: null // Garante transparência se necessário
+                    allowTaint: true
                 }); 
-                
                 canvas.toBlob(blob => { 
                     pendingBlob = blob; 
                     document.getElementById('share-modal').style.display = 'flex'; 
