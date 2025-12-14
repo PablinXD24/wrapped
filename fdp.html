@@ -44,14 +44,6 @@
             @media(min-width:768px){ height: 90vh; border: 1px solid rgba(255,255,255,0.1); border-radius:30px; overflow:hidden; box-shadow: 0 20px 80px rgba(0,0,0,0.6); background: rgba(0,0,0,0.2); backdrop-filter: blur(20px); }
         }
 
-        .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: none; flex-direction: column; padding: 24px;
-            overflow-y: auto; scrollbar-width: none;
-        }
-        .screen.active { display: flex; animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
         /* --- UI COMPONENTS --- */
         .fdp-card {
             padding: 24px; border-radius: 20px; font-weight: 700; font-size: 1.2rem; line-height: 1.3;
@@ -215,14 +207,14 @@
     let selectedCardIdx = -1;
     let gameOver = false;
 
-    // EXPONDO FUNÇÃO GLOBAL PARA O BOTÃO DE EMERGÊNCIA
+    // --- FUNÇÃO DE EMERGÊNCIA GLOBAL ---
     window.forceNextPhase = function() {
         if(!isHost) return;
         get(ref(db, `rooms/${roomCode}/fdp_match/state`)).then(s => {
             const st = s.val();
             if(st === 'PICKING') update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'VOTING' });
             if(st === 'VOTING') {
-                // Se travar na votação, força um vencedor aleatório
+                // Força um vencedor se travar
                 get(ref(db, `rooms/${roomCode}/fdp_match/table`)).then(t => {
                     if(t.exists()) {
                         const entries = Object.entries(t.val());
@@ -234,6 +226,7 @@
                             winner: { name: random[1].ownerName, text: random[1].text, black: black }
                         });
                         
+                        // Reseta após delay
                         setTimeout(() => hostStartNewRoundClean(), 6000);
                     }
                 });
@@ -265,7 +258,7 @@
         "A grávida de Taubaté.", "Dívida no Serasa.", "Um Fiat Marea Turbo.", "Comer o cu de quem tá lendo.", "Um cadáver fresco.",
         "Pagar pensão alimentícia.", "Um travesti de 2 metros.", "Cheirar cocaína no pau de um palhaço.", "Oito litros de Corote.",
         "Demitir o estagiário.", "Calcinha comestível sabor bacon.", "Minha dignidade.", "Um peido silencioso e mortal.", "Vender foto do pé.",
-        "O Agostinho Carrara.", "Gemidão do Zap.", "Chutar mendigo.", "A harmonização facial do demonio.", "Vira-lata caramelo.",
+        "O Agostinho Carrara.", "Gemidão do Zap.", "Chutar mendigo.", "A harmonização facial do demônio.", "Vira-lata caramelo.",
         "Boleto vencido.", "Café frio e cigarro.", "Uma coxinha mordida.", "O véio da Havan.", "Um áudio de 5 minutos da sua mãe.",
         "Arroz com uva passa.", "Pavê ou pacumê.", "Um Palio 98 rebaixado.", "Churrasco de gato.", "Três reais de pão.",
         "A sandália Havaiana da sua mãe voando.", "Um PM de folga.", "Dois caras numa moto.", "O filme do Pelé.", "Uma garrafa pet no relógio de luz.",
@@ -288,10 +281,7 @@
     /* --- GAME CONNECT --- */
     const roomRef = ref(db, `rooms/${roomCode}`);
     
-    // Inicializar e mostrar a tela correta
-    document.getElementById('screen-game').classList.add('active');
-    document.getElementById('screen-game').style.display = 'flex';
-
+    // UI Refs
     const els = {
         loading: document.getElementById('loading'),
         scoreBoard: document.getElementById('score-board'),
@@ -306,6 +296,10 @@
         forceBtn: document.getElementById('btn-force')
     };
 
+    // Inicializar
+    document.getElementById('screen-game').classList.add('active');
+    document.getElementById('screen-game').style.display = 'flex';
+
     onValue(roomRef, (snap) => {
         const data = snap.val();
         els.loading.style.display = 'none';
@@ -313,21 +307,17 @@
 
         if(data.host === myId) {
             isHost = true;
-            els.forceBtn.style.display = 'block'; // Mostra botão de emergência
+            els.forceBtn.style.display = 'block';
         }
         if(data.players && data.players[myId]) myName = data.players[myId].name;
 
-        // Atualizar Placar
         updateScoreBoard(data.players);
-        
-        // Checar Fim de Jogo
         checkGameOver(data.players);
 
-        // Lógica do Round
         if(!gameOver) {
             if(data.fdp_match) {
                 updateInterface(data.fdp_match);
-                // REACTIVE HOST LOGIC: Checks every time data changes
+                // LÓGICA REATIVA DO HOST (Monitora o jogo sempre que algo muda)
                 if(isHost) checkRoundProgress(data);
             } else if (isHost) {
                 hostStartNewRound();
@@ -335,44 +325,42 @@
         }
     });
 
-    /* --- HOST REACTIVE LOGIC (O CORAÇÃO DA CORREÇÃO) --- */
+    /* --- LÓGICA DO HOST (MONITORAMENTO) --- */
     function checkRoundProgress(data) {
         if(!data.fdp_match) return;
         
         const state = data.fdp_match.state;
         const totalPlayers = Object.keys(data.players).length;
         
-        // CHECK FASE DE ESCOLHA (TODOS JOGARAM?)
+        // FASE 1: TODOS JOGARAM?
         if(state === 'PICKING') {
             const playedCount = data.fdp_match.table ? Object.keys(data.fdp_match.table).length : 0;
-            // Se todos jogaram, avança para votação
+            // Se todos jogaram, passa para votação
             if(playedCount >= totalPlayers && totalPlayers > 0) {
                 update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'VOTING' });
             }
         }
         
-        // CHECK FASE DE VOTAÇÃO (TODOS VOTARAM?)
+        // FASE 2: TODOS VOTARAM?
         if(state === 'VOTING') {
             const votesCount = data.fdp_match.votes ? Object.keys(data.fdp_match.votes).length : 0;
-            // Se todos votaram, finaliza round
+            // Se todos votaram, finaliza
             if(votesCount >= totalPlayers && totalPlayers > 0) {
                 hostFinalizeRound(data.fdp_match.votes, data.fdp_match.table, data.fdp_match.blackCard);
             }
         }
     }
 
-    // Sincronizar Mão
+    // --- SINCRONIA DE DADOS ---
     onValue(ref(db, `rooms/${roomCode}/players/${myId}/hand_fdp`), (snap) => {
         if(snap.exists()) {
             hand = snap.val();
-            const status = document.getElementById('game-status').innerText;
-            if(status.includes("ESCOLHA")) renderHand(hand);
+            if(document.getElementById('game-status').innerText.includes("ESCOLHA")) renderHand(hand);
         } else {
             fillHand();
         }
     });
 
-    // Sincronizar Vencedor da Rodada
     onValue(ref(db, `rooms/${roomCode}/fdp_match/winner`), (snap) => {
         const win = snap.val();
         if(win && !gameOver) {
@@ -387,7 +375,7 @@
         }
     });
 
-    /* --- INTERFACE UPDATER --- */
+    /* --- UPDATE INTERFACE --- */
     function updateInterface(matchData) {
         document.getElementById('black-text').innerText = matchData.blackCard;
         
@@ -395,18 +383,15 @@
         const color = colors[(matchData.roundCount || 0) % colors.length];
         els.ambilight.style.background = `radial-gradient(circle at 50% 30%, ${color}, #000)`;
 
-        // --- FASE 1: ESCOLHER CARTA (PICKING) ---
         if(matchData.state === 'PICKING') {
             els.table.style.display = 'none';
             els.modalWinner.style.display = 'none';
             
             const myPlay = matchData.table ? matchData.table[myId] : null;
-            
             if(myPlay) {
                 els.status.innerText = "ESPERANDO OS OUTROS...";
                 els.hand.style.display = 'none';
                 els.btnAction.style.display = 'none';
-                
                 if(matchData.table) {
                     const count = Object.keys(matchData.table).length;
                     els.status.innerText = `AGUARDANDO (${count} JOGARAM)...`;
@@ -414,30 +399,25 @@
             } else {
                 els.status.innerText = "ESCOLHA SUA MELHOR CARTA";
                 els.hand.style.display = 'flex';
-                els.btnAction.style.display = 'none'; 
                 renderHand(hand);
             }
         }
-
-        // --- FASE 2: VOTAÇÃO (DEMOCRACIA) ---
         else if (matchData.state === 'VOTING') {
             els.hand.style.display = 'none';
             els.btnAction.style.display = 'none';
             els.table.style.display = 'grid';
             
             const myVote = matchData.votes ? matchData.votes[myId] : null;
-            
             if(myVote) {
                 els.status.innerText = "VOTO COMPUTADO. AGUARDANDO...";
             } else {
                 els.status.innerText = "VOTE NA CARTA MAIS ENGRAÇADA!";
             }
-
             renderVotingTable(matchData.table, matchData.votes, !!myVote);
         }
     }
 
-    /* --- RENDER FUNCTIONS --- */
+    /* --- RENDER --- */
     function renderHand(handData) {
         els.hand.innerHTML = '';
         handData.forEach((text, idx) => {
@@ -463,15 +443,13 @@
         Object.entries(tableData).forEach(([uid, item], idx) => {
             const card = document.createElement('div');
             card.className = 'fdp-card card-white table-card';
-            card.innerHTML = item.text; 
+            card.innerHTML = item.text; // MOSTRA O TEXTO PARA TODOS!
             
             let voteCount = 0;
             if(votesData) {
                 Object.values(votesData).forEach(votedId => { if(votedId === uid) voteCount++; });
             }
-            if(voteCount > 0) {
-                card.innerHTML += `<div class="vote-badge">${voteCount}</div>`;
-            }
+            if(voteCount > 0) card.innerHTML += `<div class="vote-badge">${voteCount}</div>`;
 
             if(!iVoted && uid !== myId) {
                 card.onclick = () => { if(confirm("Votar nesta carta?")) submitVote(uid); };
@@ -498,9 +476,7 @@
     function checkGameOver(players) {
         if(!players || gameOver) return;
         let winner = null;
-        Object.values(players).forEach(p => {
-            if((p.score_fdp || 0) >= 5) winner = p.name;
-        });
+        Object.values(players).forEach(p => { if((p.score_fdp || 0) >= 5) winner = p.name; });
 
         if(winner) {
             gameOver = true;
@@ -510,7 +486,7 @@
         }
     }
 
-    /* --- PLAYER ACTIONS --- */
+    /* --- ACTIONS --- */
     function submitCard() {
         if(selectedCardIdx === -1) return;
         const text = hand[selectedCardIdx];
@@ -524,11 +500,12 @@
 
         els.hand.style.display = 'none';
         els.btnAction.style.display = 'none';
-        // Não chamamos checkManual aqui mais, deixamos o listener do host fazer
+        // A lógica do Host vai detectar a mudança automaticamente
     }
 
+    // CORREÇÃO CRÍTICA: USAR 'SET' PARA O VOTO
     function submitVote(targetUid) {
-        update(ref(db, `rooms/${roomCode}/fdp_match/votes/${myId}`), targetUid);
+        set(ref(db, `rooms/${roomCode}/fdp_match/votes/${myId}`), targetUid);
     }
 
     function fillHand() {
@@ -538,14 +515,14 @@
         hand = h;
     }
 
-    /* --- HOST LOGIC --- */
+    /* --- HOST --- */
     async function hostStartNewRound() {
         if(!isHost || gameOver) return;
         const matchRef = ref(db, `rooms/${roomCode}/fdp_match`);
         const s = await get(matchRef);
         const current = s.val() || { roundCount: 0 };
         
-        if(current.state === 'WINNER') return; // Bloqueia reset duplo
+        if(current.state === 'WINNER') return; 
 
         const nextBlack = blackCards[Math.floor(Math.random() * blackCards.length)];
         
@@ -574,31 +551,28 @@
                     winnerId = targetId;
                 }
             });
-        } else {
-            // Fallback se ninguém votar: escolhe aleatório da mesa
-            const entries = Object.keys(table);
-            winnerId = entries[Math.floor(Math.random() * entries.length)];
+        }
+
+        // Se não tem vencedor (ninguém votou), pega aleatório da mesa
+        if(!winnerId && table) {
+             const keys = Object.keys(table);
+             if(keys.length > 0) winnerId = keys[Math.floor(Math.random() * keys.length)];
         }
 
         if(winnerId && table[winnerId]) {
             const winnerCard = table[winnerId];
             
-            // Anuncia Vencedor (Isso ativa o modal nos clientes)
             update(ref(db, `rooms/${roomCode}/fdp_match`), {
                 state: 'WINNER',
                 winner: { name: winnerCard.ownerName, text: winnerCard.text, black: blackText }
             });
 
-            // Pontua
             get(ref(db, `rooms/${roomCode}/players/${winnerId}/score_fdp`)).then(s => {
                 const pts = (s.val() || 0) + 1;
                 update(ref(db, `rooms/${roomCode}/players/${winnerId}`), { score_fdp: pts });
                 
-                // Se ninguém ganhou o jogo todo, prepara próxima rodada
                 if(pts < 5) {
-                    setTimeout(() => {
-                        hostStartNewRoundClean(); 
-                    }, 6000); 
+                    setTimeout(() => { hostStartNewRoundClean(); }, 6000); 
                 }
             });
         }
