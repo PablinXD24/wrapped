@@ -13,8 +13,6 @@
             --neon-green: #1ed760;
             --neon-red: #ff3333;
             --bg-dark: #050505;
-            --glass: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
             --font-display: 'Space Grotesk', sans-serif;
             --font-data: 'Space Mono', monospace;
         }
@@ -58,16 +56,16 @@
 
         .card {
             background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px);
-            border: 1px solid var(--border); border-radius: 24px; padding: 30px;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 30px;
             width: 100%; margin-bottom: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
 
-        /* Sistema de Strikes */
+        /* Strikes Visual */
         .strikes-container { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; }
         .strike-dot { width: 25px; height: 25px; border-radius: 50%; background: #222; border: 2px solid #444; transition: 0.3s; }
         .strike-dot.active { background: var(--neon-red); box-shadow: 0 0 20px var(--neon-red); border-color: white; transform: scale(1.2); }
 
-        /* Banido Style */
+        /* Banido Visual */
         .banned-stamp { 
             border: 8px solid var(--neon-red); color: var(--neon-red); 
             padding: 10px 40px; font-size: 4rem; font-weight: 900; 
@@ -76,22 +74,30 @@
         }
         @keyframes stampIn { from { transform: scale(2) rotate(-15deg); opacity: 0; } to { transform: scale(1) rotate(-15deg); opacity: 0.9; } }
 
-        /* Voting UI */
+        /* Voting Buttons */
         .vote-row { display: flex; gap: 15px; width: 100%; margin-top: 20px; }
         .btn-fail { background: rgba(255, 50, 50, 0.15); border: 2px solid var(--neon-red); color: var(--neon-red); transition: 0.2s; }
         .btn-pass { background: rgba(30, 215, 96, 0.15); border: 2px solid var(--neon-green); color: var(--neon-green); transition: 0.2s; }
-        
         .btn-fail:active, .btn-pass:active { transform: scale(0.95); opacity: 0.8; }
 
-        /* Effects */
+        /* Roleta / Efeitos */
         .pulse-text { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        .roulette-mode { background-color: black !important; }
+        .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99; transition: background 0.1s; }
+        
+        .strike-bg { background-color: var(--neon-red) !important; animation: shake 0.5s; }
+        .safe-bg { background-color: var(--neon-green) !important; color: black; }
+
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 100% { transform: translate(0, 0) rotate(0); } }
 
     </style>
 </head>
 <body>
 
 <div class="noise"></div>
+<div id="flash-layer" class="flash-overlay"></div>
 
 <div id="screen-lobby" class="screen active">
     <h1>NO MERCY</h1>
@@ -100,7 +106,6 @@
 </div>
 
 <div id="screen-game" class="screen">
-    
     <div style="opacity: 0.6; font-family: var(--font-data); letter-spacing: 2px;">VEZ DE</div>
     <div id="current-player-name" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; color: white;">...</div>
     
@@ -115,37 +120,43 @@
         <div id="challenge-text" style="font-size: 1.6rem; font-weight: 700; line-height: 1.2;">...</div>
     </div>
 
-    <div id="controls-area" style="width: 100%;">
-        </div>
+    <div id="controls-area" style="width: 100%;"></div>
     
     <p id="wait-msg" class="pulse-text" style="margin-top:20px; display:none; font-family: var(--font-data); font-size: 0.8rem;"></p>
 </div>
 
-<div id="template-voting-ui" style="display:none; width:100%;">
+<div id="template-voting-ui" style="display:none;">
     <p>O desafio foi cumprido?</p>
     <div class="vote-row">
-        <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ (STRIKE)</button>
-        <button class="btn btn-pass" onclick="castVote('pass')">FEZ (SAFE)</button>
+        <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ 👎</button>
+        <button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button>
     </div>
 </div>
 
-<div id="template-action-ui" style="display:none; width:100%;">
+<div id="template-action-ui" style="display:none;">
     <p class="pulse-text" style="color: var(--neon-green);">Cumpra o desafio!</p>
     <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 10px;">O grupo está votando...</p>
+</div>
+
+<div id="screen-roulette" class="screen" style="background: black;">
+    <i class="fa-solid fa-skull-crossbones" style="font-size: 6rem; color: #333; margin-bottom: 20px;"></i>
+    <h2 style="color: #333;">SORTEANDO<br>PUNIÇÃO</h2>
+</div>
+
+<div id="screen-result" class="screen">
+    <div id="result-content"></div>
 </div>
 
 <div id="screen-banned" class="screen" style="background: #1a0000;">
     <div class="banned-stamp">BANIDO</div>
     <h2 id="elim-name" style="margin-bottom: 10px; color: white;">VOCÊ</h2>
     <p>Atingiu 3 Strikes e foi removido.</p>
-    <p style="font-size: 0.8rem; opacity: 0.5;">Agora você só pode assistir e julgar.</p>
 </div>
 
 <div id="screen-winner" class="screen" style="background: var(--neon-green); color: black;">
     <i class="fa-solid fa-trophy" style="font-size: 5rem; margin-bottom: 20px;"></i>
     <h1>SOBREVIVENTE</h1>
     <h2 id="winner-name" style="font-size: 3rem;">NOME</h2>
-    <p style="color: black; font-weight: bold;">Todos os outros foram eliminados.</p>
     <button class="btn" style="background: black; color: white; margin-top: 30px;" onclick="window.location.href='index.html'">VOLTAR AO INÍCIO</button>
 </div>
 
@@ -189,13 +200,13 @@
     
     let myName = "Player";
     let amIHost = false;
+    let rouletteInterval = null;
 
     if(!roomCode || !myId) {
         alert("Erro: Entre pelo Wrapped.");
         window.location.href = 'index.html';
     }
 
-    // --- FUNÇÃO DE UTILIDADE ---
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => {
             s.classList.remove('active');
@@ -206,9 +217,13 @@
             target.style.display = 'flex';
             setTimeout(() => target.classList.add('active'), 10);
         }
+        // Limpar classes de efeito
+        document.body.className = '';
+        document.getElementById('flash-layer').style.background = 'transparent';
+        if(rouletteInterval) clearInterval(rouletteInterval);
     }
-    // ---------------------------
 
+    // Inicialização
     get(ref(db, `rooms/${roomCode}/players/${myId}`)).then(snap => {
         if(snap.exists()) {
             myName = snap.val().name;
@@ -227,20 +242,16 @@
             document.getElementById('loading').style.display = 'none';
             if(data.host === myId) amIHost = true;
 
-            // CHECAGEM DE BANIMENTO (LOCAL)
+            // 1. CHECAGEM DE BANIMENTO (Local)
             const myData = data.players[myId];
             if(myData && myData.strikes >= 3) {
                 showScreen('screen-banned');
                 document.getElementById('elim-name').innerText = myName;
-                
-                // Se banido for Host e estivermos em round, ele ainda precisa calcular votos
-                if(amIHost && data.nomercy_status === 'round') {
-                    checkVotes(data);
-                }
+                if(amIHost && data.nomercy_status === 'round') checkVotes(data); // Host banido continua rodando lógica
                 return; 
             }
 
-            // ESTADOS DO JOGO
+            // 2. MÁQUINA DE ESTADOS
             if(data.nomercy_status === 'game_over') {
                 showScreen('screen-winner');
                 document.getElementById('winner-name').innerText = data.winnerName;
@@ -248,12 +259,51 @@
             else if(data.nomercy_status === 'round') {
                 showScreen('screen-game');
                 renderGameRound(data);
-                
-                // HOST CHECA VOTOS A CADA ATUALIZAÇÃO
                 if(amIHost) checkVotes(data);
             }
+            else if(data.nomercy_status === 'roulette_spin') {
+                // EFEITO: TELA PRETA + PISCAR VERMELHO
+                showScreen('screen-roulette');
+                document.body.classList.add('roulette-mode');
+                
+                // Simula luz passando (Flash aleatório em cada cliente)
+                if(rouletteInterval) clearInterval(rouletteInterval);
+                rouletteInterval = setInterval(() => {
+                    const flash = document.getElementById('flash-layer');
+                    if(Math.random() > 0.7) flash.style.background = 'rgba(255, 0, 0, 0.4)';
+                    else flash.style.background = 'transparent';
+                }, 100);
+            }
+            else if(data.nomercy_status === 'round_result_fail') {
+                // RESULTADO: STRIKE (Vermelho)
+                showScreen('screen-result');
+                document.body.classList.add('strike-bg');
+                
+                const isVictim = (data.roundPlayer === myId);
+                const strikes = data.players[data.roundPlayer].strikes;
+
+                document.getElementById('result-content').innerHTML = `
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size:5rem; margin-bottom:20px;"></i>
+                    <h1 style="font-size:4rem;">STRIKE!</h1>
+                    <p style="font-size:1.5rem; font-weight:bold;">${isVictim ? "VOCÊ FALHOU" : data.roundPlayerName + " FALHOU"}</p>
+                    <div style="background:black; padding:10px 20px; border-radius:20px; margin-top:20px;">
+                        ${strikes}/3 STRIKES
+                    </div>
+                `;
+            }
+            else if(data.nomercy_status === 'round_result_safe') {
+                // RESULTADO: SAFE (Verde)
+                showScreen('screen-result');
+                document.body.classList.add('safe-bg');
+                
+                document.getElementById('result-content').innerHTML = `
+                    <i class="fa-solid fa-check-circle" style="font-size:5rem; margin-bottom:20px;"></i>
+                    <h1 style="font-size:4rem; color:black;">SAFE</h1>
+                    <p style="color:black; font-weight:bold;">O DESAFIO FOI CUMPRIDO</p>
+                `;
+            }
             else {
-                // Lobby inicial
+                // Lobby
                 if(amIHost) startNewRound(data.players); 
                 else document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
             }
@@ -273,28 +323,22 @@
         document.getElementById('s2').className = playerStrikes >= 2 ? 'strike-dot active' : 'strike-dot';
         document.getElementById('s3').className = playerStrikes >= 3 ? 'strike-dot active' : 'strike-dot';
 
-        // Lógica de UI (SIMULTÂNEA)
+        // Lógica de UI Simultânea
         const controls = document.getElementById('controls-area');
         controls.innerHTML = "";
-        
         const waitMsg = document.getElementById('wait-msg');
         waitMsg.style.display = 'none';
 
         if(isMyTurn) {
-            // Jogador vê instrução apenas
             const ui = document.getElementById('template-action-ui').cloneNode(true);
             ui.style.display = 'block';
             controls.appendChild(ui);
         } else {
-            // Todos os outros veem VOTAÇÃO IMEDIATAMENTE
             const myVote = data.roundVotes ? data.roundVotes[myId] : null;
-
             if(myVote) {
-                // Já votou
                 waitMsg.innerText = `Voto registrado: ${myVote === 'pass' ? 'FEZ 👍' : 'NÃO FEZ 👎'}`;
                 waitMsg.style.display = 'block';
             } else {
-                // Não votou: Mostra botões
                 const ui = document.getElementById('template-voting-ui').cloneNode(true);
                 ui.style.display = 'block';
                 controls.appendChild(ui);
@@ -309,6 +353,7 @@
     // --- LÓGICA DO HOST ---
 
     function startNewRound(players) {
+        // Apenas jogadores vivos (strikes < 3)
         const activeIds = Object.keys(players).filter(id => (players[id].strikes || 0) < 3);
 
         if(activeIds.length === 0) return;
@@ -324,6 +369,7 @@
         const rndName = players[rndId].name;
         const rndChall = challenges[Math.floor(Math.random() * challenges.length)];
 
+        // Limpa votos e inicia novo round
         update(ref(db, `rooms/${roomCode}`), {
             nomercy_status: 'round',
             roundPlayer: rndId,
@@ -334,42 +380,57 @@
     }
 
     function checkVotes(data) {
+        if(data.votesProcessed) return; // Evita loop
+
         const votes = data.roundVotes || {};
         const activePlayers = Object.values(data.players).filter(p => (p.strikes||0) < 3);
-        const totalVoters = activePlayers.length - 1; // O jogador da vez não vota
+        const totalVoters = activePlayers.length - 1; // Jogador da vez não vota
         
         const votesCast = Object.keys(votes).length;
 
-        // Se todos (ou a maioria suficiente) votaram
+        // Se votação concluída
         if(votesCast >= totalVoters && totalVoters > 0) {
             
-            // Processar resultado
+            // Trava processamento
+            update(ref(db, `rooms/${roomCode}`), { votesProcessed: true });
+
             let fails = 0;
             Object.values(votes).forEach(v => { if(v==='fail') fails++; });
             const passes = votesCast - fails;
 
             if(fails > passes) {
-                // STRIKE!
-                const pid = data.roundPlayer;
-                const currentStrikes = (data.players[pid].strikes || 0) + 1;
+                // --- CENÁRIO DE FALHA (STRIKE + ROLETA) ---
                 
-                // Atualiza strikes e reinicia
-                update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: currentStrikes })
-                .then(() => {
-                    setTimeout(() => startNewRound(data.players), 2500); 
-                });
+                // 1. Inicia Efeito Roleta (Suspense)
+                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'roulette_spin' });
+
+                setTimeout(() => {
+                    // 2. Aplica Strike e Mostra Resultado
+                    const pid = data.roundPlayer;
+                    const currentStrikes = (data.players[pid].strikes || 0) + 1;
+
+                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: currentStrikes });
+                    update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
+
+                    // 3. Próximo Round
+                    setTimeout(() => {
+                         update(ref(db, `rooms/${roomCode}`), { votesProcessed: null }); // Destrava para px round
+                         startNewRound(data.players);
+                    }, 4000); // Tempo para ver o strike
+                }, 4000); // Tempo da roleta girando
                 
             } else {
-                // SAFE
-                setTimeout(() => startNewRound(data.players), 1500);
+                // --- CENÁRIO SAFE (SEM ROLETA) ---
+                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
+                
+                setTimeout(() => {
+                    update(ref(db, `rooms/${roomCode}`), { votesProcessed: null });
+                    startNewRound(data.players);
+                }, 2000);
             }
-            
-            // Trava para não rodar múltiplas vezes enquanto espera o timeout
-            update(ref(db, `rooms/${roomCode}`), { roundVotes: { ...votes, processed: true } });
         }
     }
     
-    // EXPOSIÇÃO GLOBAL
     window.castVote = castVote;
 
 </script>
