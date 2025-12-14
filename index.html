@@ -462,33 +462,11 @@
     let pendingBlob = null;
     let fullRoomData = null; 
     let protestCatSelected = "";
-    
-    // NEW VARS FOR COURT RECAP
     let courtHistoryData = [];
     let courtSlideIdx = 0;
 
-    // EXPOSE TO WINDOW
-    window.goToMenu = goToMenu;
-    window.createRoomReal = createRoomReal;
-    window.showJoinInput = showJoinInput;
-    window.joinRoomReal = joinRoomReal;
-    window.startGameReal = startGameReal;
-    window.castVote = castVote;
-    window.handleStoryClick = handleStoryClick;
-    window.shareSlide = shareSlide;
-    window.processShare = processShare;
-    window.closeShareModal = closeShareModal;
-    window.showScreen = showScreen;
-    window.startProtestSelection = startProtestSelection;
-    window.showOffenders = showOffenders;
-    window.queueProtest = queueProtest;
-    window.castTribunalVote = castTribunalVote;
-    window.startCourtCase = startCourtCase;
-    window.closeCourtSession = closeCourtSession;
-    window.backFromProtestMenu = backFromProtestMenu;
-
     // --- NOVA FUNÇÃO DE INÍCIO FDP ---
-    window.startFDP = function() {
+    function startFDP() {
         if(confirm("Iniciar modo FDP (Cartas)? Isso vai redirecionar todos.")) {
             update(roomRef, { status: 'redirecting_to_fdp' });
         }
@@ -1093,7 +1071,9 @@
         alert(`JULGAMENTO ENCERRADO!`);
     }
 
-    // --- SHARE FUNCTION UPDATED ---
+    // --- SHARE FUNCTION FIXED ---
+    async function processShare(type) { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); };
+    
     async function shareSlide() {
         isPaused = true; 
         clearTimeout(timer);
@@ -1109,21 +1089,17 @@
         const q = questions[slideIdx];
         const theme = themes[slideIdx % themes.length];
 
-        // 1. Reset Canvas Content
         canvasEl.style.display = 'flex';
         
-        // 2. Set Dynamic Background
         const bgLayer = document.getElementById('ex-bg');
-        if(slideIdx >= questions.length) { // Awards
+        if(slideIdx >= questions.length) { 
              const award = awardSlides[slideIdx - questions.length];
              if(award.type === 'cover') bgLayer.style.background = '#000';
              else bgLayer.style.background = '#fff';
         } else {
-             // Result Gradient
              bgLayer.style.background = `radial-gradient(circle at 50% 50%, ${theme}, #000)`;
         }
 
-        // 3. Populate Content
         const isAwardPhase = slideIdx >= questions.length;
         document.getElementById('ex-standard-ui').style.display = 'none';
         document.getElementById('ex-match-ui').style.display = 'none';
@@ -1160,32 +1136,24 @@
                 document.getElementById('ex-winner').innerText = sorted[0] ? sorted[0][0] : "Ninguém";
                 document.getElementById('ex-roast').innerText = q.roast[1] || "...";
                 
-                // Clone Bars exactly
                 const dataHTML = document.getElementById('res-data').innerHTML;
                 const exData = document.getElementById('ex-data');
                 exData.innerHTML = dataHTML;
                 
-                // Styling override for high-res
                 exData.querySelectorAll('.data-row').forEach(row => { 
                     row.style.fontSize = '3rem'; 
                     row.style.marginBottom = '40px'; 
                     row.style.fontWeight = 'bold'; 
                 });
                 exData.querySelectorAll('.data-bar-fill').forEach(bar => { 
-                    bar.style.backgroundColor = 'white'; // White bars for contrast
+                    bar.style.backgroundColor = 'white'; 
                 });
             }
         }
 
-        // 4. Render
         setTimeout(async () => {
             try {
-                const canvas = await html2canvas(canvasEl, { 
-                    scale: 1, 
-                    useCORS: true,
-                    logging: false, 
-                    allowTaint: true
-                }); 
+                const canvas = await html2canvas(canvasEl, { scale: 1, useCORS: true, logging: false, allowTaint: true }); 
                 canvas.toBlob(blob => { 
                     pendingBlob = blob; 
                     document.getElementById('share-modal').style.display = 'flex'; 
@@ -1203,6 +1171,25 @@
     }
 
     function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { slideIdx++; loadSlide(); }, 2000); }
+
+    // --- EXPOSIÇÃO GLOBAL (FIX) ---
+    window.goToMenu = goToMenu;
+    window.createRoomReal = createRoomReal;
+    window.showJoinInput = showJoinInput;
+    window.joinRoomReal = joinRoomReal;
+    window.startGameReal = startGameReal;
+    window.startFDP = startFDP;
+    window.handleStoryClick = handleStoryClick;
+    window.shareSlide = shareSlide;
+    window.processShare = processShare;
+    window.closeShareModal = closeShareModal;
+    window.startProtestSelection = startProtestSelection;
+    window.showOffenders = showOffenders;
+    window.queueProtest = queueProtest;
+    window.backFromProtestMenu = backFromProtestMenu;
+    window.startCourtCase = startCourtCase;
+    window.closeCourtSession = closeCourtSession;
+    window.castTribunalVote = castTribunalVote;
 </script>
 </body>
 </html>
