@@ -12,6 +12,7 @@
         :root {
             --neon-green: #1ed760;
             --neon-red: #ff3333;
+            --neon-yellow: #f2e205;
             --bg-dark: #050505;
             --font-display: 'Space Grotesk', sans-serif;
             --font-data: 'Space Mono', monospace;
@@ -168,130 +169,69 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- LISTA MASSIVA DE PUNIÇÕES (QUANDO ALGUÉM FALHA) ---
     const punishments = [
-        "O GRUPO TODO BEBE 1 DOSE",
-        "QUEM VOTOU 'NÃO FEZ' BEBE UMA DOSE",
-        "O JOGADOR À DIREITA DO ACUSADO BEBE",
-        "O JOGADOR À ESQUERDA DO ACUSADO BEBE",
-        "O ACUSADO ESCOLHE ALGUÉM PARA BEBER",
-        "O ACUSADO ESCOLHE 2 PESSOAS PARA BEBER",
-        "TODOS OS HOMENS BEBEM",
-        "TODAS AS MULHERES BEBEM",
-        "QUEM ESTIVER DE PRETO BEBE",
-        "QUEM TIVER MENOS STRIKES BEBE",
-        "O ANFITRIÃO DA SALA BEBE",
-        "NINGUÉM BEBE (DESTA VEZ)",
-        "TODOS BEBEM, MENOS O ACUSADO (HUMILHAÇÃO)",
-        "O ACUSADO DEVE BEBER DOBRADO",
-        "QUEM ESTIVER EM PÉ BEBE",
-        "QUEM ESTIVER SENTADO BEBE",
-        "A PESSOA MAIS VELHA DA RODA BEBE",
-        "A PESSOA MAIS NOVA DA RODA BEBE",
-        "TROQUE DE LUGAR COM A PESSOA À SUA FRENTE",
-        "BEBE QUEM ESTIVER SEGURANDO O CELULAR COM A MÃO ESQUERDA"
+        "O GRUPO TODO BEBE 1 DOSE", "QUEM VOTOU 'NÃO FEZ' BEBE", "O JOGADOR À DIREITA BEBE",
+        "O JOGADOR À ESQUERDA BEBE", "ESCOLHA ALGUÉM PARA BEBER", "ESCOLHA 2 PESSOAS PARA BEBER",
+        "TODOS OS HOMENS BEBEM", "TODAS AS MULHERES BEBEM", "QUEM ESTIVER DE PRETO BEBE",
+        "QUEM TIVER MENOS STRIKES BEBE", "O HOST BEBE", "NINGUÉM BEBE (DESSA VEZ)",
+        "TODOS BEBEM MENOS O ACUSADO", "O ACUSADO BEBE DOBRADO", "QUEM ESTIVER EM PÉ BEBE",
+        "A PESSOA MAIS VELHA BEBE", "A PESSOA MAIS NOVA BEBE", "TROQUE DE LUGAR COM A FRENTE"
     ];
 
-    // --- LISTA MASSIVA DE DESAFIOS (300+) ---
     const challenges = [
-        // CLÁSSICOS & BEBIDA
-        "Beba um shot sem usar as mãos.", "Faça um brinde constrangedor.", "Beba 2 goles de água da torneira.", "Vire o copo de quem está à sua direita.",
-        "Misture duas bebidas e tome um gole.", "Beba de olhos fechados até alguém dizer 'pare'.", "Lamba o fundo do seu copo.",
-        
-        // CELULAR & REDES SOCIAIS
+        "Beba um shot sem usar as mãos.", "Faça um brinde constrangedor.", "Vire o copo de quem está à direita.",
         "Ligue para a ex e pergunte se ela está feliz.", "Mande 'Oi sumido(a)' para a 3ª pessoa do direct.", 
         "Deixe o grupo ler sua última conversa no WhatsApp.", "Poste uma foto zoada no story e apague em 10 min.",
-        "Mande um áudio gemendo para o seu pai.", "Curta as 10 primeiras fotos do ex.", "Comente 'Fogo no parquinho' na última foto da sua mãe.",
-        "Mostre seu histórico de pesquisa do Google.", "Mande 'Eu te amo' para o último contato do Zap.", "Bloqueie uma pessoa escolhida pelo grupo.",
-        "Mande uma selfie zoada para o chefe.", "Leia em voz alta a última DM que recebeu.", "Mostre a foto mais recente da sua galeria.",
-        "Deixe alguém do grupo mudar sua bio do Insta.", "Mande um nude (fake ou não) para o grupo (no jogo).",
-        "Ligue para uma pizzaria e peça um hambúrguer.", "Mande áudio cantando parabéns para um contato aleatório.",
-        
-        // INTERAÇÃO FÍSICA & GRUPO
-        "Dê um beijo na bochecha da pessoa à direita.", "Sente no colo de quem está à esquerda por 1 rodada.",
-        "Faça uma massagem nos ombros de quem você escolher.", "Deixe alguém te dar um tapa na cara (leve).",
-        "Cheire o pescoço da pessoa à sua direita.", "Troque de camisa com alguém da roda.", "Deixe alguém pentear seu cabelo do jeito que quiser.",
-        "Dê um selinho na pessoa à sua frente.", "Faça carinho na orelha de alguém.", "Morda (leve) o dedo de alguém.",
-        "Deixe o grupo fazer uma maquiagem em você.", "Dance uma valsa com uma cadeira.", "Imite um cachorro cheirando alguém.",
-        
-        // VERDADES PESADAS
-        "Conte o seu segredo mais vergonhoso.", "Revele com quem da roda você transaria.", "Qual a pior coisa que já fez bêbado?",
-        "Quem da roda você acha mais chato?", "Qual foi sua pior experiência sexual?", "Já traiu? Conte a história.",
-        "Quem da roda se veste pior?", "Qual o maior crime que já cometeu?", "Já ficou com alguém da família de um amigo?",
-        "Qual a mentira que você conta com mais frequência?", "Quem da roda você eliminaria da sua vida?", "Já fingiu orgasmo? Com quem?",
-        "Conte um fetiche estranho que você tem.", "Qual a coisa mais nojenta que já comeu?", "Você voltaria com algum ex? Quem?",
-        
-        // ATUAÇÃO & MICO
-        "Imite um animal escolhido pelo grupo.", "Fale com sotaque gringo por 3 rodadas.", "Finja ser um comentarista de futebol narrando o jogo.",
-        "Imite a risada de alguém da roda.", "Cante o refrão de uma música brega.", "Faça uma dança sensual com a parede.",
-        "Fale tudo cantando até a próxima vez.", "Ande de quatro pela sala.", "Finja que está tendo um ataque de riso.",
-        "Imite o jeito de andar de alguém da roda.", "Faça uma cara de orgasmo por 10 segundos.", "Rebole até o chão sem música.",
-        
-        // ALEATÓRIOS & CAOS
-        "Faça 10 flexões agora.", "Fique em um pé só até a próxima rodada.", "Tire uma peça de roupa (acessórios não valem).",
-        "Coloque um cubo de gelo dentro da roupa.", "Coma uma colher de pimenta (se tiver).", "Beba um copo de água em 5 segundos.",
-        "Gire 10 vezes e tente andar em linha reta.", "Fique sem falar nada por 2 rodadas.", "Segure a respiração por 30 segundos.",
-        "Deixe alguém desenhar na sua cara com caneta.", "Chupei um limão sem fazer careta.", "Fale o alfabeto ao contrário.",
-        
-        // VARIAÇÕES PARA VOLUME (Gerando volume temático)
-        "Mande 'Sdds' para a 1ª pessoa do WhatsApp.", "Mande 'Sdds' para a 5ª pessoa do WhatsApp.", "Mande 'Sdds' para a 10ª pessoa do WhatsApp.",
-        "Mostre a 1ª foto da sua galeria.", "Mostre a 10ª foto da sua galeria.", "Mostre a 20ª foto da sua galeria.",
-        "Elogie a pessoa à sua direita.", "Elogie a pessoa à sua esquerda.", "Xingue a pessoa à sua frente.",
-        "Conte uma mentira sobre a pessoa da direita.", "Conte uma verdade sobre a pessoa da esquerda.",
-        "Faça um striptease de 1 peça de roupa.", "Coloque a meia na mão como luva.", "Beba se você já beijou alguém hoje.",
-        "Beba se você está sem calcinha/cueca.", "Beba se você já mandou nude.", "Beba se você tem tatuagem.",
-        "Faça uma declaração de amor para uma planta/objeto.", "Finja ser um influenciador vendendo o copo.",
-        "Fale 'Eu sou um fracasso' sorrindo.", "Grite o nome do seu ex.", "Mande um emoji de berinjela para sua mãe.",
-        "Pergunte 'Tudo bem?' para o 1º story do Insta.", "Reaja com fogo no 3º story do Insta.",
-        "Mande 'Quero te ver' para um contatinho antigo.", "Fale o nome de 3 pessoas que você já pegou.",
-        "Fale o nome de 3 pessoas que você quer pegar.", "Escolha alguém para te dar um tapa na bunda.",
-        "Dê um tapa na bunda da pessoa à esquerda.", "Lamba o cotovelo (tente).", "Encoste a língua no nariz.",
-        "Faça o quadradinho de 8.", "Imite o Silvio Santos.", "Imite o Faustão.", "Imite o Lula.", "Imite o Bolsonaro.",
+        "Mande um áudio gemendo para o seu pai.", "Curta as 10 primeiras fotos do ex.",
+        "Mostre seu histórico de pesquisa do Google.", "Mande 'Eu te amo' para o último contato do Zap.",
+        "Ligue para uma pizzaria e peça um hambúrguer.", "Dê um beijo na bochecha da pessoa à direita.",
+        "Sente no colo de quem está à esquerda por 1 rodada.", "Faça uma massagem nos ombros de quem escolher.",
+        "Deixe alguém te dar um tapa na cara (leve).", "Cheire o pescoço da pessoa à direita.",
+        "Troque de camisa com alguém da roda.", "Deixe alguém pentear seu cabelo.", "Dê um selinho na pessoa à frente.",
+        "Faça carinho na orelha de alguém.", "Morda (leve) o dedo de alguém.", "Dance uma valsa com uma cadeira.",
+        "Imite um cachorro cheirando alguém.", "Conte o seu segredo mais vergonhoso.", "Revele com quem da roda transaria.",
+        "Qual a pior coisa que já fez bêbado?", "Quem da roda você acha mais chato?", "Qual foi sua pior experiência sexual?",
+        "Já traiu? Conte a história.", "Quem da roda se veste pior?", "Qual o maior crime que já cometeu?",
+        "Qual a mentira que conta com mais frequência?", "Quem da roda você eliminaria da sua vida?",
+        "Conte um fetiche estranho.", "Qual a coisa mais nojenta que já comeu?", "Você voltaria com algum ex? Quem?",
+        "Imite um animal escolhido pelo grupo.", "Fale com sotaque gringo por 3 rodadas.",
+        "Finja ser um comentarista de futebol.", "Imite a risada de alguém da roda.", "Cante o refrão de uma música brega.",
+        "Faça uma dança sensual com a parede.", "Fale tudo cantando até a próxima vez.", "Ande de quatro pela sala.",
+        "Faça 10 flexões agora.", "Fique em um pé só até a próxima rodada.", "Tire uma peça de roupa.",
+        "Coloque um cubo de gelo dentro da roupa.", "Beba um copo de água em 5 segundos.",
+        "Gire 10 vezes e tente andar em linha reta.", "Fique sem falar nada por 2 rodadas.", "Segure a respiração por 30s.",
+        "Mande 'Sdds' para a 5ª pessoa do WhatsApp.", "Mostre a 10ª foto da sua galeria.", "Elogie a pessoa à direita.",
+        "Xingue a pessoa à frente.", "Faça um striptease de 1 peça.", "Beba se já beijou hoje.",
+        "Beba se está sem roupa íntima.", "Beba se já mandou nude.", "Faça uma declaração de amor para um objeto.",
+        "Grite o nome do seu ex.", "Pergunte 'Tudo bem?' para o 1º story do Insta.", "Fale 3 pessoas que já pegou.",
+        "Fale 3 pessoas que quer pegar.", "Escolha alguém para te dar um tapa na bunda.", "Faça o quadradinho de 8.",
+        "Imite o Silvio Santos.", "Imite o Faustão.", "Imite o Lula.", "Imite o Bolsonaro.",
         "Cante 'Evidências' inteira.", "Dance 'Macarena' sem música.", "Faça pose de fisiculturista.",
-        "Conte uma piada ruim. Se ninguém rir, beba.", "Olhe fixamente para alguém por 30s sem rir.",
-        "Deixe alguém te fazer cócegas por 10s.", "Fale 3 defeitos seus.", "Fale 3 qualidades da pessoa à direita.",
-        "Beba se você já foi corno.", "Beba se você já traiu.", "Beba se você já foi preso.",
-        "Beba se você já deu PT.", "Beba se você já vomitou em alguém.", "Beba se você já fez sexo em local público.",
-        "Simule um pedido de casamento para alguém da roda.", "Finja estar chorando muito.", "Imite um bebê chorando.",
-        "Fale como um robô por 1 rodada.", "Fale sussurrando por 1 rodada.", "Grite tudo o que for falar por 1 rodada.",
-        
-        // MAIS DESAFIOS PARA COMPLETAR A LISTA
-        "Revele o valor da sua conta bancária.", "Mostre sua última pesquisa no YouTube.", "Mostre quem você bloqueou recentemente.",
-        "Deixe o grupo enviar um sticker aleatório para alguém.", "Coloque sua música mais ouvida para tocar.",
-        "Mostre sua foto de RG.", "Mostre sua foto de carteira de motorista.", "Conte o sonho mais bizarro que já teve.",
-        "Qual a maior vergonha que passou na escola?", "Qual seu apelido de infância?", "Quem foi seu primeiro beijo?",
-        "Com quantos anos perdeu a virgindade?", "Já gostou de algum professor?", "Já colou em prova e foi pego?",
-        "Já roubou algo (mesmo pequeno)?", "Já fez xixi na piscina?", "Já fez xixi na rua?",
-        "Já vomitou e continuou bebendo?", "Já esqueceu o nome de quem estava ficando?", "Já chamou alguém pelo nome do ex?",
-        "Já stalkeou ex de atual?", "Já criou perfil fake?", "Já mentiu idade?",
-        "Já saiu sem pagar?", "Já foi expulso de algum lugar?", "Já brigou na rua?",
-        "Dê uma cambalhota.", "Faça uma bananeira (ou tente).", "Faça a posição de prancha por 30s.",
-        "Pule em um pé só dando uma volta na sala.", "Imite uma galinha botando ovo.", "Imite um macaco.",
-        "Imite um peixe fora d'água.", "Finja que está eletrocutado.", "Finja que está derretendo.",
-        "Abrace a pessoa à sua frente por 1 minuto.", "Sente no chão até a próxima rodada.", "Fique de joelhos até a próxima rodada.",
-        "Use o sapato como telefone.", "Beba água no prato como cachorro.", "Coma algo sem usar as mãos.",
-        "Tente lamber o próprio nariz.", "Tente encostar o pé na cabeça.", "Faça vesguinho.",
-        "Mande áudio miando para um grupo aleatório.", "Mande áudio latindo para um amigo.", "Mande 'Te amo' para um número desconhecido.",
-        "Ligue para a operadora e peça uma pizza.", "Pergunte 'Que dia é hoje?' para um estranho na rua (ou janela).",
-        "Grite 'EU AMO PAGODE' na janela.", "Grite 'SOCORRO, ESTOU PRESO NO JOGO'.", "Imite uma sirene de polícia.",
-        "Faça barulho de pum com o braço.", "Arrote o alfabeto.", "Fale de boca cheia (de água).",
-        "Faça gargarejo com a bebida.", "Beba de canudinho (se não tiver, improvise).", "Beba segurando o copo com os dentes.",
-        "Dê 3 pulinhos e grite 'VIVA'.", "Faça uma rima com 'Pão'.", "Faça uma rima com 'Mão'.",
-        "Conte uma história de terror em 1 minuto.", "Invente um apelido para cada pessoa da roda.", "Fale a cor da calcinha/cueca de todos (chute).",
-        "Adivinhe quem é o mais provável de ser preso.", "Adivinhe quem é o mais provável de ficar rico.", "Adivinhe quem é o mais provável de casar primeiro.",
-        "Aponte para quem você acha mais bonito(a).", "Aponte para quem você acha mais inteligente.", "Aponte para quem você acha mais engraçado.",
-        "Escolha alguém para duelar no 'pedra, papel e tesoura'. Quem perder bebe.", "Escolha alguém para duelar no olhar. Quem piscar bebe.",
-        "Todos devem tocar o chão. O último bebe.", "Todos devem levantar a mão. O último bebe.", "O mestre mandou: Beber.",
-        "Crie uma regra nova para o jogo.", "Anule uma regra do jogo.", "Você vira o 'barman' por 1 rodada (serve todos).",
-        "Você não pode dobrar os braços por 1 rodada.", "Você não pode mostrar os dentes por 1 rodada.",
-        "Você só pode falar perguntando?", "Você deve terminar toda frase com 'Miau'.", "Você deve começar toda frase com 'Senhor'.",
-        "Beba se você usa óculos.", "Beba se você tem barba.", "Beba se você tem cabelo curto.", "Beba se você tem cabelo longo.",
-        "Beba se você está de tênis.", "Beba se você está de chinelo.", "Beba se você está descalço.",
-        "Escolha uma palavra proibida. Quem falar bebe.", "Escolha um tema. Quem não souber falar algo do tema bebe.",
-        "Fale nomes de marcas de carro. Quem repetir bebe.", "Fale nomes de frutas. Quem repetir bebe.",
-        "Fale nomes de posições sexuais. Quem repetir bebe.", "Fale nomes de países. Quem repetir bebe.",
-        "Jogue uma moeda. Cara: você bebe. Coroa: grupo bebe.", "Jogue uma moeda. Cara: direita bebe. Coroa: esquerda bebe."
-        // ... (A lista é longa para garantir variedade, o código irá sortear randomicamente)
+        "Conte uma piada ruim.", "Olhe fixamente para alguém por 30s.", "Deixe alguém fazer cócegas em você.",
+        "Beba se já foi corno.", "Beba se já traiu.", "Beba se já foi preso.", "Beba se já deu PT.",
+        "Simule um pedido de casamento.", "Finja estar chorando muito.", "Imite um bebê chorando.",
+        "Fale como um robô.", "Fale sussurrando.", "Grite tudo o que for falar.", "Revele o saldo bancário.",
+        "Mostre a última pesquisa do YouTube.", "Mostre quem bloqueou recentemente.", "Coloque sua música mais ouvida.",
+        "Mostre foto do RG.", "Conte um sonho bizarro.", "Qual maior vergonha na escola?", "Qual seu apelido de infância?",
+        "Quem foi seu primeiro beijo?", "Com quantos anos perdeu a virgindade?", "Já gostou de professor?",
+        "Já colou em prova?", "Já roubou algo?", "Já fez xixi na piscina?", "Já fez xixi na rua?",
+        "Já vomitou e continuou bebendo?", "Já esqueceu o nome de quem ficava?", "Já stalkeou ex de atual?",
+        "Já criou perfil fake?", "Já mentiu idade?", "Já saiu sem pagar?", "Já foi expulso?", "Já brigou na rua?",
+        "Dê uma cambalhota.", "Faça uma bananeira.", "Faça prancha por 30s.", "Pule em um pé só.",
+        "Imite uma galinha.", "Imite um macaco.", "Imite um peixe.", "Finja choque elétrico.",
+        "Abrace a pessoa à frente por 1 min.", "Sente no chão.", "Fique de joelhos.", "Use sapato como telefone.",
+        "Beba água no prato.", "Coma sem as mãos.", "Lamba o nariz.", "Encoste o pé na cabeça.", "Faça vesguinho.",
+        "Mande áudio miando.", "Mande áudio latindo.", "Ligue pedindo pizza na operadora.",
+        "Grite na janela.", "Imite sirene.", "Arrote o alfabeto.", "Fale de boca cheia.", "Faça gargarejo com bebida.",
+        "Beba de canudinho.", "Beba segurando com dentes.", "Faça rima com Pão.", "Conte história de terror.",
+        "Invente apelidos para todos.", "Fale a cor da roupa íntima de todos.", "Quem é mais provável de ser preso?",
+        "Quem é mais provável de ficar rico?", "Quem é mais bonito?", "Quem é mais inteligente?",
+        "Duelo de pedra papel tesoura.", "Duelo de olhar.", "Todos tocam o chão.", "Todos levantam a mão.",
+        "O mestre mandou beber.", "Crie uma regra.", "Anule uma regra.", "Vire barman por uma rodada.",
+        "Não dobre os braços.", "Não mostre os dentes.", "Só fale perguntando.", "Termine frases com Miau.",
+        "Comece frases com Senhor.", "Beba se usa óculos.", "Beba se tem barba.", "Beba se tem cabelo curto.",
+        "Beba se tem tatuagem.", "Beba se está descalço.", "Palavra proibida: Não.", "Fale marcas de carro.",
+        "Fale nomes de frutas.", "Fale posições sexuais.", "Fale países.", "Cara ou Coroa: Você bebe ou Grupo bebe."
     ];
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -322,12 +262,19 @@
         if(rouletteInterval) clearInterval(rouletteInterval);
     }
 
+    // --- SETUP INICIAL ---
+    // 1. Inicia o loop imediatamente para não travar
+    initGameLoop();
+
+    // 2. Atualiza dados do jogador em paralelo
     get(ref(db, `rooms/${roomCode}/players/${myId}`)).then(snap => {
         if(snap.exists()) {
             myName = snap.val().name;
-            update(ref(db, `rooms/${roomCode}/players/${myId}`), { strikes: 0 });
+            // Garante strikes iniciais
+            update(ref(db, `rooms/${roomCode}/players/${myId}`), { 
+                strikes: snap.val().strikes || 0 
+            });
         }
-        initGameLoop();
     });
 
     function initGameLoop() {
@@ -335,13 +282,13 @@
         
         onValue(roomRef, (snap) => {
             const data = snap.val();
-            if(!data) return;
+            if(!data) return; // Sala não existe ou erro de leitura
 
             document.getElementById('loading').style.display = 'none';
             if(data.host === myId) amIHost = true;
 
-            // 1. CHECAGEM DE BANIMENTO
-            const myData = data.players[myId];
+            // STATUS: BANIDO
+            const myData = data.players ? data.players[myId] : null;
             if(myData && myData.strikes >= 3) {
                 showScreen('screen-banned');
                 document.getElementById('elim-name').innerText = myName;
@@ -349,7 +296,7 @@
                 return; 
             }
 
-            // 2. MÁQUINA DE ESTADOS
+            // MÁQUINA DE ESTADOS
             if(data.nomercy_status === 'game_over') {
                 showScreen('screen-winner');
                 document.getElementById('winner-name').innerText = data.winnerName;
@@ -374,8 +321,10 @@
                 showScreen('screen-result');
                 document.body.classList.add('strike-bg');
                 
-                const isVictim = (data.roundPlayer === myId);
-                const strikes = data.players[data.roundPlayer].strikes;
+                const pid = data.roundPlayer;
+                const pData = data.players[pid];
+                const isVictim = (pid === myId);
+                const strikes = pData ? pData.strikes : 0;
                 const extraPunishment = data.currentPunishment || "SORTE";
 
                 document.getElementById('result-content').innerHTML = `
@@ -388,7 +337,7 @@
                     
                     <div class="punishment-box">
                         <h3 style="color:white; margin-bottom:10px;">PUNIÇÃO EXTRA</h3>
-                        <p style="font-size:1.2rem; font-weight:bold; color:var(--neon-yellow);">${extraPunishment}</p>
+                        <p style="font-size:1.2rem; font-weight:bold; color:var(--neon-yellow); text-transform:uppercase;">${extraPunishment}</p>
                     </div>
                 `;
             }
@@ -403,7 +352,13 @@
                 `;
             }
             else {
-                if(amIHost) startNewRound(data.players); 
+                // Lobby
+                if(amIHost) {
+                    // Inicia se tiver jogadores e status for lobby/vazio
+                    if(data.players && Object.keys(data.players).length > 0) {
+                        startNewRound(data.players, null); 
+                    }
+                } 
                 else document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
             }
         });
@@ -412,7 +367,8 @@
     function renderGameRound(data) {
         const currentPlayerId = data.roundPlayer;
         const isMyTurn = (currentPlayerId === myId);
-        const playerStrikes = data.players[currentPlayerId].strikes || 0;
+        const pData = data.players[currentPlayerId];
+        const playerStrikes = pData ? (pData.strikes || 0) : 0;
 
         document.getElementById('current-player-name').innerText = data.roundPlayerName;
         document.getElementById('challenge-text').innerText = data.roundChallenge;
@@ -459,7 +415,8 @@
 
     // --- LÓGICA DO HOST ---
 
-    function startNewRound(players) {
+    function startNewRound(players, lastPlayerId) {
+        // Filtrar jogadores ativos
         const activeIds = Object.keys(players).filter(id => (players[id].strikes || 0) < 3);
 
         if(activeIds.length === 0) return;
@@ -471,14 +428,27 @@
             return;
         }
 
-        const rndId = activeIds[Math.floor(Math.random() * activeIds.length)];
-        const rndName = players[rndId].name;
+        // --- ORDEM SEQUENCIAL (CORREÇÃO) ---
+        activeIds.sort(); // Garante ordem consistente (por ID)
+        
+        let nextIndex = 0;
+        if(lastPlayerId) {
+            const currIdx = activeIds.indexOf(lastPlayerId);
+            if(currIdx !== -1) {
+                nextIndex = (currIdx + 1) % activeIds.length;
+            }
+        }
+        
+        const nextId = activeIds[nextIndex];
+        const nextName = players[nextId].name;
+        // -----------------------------------
+
         const rndChall = challenges[Math.floor(Math.random() * challenges.length)];
 
         update(ref(db, `rooms/${roomCode}`), {
             nomercy_status: 'round',
-            roundPlayer: rndId,
-            roundPlayerName: rndName,
+            roundPlayer: nextId,
+            roundPlayerName: nextName,
             roundChallenge: rndChall,
             roundVotes: null,
             votesProcessed: null
@@ -503,10 +473,9 @@
             const passes = votesCast - fails;
 
             if(fails > passes) {
-                // STRIKE -> ROLETA -> PUNIÇÃO EXTRA
-                
-                // 1. Sorteia punição extra
+                // STRIKE -> PUNIÇÃO EXTRA -> ROLETA
                 const rndPunish = punishments[Math.floor(Math.random() * punishments.length)];
+                
                 update(ref(db, `rooms/${roomCode}`), { 
                     nomercy_status: 'roulette_spin',
                     currentPunishment: rndPunish 
@@ -514,19 +483,19 @@
 
                 setTimeout(() => {
                     const pid = data.roundPlayer;
-                    const currentStrikes = (data.players[pid].strikes || 0) + 1;
+                    const pData = data.players[pid];
+                    const currentStrikes = (pData ? (pData.strikes || 0) : 0) + 1;
 
                     update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: currentStrikes });
                     update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
 
-                    // Tempo para ler a punição e ver o strike
-                    setTimeout(() => startNewRound(data.players), 6000);
+                    setTimeout(() => startNewRound(data.players, pid), 6000);
                 }, 4000);
                 
             } else {
                 // SAFE
                 update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
-                setTimeout(() => startNewRound(data.players), 2000);
+                setTimeout(() => startNewRound(data.players, data.roundPlayer), 2000);
             }
         }
     }
