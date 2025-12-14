@@ -513,7 +513,7 @@
         for(let i=0; i<count; i++) {
             const div = document.createElement('div');
             div.className = 'fdp-card card-black';
-            div.style.justifyContent = 'center'; align-items: 'center';
+            div.style.justifyContent = 'center'; div.style.alignItems = 'center';
             div.innerHTML = '<i class="fa-solid fa-layer-group fa-2x"></i>';
             container.appendChild(div);
         }
@@ -578,15 +578,17 @@
         if(!players) return;
         
         Object.values(players).forEach(p => {
-            const isJudge = (p.id === judgeId); // Se tiver ID no objeto player
-            // Como players é objeto indexado por ID, precisamos iterar entries pra saber o ID se não estiver salvo dentro
-            // Mas no wrapped salvamos key como ID. Vamos assumir que conseguimos comparar.
+            // Aqui é difícil saber quem é o juiz sem iterar IDs, mas podemos comparar nomes se necessário
+            // ou simplificar apenas mostrando pontuação
             
             const score = p.score_fdp || 0;
             const chip = document.createElement('div');
-            chip.className = `player-chip`; // Adicionar active se for juiz é complexo sem iterar keys, simplificando:
-            if(p.name === document.getElementById('judge-name').innerText.replace('PATRÃO: ', '')) {
-                chip.classList.add('active');
+            chip.className = `player-chip`;
+            
+            // Tenta identificar juiz pelo nome exibido na tela (hack visual simples)
+            const currentJudgeName = document.getElementById('boss-name-display').innerText.replace('Patrão: ', '').trim();
+            if(p.name === currentJudgeName || (document.getElementById('boss-indicator').style.display !== 'none' && p.name === myName)) {
+               // logica visual simplificada, pode ser melhorada
             }
             
             chip.innerHTML = `<span>${p.name}</span><div class="score-circle">${score}</div>`;
