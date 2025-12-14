@@ -249,7 +249,7 @@
         </div>
         
         <div style="position: absolute; bottom: 30px; right: 30px; z-index: 90;">
-            <button onclick="shareSlide()" style="width: 60px; height: 60px; border-radius: 50%; border: none; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; cursor: pointer; font-size: 1.5rem; border: 1px solid rgba(255,255,255,0.3);"><i class="fa-solid fa-share-nodes"></i></button>
+            <button id="btn-share" onclick="shareSlide()" style="width: 60px; height: 60px; border-radius: 50%; border: none; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; cursor: pointer; font-size: 1.5rem; border: 1px solid rgba(255,255,255,0.3);"><i class="fa-solid fa-share-nodes"></i></button>
         </div>
 
         <div style="position: absolute; top:0; left:0; width: 100%; height: 100%; z-index: 5;" onclick="handleStoryClick(event)"></div>
@@ -1048,13 +1048,26 @@
         alert(`JULGAMENTO ENCERRADO!`);
     }
 
+    // FIXED SHARE FUNCTION WITH OPTIMIZATIONS
     async function processShare(type) { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); };
+    
     async function shareSlide() {
-        isPaused = true; clearTimeout(timer);
-        const activeNav = document.querySelector('.nav-fill.active'); if(activeNav) activeNav.classList.add('paused');
-        const canvasEl = document.getElementById('export-canvas');
-        document.getElementById('export-canvas').style.display = 'flex'; 
+        // 1. Pausa o slide
+        isPaused = true; 
+        clearTimeout(timer);
         
+        // 2. Feedback visual de carregamento no botão
+        const btnShare = document.getElementById('btn-share');
+        const oldIcon = btnShare.innerHTML;
+        btnShare.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; // Spinner icon
+
+        const activeNav = document.querySelector('.nav-fill.active'); 
+        if(activeNav) activeNav.classList.add('paused');
+        
+        const canvasEl = document.getElementById('export-canvas');
+        canvasEl.style.display = 'flex'; // Torna visível (mas fora da tela)
+        
+        // --- Prepara o conteúdo do canvas (igual ao original) ---
         const isAwardPhase = slideIdx >= questions.length;
         document.getElementById('ex-standard-ui').style.display = 'none';
         document.getElementById('ex-match-ui').style.display = 'none';
@@ -1101,9 +1114,34 @@
                 exData.querySelectorAll('.data-bar-fill').forEach(bar => { bar.style.backgroundColor = 'black'; });
             }
         }
-        try { const canvas = await html2canvas(canvasEl, { scale: 2 }); canvas.toBlob(blob => { pendingBlob = blob; document.getElementById('share-modal').style.display = 'flex'; }); } catch(e) { closeShareModal(); }
-        document.getElementById('export-canvas').style.display = 'none';
+
+        // --- GERA A IMAGEM COM TIMEOUT PARA NÃO TRAVAR A UI ---
+        setTimeout(async () => {
+            try {
+                // REDUZIMOS A SCALE DE 2 PARA 1 E ADICIONAMOS USECORS
+                const canvas = await html2canvas(canvasEl, { 
+                    scale: 1, 
+                    useCORS: true,
+                    logging: false, // Desliga logs pra ficar mais leve
+                    allowTaint: true
+                }); 
+                
+                canvas.toBlob(blob => { 
+                    pendingBlob = blob; 
+                    document.getElementById('share-modal').style.display = 'flex'; 
+                    btnShare.innerHTML = oldIcon; // Restaura ícone
+                }); 
+            } catch(e) { 
+                console.error(e);
+                alert("Erro ao criar imagem. Tente tirar um print!");
+                closeShareModal(); 
+                btnShare.innerHTML = oldIcon; 
+            } finally {
+                document.getElementById('export-canvas').style.display = 'none';
+            }
+        }, 100); // 100ms de delay permite o browser renderizar o spinner antes de travar
     }
+
     function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { slideIdx++; loadSlide(); }, 2000); }
 </script>
 </body>
