@@ -31,7 +31,6 @@
 
         .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.06; pointer-events: none; z-index: 0; }
         
-        /* Telas */
         .screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; padding: 30px;
@@ -41,7 +40,6 @@
         .screen.active { display: flex; animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-        /* UI Elements */
         h1 { font-size: 3.5rem; font-weight: 900; line-height: 0.9; text-transform: uppercase; margin-bottom: 20px; color: var(--neon-red); }
         h2 { text-transform: uppercase; letter-spacing: 2px; }
         p { font-family: var(--font-data); opacity: 0.7; margin-bottom: 20px; line-height: 1.5;}
@@ -60,12 +58,10 @@
             width: 100%; margin-bottom: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
 
-        /* Strikes Visual */
         .strikes-container { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; }
         .strike-dot { width: 25px; height: 25px; border-radius: 50%; background: #222; border: 2px solid #444; transition: 0.3s; }
         .strike-dot.active { background: var(--neon-red); box-shadow: 0 0 20px var(--neon-red); border-color: white; transform: scale(1.2); }
 
-        /* Banido Visual */
         .banned-stamp { 
             border: 8px solid var(--neon-red); color: var(--neon-red); 
             padding: 10px 40px; font-size: 4rem; font-weight: 900; 
@@ -74,13 +70,11 @@
         }
         @keyframes stampIn { from { transform: scale(2) rotate(-15deg); opacity: 0; } to { transform: scale(1) rotate(-15deg); opacity: 0.9; } }
 
-        /* Voting Buttons */
         .vote-row { display: flex; gap: 15px; width: 100%; margin-top: 20px; }
         .btn-fail { background: rgba(255, 50, 50, 0.15); border: 2px solid var(--neon-red); color: var(--neon-red); transition: 0.2s; }
         .btn-pass { background: rgba(30, 215, 96, 0.15); border: 2px solid var(--neon-green); color: var(--neon-green); transition: 0.2s; }
         .btn-fail:active, .btn-pass:active { transform: scale(0.95); opacity: 0.8; }
 
-        /* Roleta / Efeitos */
         .pulse-text { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
@@ -89,7 +83,6 @@
         
         .strike-bg { background-color: var(--neon-red) !important; animation: shake 0.5s; }
         .safe-bg { background-color: var(--neon-green) !important; color: black; }
-
         @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 100% { transform: translate(0, 0) rotate(0); } }
 
     </style>
@@ -120,22 +113,9 @@
         <div id="challenge-text" style="font-size: 1.6rem; font-weight: 700; line-height: 1.2;">...</div>
     </div>
 
-    <div id="controls-area" style="width: 100%;"></div>
+    <div id="controls-area" style="width: 100%; margin-top: 20px;"></div>
     
     <p id="wait-msg" class="pulse-text" style="margin-top:20px; display:none; font-family: var(--font-data); font-size: 0.8rem;"></p>
-</div>
-
-<div id="template-voting-ui" style="display:none;">
-    <p>O desafio foi cumprido?</p>
-    <div class="vote-row">
-        <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ 👎</button>
-        <button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button>
-    </div>
-</div>
-
-<div id="template-action-ui" style="display:none;">
-    <p class="pulse-text" style="color: var(--neon-green);">Cumpra o desafio!</p>
-    <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 10px;">O grupo está votando...</p>
 </div>
 
 <div id="screen-roulette" class="screen" style="background: black;">
@@ -217,13 +197,11 @@
             target.style.display = 'flex';
             setTimeout(() => target.classList.add('active'), 10);
         }
-        // Limpar classes de efeito
         document.body.className = '';
         document.getElementById('flash-layer').style.background = 'transparent';
         if(rouletteInterval) clearInterval(rouletteInterval);
     }
 
-    // Inicialização
     get(ref(db, `rooms/${roomCode}/players/${myId}`)).then(snap => {
         if(snap.exists()) {
             myName = snap.val().name;
@@ -242,12 +220,12 @@
             document.getElementById('loading').style.display = 'none';
             if(data.host === myId) amIHost = true;
 
-            // 1. CHECAGEM DE BANIMENTO (Local)
+            // 1. CHECAGEM DE BANIMENTO
             const myData = data.players[myId];
             if(myData && myData.strikes >= 3) {
                 showScreen('screen-banned');
                 document.getElementById('elim-name').innerText = myName;
-                if(amIHost && data.nomercy_status === 'round') checkVotes(data); // Host banido continua rodando lógica
+                if(amIHost && data.nomercy_status === 'round') checkVotes(data); 
                 return; 
             }
 
@@ -262,11 +240,9 @@
                 if(amIHost) checkVotes(data);
             }
             else if(data.nomercy_status === 'roulette_spin') {
-                // EFEITO: TELA PRETA + PISCAR VERMELHO
                 showScreen('screen-roulette');
                 document.body.classList.add('roulette-mode');
                 
-                // Simula luz passando (Flash aleatório em cada cliente)
                 if(rouletteInterval) clearInterval(rouletteInterval);
                 rouletteInterval = setInterval(() => {
                     const flash = document.getElementById('flash-layer');
@@ -275,7 +251,6 @@
                 }, 100);
             }
             else if(data.nomercy_status === 'round_result_fail') {
-                // RESULTADO: STRIKE (Vermelho)
                 showScreen('screen-result');
                 document.body.classList.add('strike-bg');
                 
@@ -292,7 +267,6 @@
                 `;
             }
             else if(data.nomercy_status === 'round_result_safe') {
-                // RESULTADO: SAFE (Verde)
                 showScreen('screen-result');
                 document.body.classList.add('safe-bg');
                 
@@ -303,7 +277,6 @@
                 `;
             }
             else {
-                // Lobby
                 if(amIHost) startNewRound(data.players); 
                 else document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
             }
@@ -318,30 +291,39 @@
         document.getElementById('current-player-name').innerText = data.roundPlayerName;
         document.getElementById('challenge-text').innerText = data.roundChallenge;
         
-        // Renderizar Strikes
         document.getElementById('s1').className = playerStrikes >= 1 ? 'strike-dot active' : 'strike-dot';
         document.getElementById('s2').className = playerStrikes >= 2 ? 'strike-dot active' : 'strike-dot';
         document.getElementById('s3').className = playerStrikes >= 3 ? 'strike-dot active' : 'strike-dot';
 
-        // Lógica de UI Simultânea
         const controls = document.getElementById('controls-area');
-        controls.innerHTML = "";
         const waitMsg = document.getElementById('wait-msg');
         waitMsg.style.display = 'none';
 
+        // LÓGICA REESCRITA PARA USAR HTML DIRETO (CORREÇÃO DE BUGS VISUAIS)
         if(isMyTurn) {
-            const ui = document.getElementById('template-action-ui').cloneNode(true);
-            ui.style.display = 'block';
-            controls.appendChild(ui);
+            controls.innerHTML = `
+                <div style="width:100%;">
+                    <p class="pulse-text" style="color: var(--neon-green);">Cumpra o desafio!</p>
+                    <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 10px;">O grupo está votando...</p>
+                </div>
+            `;
         } else {
             const myVote = data.roundVotes ? data.roundVotes[myId] : null;
+            
             if(myVote) {
+                controls.innerHTML = "";
                 waitMsg.innerText = `Voto registrado: ${myVote === 'pass' ? 'FEZ 👍' : 'NÃO FEZ 👎'}`;
                 waitMsg.style.display = 'block';
             } else {
-                const ui = document.getElementById('template-voting-ui').cloneNode(true);
-                ui.style.display = 'block';
-                controls.appendChild(ui);
+                controls.innerHTML = `
+                    <div style="width:100%;">
+                        <p>O desafio foi cumprido?</p>
+                        <div class="vote-row">
+                            <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ 👎</button>
+                            <button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button>
+                        </div>
+                    </div>
+                `;
             }
         }
     }
@@ -353,7 +335,6 @@
     // --- LÓGICA DO HOST ---
 
     function startNewRound(players) {
-        // Apenas jogadores vivos (strikes < 3)
         const activeIds = Object.keys(players).filter(id => (players[id].strikes || 0) < 3);
 
         if(activeIds.length === 0) return;
@@ -369,29 +350,27 @@
         const rndName = players[rndId].name;
         const rndChall = challenges[Math.floor(Math.random() * challenges.length)];
 
-        // Limpa votos e inicia novo round
         update(ref(db, `rooms/${roomCode}`), {
             nomercy_status: 'round',
             roundPlayer: rndId,
             roundPlayerName: rndName,
             roundChallenge: rndChall,
-            roundVotes: null
+            roundVotes: null,
+            votesProcessed: null // Resetar trava
         });
     }
 
     function checkVotes(data) {
-        if(data.votesProcessed) return; // Evita loop
+        if(data.votesProcessed) return;
 
         const votes = data.roundVotes || {};
         const activePlayers = Object.values(data.players).filter(p => (p.strikes||0) < 3);
-        const totalVoters = activePlayers.length - 1; // Jogador da vez não vota
+        const totalVoters = activePlayers.length - 1; 
         
         const votesCast = Object.keys(votes).length;
 
-        // Se votação concluída
         if(votesCast >= totalVoters && totalVoters > 0) {
             
-            // Trava processamento
             update(ref(db, `rooms/${roomCode}`), { votesProcessed: true });
 
             let fails = 0;
@@ -399,34 +378,23 @@
             const passes = votesCast - fails;
 
             if(fails > passes) {
-                // --- CENÁRIO DE FALHA (STRIKE + ROLETA) ---
-                
-                // 1. Inicia Efeito Roleta (Suspense)
+                // STRIKE -> ROLETA
                 update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'roulette_spin' });
 
                 setTimeout(() => {
-                    // 2. Aplica Strike e Mostra Resultado
                     const pid = data.roundPlayer;
                     const currentStrikes = (data.players[pid].strikes || 0) + 1;
 
                     update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: currentStrikes });
                     update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
 
-                    // 3. Próximo Round
-                    setTimeout(() => {
-                         update(ref(db, `rooms/${roomCode}`), { votesProcessed: null }); // Destrava para px round
-                         startNewRound(data.players);
-                    }, 4000); // Tempo para ver o strike
-                }, 4000); // Tempo da roleta girando
+                    setTimeout(() => startNewRound(data.players), 4000);
+                }, 4000);
                 
             } else {
-                // --- CENÁRIO SAFE (SEM ROLETA) ---
+                // SAFE
                 update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
-                
-                setTimeout(() => {
-                    update(ref(db, `rooms/${roomCode}`), { votesProcessed: null });
-                    startNewRound(data.players);
-                }, 2000);
+                setTimeout(() => startNewRound(data.players), 2000);
             }
         }
     }
