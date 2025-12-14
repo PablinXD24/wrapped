@@ -143,7 +143,12 @@
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); color: white; }
         .btn-opt { padding: 15px; margin-top: 10px; width: 100%; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
-        #export-canvas { position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; background: #fff; color: #000; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        /* --- EXPORT CANVAS (FIXED) --- */
+        #export-canvas { 
+            position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; 
+            background: #fff; color: #000; text-align: center; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+        }
         .ex-cat { font-family: var(--font-data); font-size: 2.5rem; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 40px; }
         .ex-winner { font-size: 9rem; font-weight: 900; line-height: 0.9; margin: 40px 0; text-transform: uppercase; word-break: break-word;}
         .ex-roast { font-size: 3.5rem; font-weight: 700; margin-bottom: 80px; line-height: 1.2; }
@@ -158,7 +163,34 @@
 
 <div class="noise"></div>
 <div class="ambilight-bg" id="ambilight"></div>
-<div id="export-canvas" style="display: none;"></div> 
+
+<div id="export-canvas" style="display: none;">
+    <div id="ex-intro-ui" class="ex-intro-ui">
+        <i class="fa-solid fa-trophy" style="font-size: 8rem; margin-bottom: 40px; color: #FFD700;"></i>
+        <h1 style="font-size: 5rem; margin: 0;">THE<br>WRAPPED<br>2025</h1>
+    </div>
+
+    <div id="ex-cat" class="ex-cat">CATEGORIA</div>
+
+    <div id="ex-standard-ui" style="width: 100%;">
+        <div id="ex-roast" class="ex-roast">...</div>
+        <div id="ex-winner" class="ex-winner">NOME</div>
+        <div id="ex-data" style="width: 100%; text-align: left;"></div>
+    </div>
+
+    <div id="ex-match-ui" class="ex-match-ui">
+        <div class="match-card"><div class="match-avatar" id="ex-m-p1" style="width:150px; height:150px; font-size:4rem; background:#333; color:white; border-radius:50%; display:flex; justify-content:center; align-items:center;">A</div></div>
+        <i class="fa-solid fa-heart" style="font-size: 5rem; color: #1ed760;"></i>
+        <div class="match-card"><div class="match-avatar" id="ex-m-p2" style="width:150px; height:150px; font-size:4rem; background:#333; color:white; border-radius:50%; display:flex; justify-content:center; align-items:center;">B</div></div>
+    </div>
+    <div id="ex-match-text" style="font-size: 3rem; font-weight: bold; margin-top: 30px; display:none;">DEU MATCH!</div>
+
+    <div id="ex-white-ui" class="ex-white-ui">
+        <i id="ex-w-icon" class="ex-w-icon" style="font-size: 6rem; margin-bottom:20px;"></i>
+        <div id="ex-w-name" style="font-size: 6rem; font-weight: 900; margin: 20px 0;">NOME</div>
+        <div id="ex-w-desc" style="font-size: 2rem; opacity: 0.7;">Descrição</div>
+    </div>
+</div>
 
 <div class="app-container">
 
@@ -1048,29 +1080,28 @@
         alert(`JULGAMENTO ENCERRADO!`);
     }
 
-    // FIXED SHARE FUNCTION WITH OPTIMIZATIONS
+    // --- SHARE FUNCTION FIXED & OPTIMIZED ---
     async function processShare(type) { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); };
     
     async function shareSlide() {
-        // 1. Pausa o slide
+        // 1. Pause & Feedback
         isPaused = true; 
         clearTimeout(timer);
-        
-        // 2. Feedback visual de carregamento no botão
         const btnShare = document.getElementById('btn-share');
         const oldIcon = btnShare.innerHTML;
-        btnShare.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; // Spinner icon
+        btnShare.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
 
         const activeNav = document.querySelector('.nav-fill.active'); 
         if(activeNav) activeNav.classList.add('paused');
         
         const canvasEl = document.getElementById('export-canvas');
-        canvasEl.style.display = 'flex'; // Torna visível (mas fora da tela)
+        canvasEl.style.display = 'flex'; // Make visible
         
-        // --- Prepara o conteúdo do canvas (igual ao original) ---
+        // 2. Populate Export Canvas (Fixing the NULL error)
         const isAwardPhase = slideIdx >= questions.length;
         document.getElementById('ex-standard-ui').style.display = 'none';
         document.getElementById('ex-match-ui').style.display = 'none';
+        document.getElementById('ex-match-text').style.display = 'none';
         document.getElementById('ex-white-ui').style.display = 'none';
         document.getElementById('ex-intro-ui').style.display = 'none';
 
@@ -1083,8 +1114,7 @@
             } else {
                 canvasEl.style.backgroundColor = "white"; canvasEl.style.color = "black";
                 document.getElementById('ex-cat').innerText = award.cat;
-                const wUi = document.getElementById('ex-white-ui');
-                wUi.style.display = 'flex';
+                document.getElementById('ex-white-ui').style.display = 'flex';
                 document.getElementById('ex-w-name').innerText = award.name;
                 document.getElementById('ex-w-desc').innerText = award.desc;
                 document.getElementById('ex-w-icon').className = `fa-solid ${award.icon} ex-w-icon`;
@@ -1095,18 +1125,20 @@
             document.getElementById('ex-cat').innerText = q.q;
             const results = finalResults[slideIdx] || {};
             const sorted = Object.entries(results).sort((a,b) => b[1] - a[1]);
+            
             if(q.type === 'match') {
                 document.getElementById('ex-match-ui').style.display = 'flex';
                 document.getElementById('ex-match-text').style.display = 'block';
-                const p1 = sorted[0] ? sorted[0][0] : "Ninguém";
-                const p2 = sorted[1] ? sorted[1][0] : "Ninguém";
+                const p1 = sorted[0] ? sorted[0][0] : "?";
+                const p2 = sorted[1] ? sorted[1][0] : "?";
                 document.getElementById('ex-m-p1').innerText = p1[0] || "?";
                 document.getElementById('ex-m-p2').innerText = p2[0] || "?";
-                document.getElementById('ex-match-text').innerText = "DEU MATCH!";
             } else {
                 document.getElementById('ex-standard-ui').style.display = 'block';
                 document.getElementById('ex-winner').innerText = sorted[0] ? sorted[0][0] : "Ninguém";
                 document.getElementById('ex-roast').innerText = "...";
+                
+                // Clone data bars
                 const dataHTML = document.getElementById('res-data').innerHTML;
                 const exData = document.getElementById('ex-data');
                 exData.innerHTML = dataHTML;
@@ -1115,21 +1147,20 @@
             }
         }
 
-        // --- GERA A IMAGEM COM TIMEOUT PARA NÃO TRAVAR A UI ---
+        // 3. Render with html2canvas (Optimized)
         setTimeout(async () => {
             try {
-                // REDUZIMOS A SCALE DE 2 PARA 1 E ADICIONAMOS USECORS
                 const canvas = await html2canvas(canvasEl, { 
-                    scale: 1, 
+                    scale: 1, // Optimization: Lower scale to prevent crash
                     useCORS: true,
-                    logging: false, // Desliga logs pra ficar mais leve
+                    logging: false, 
                     allowTaint: true
                 }); 
                 
                 canvas.toBlob(blob => { 
                     pendingBlob = blob; 
                     document.getElementById('share-modal').style.display = 'flex'; 
-                    btnShare.innerHTML = oldIcon; // Restaura ícone
+                    btnShare.innerHTML = oldIcon; 
                 }); 
             } catch(e) { 
                 console.error(e);
@@ -1139,7 +1170,7 @@
             } finally {
                 document.getElementById('export-canvas').style.display = 'none';
             }
-        }, 100); // 100ms de delay permite o browser renderizar o spinner antes de travar
+        }, 100); 
     }
 
     function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { slideIdx++; loadSlide(); }, 2000); }
