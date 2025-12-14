@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NO MERCY - Elimination</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+        :root {
+            --neon-green: #1ed760;
+            --neon-red: #ff3333;
+            --bg-dark: #050505;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-data: 'Space Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            height: 100vh; width: 100vw; overflow: hidden;
+            font-family: var(--font-display);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.06; pointer-events: none; z-index: 0; }
+        
+        /* Telas */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; padding: 30px;
+            align-items: center; justify-content: center; text-align: center;
+            z-index: 10;
+        }
+        .screen.active { display: flex; animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* UI Elements */
+        h1 { font-size: 3.5rem; font-weight: 900; line-height: 0.9; text-transform: uppercase; margin-bottom: 20px; color: var(--neon-red); }
+        h2 { text-transform: uppercase; letter-spacing: 2px; }
+        p { font-family: var(--font-data); opacity: 0.7; margin-bottom: 20px; line-height: 1.5;}
+
+        .btn { 
+            background: white; color: black; border: none; padding: 20px; 
+            border-radius: 50px; font-family: var(--font-display); font-weight: 800; 
+            font-size: 1.1rem; width: 100%; cursor: pointer; text-transform: uppercase; 
+            margin-bottom: 15px; box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+        .btn:active { transform: scale(0.96); }
+
+        .card {
+            background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px);
+            border: 1px solid var(--border); border-radius: 24px; padding: 30px;
+            width: 100%; margin-bottom: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        /* Sistema de Strikes */
+        .strikes-container { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; }
+        .strike-dot { width: 25px; height: 25px; border-radius: 50%; background: #222; border: 2px solid #444; transition: 0.3s; }
+        .strike-dot.active { background: var(--neon-red); box-shadow: 0 0 20px var(--neon-red); border-color: white; transform: scale(1.2); }
+
+        /* Banido Style */
+        .banned-stamp { 
+            border: 8px solid var(--neon-red); color: var(--neon-red); 
+            padding: 10px 40px; font-size: 4rem; font-weight: 900; 
+            transform: rotate(-15deg); opacity: 0.9; margin-bottom: 30px;
+            text-transform: uppercase; animation: stampIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes stampIn { from { transform: scale(2) rotate(-15deg); opacity: 0; } to { transform: scale(1) rotate(-15deg); opacity: 0.9; } }
+
+        /* Voting UI */
+        .vote-row { display: flex; gap: 15px; width: 100%; margin-top: 20px; }
+        .btn-fail { background: rgba(255, 50, 50, 0.15); border: 2px solid var(--neon-red); color: var(--neon-red); }
+        .btn-pass { background: rgba(30, 215, 96, 0.15); border: 2px solid var(--neon-green); color: var(--neon-green); }
+
+        /* Effects */
+        .pulse-text { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+    </style>
+</head>
+<body>
+
+<div class="noise"></div>
+
+<div id="screen-lobby" class="screen active">
+    <h1>NO MERCY</h1>
+    <p>Conectando à sala...</p>
+    <div id="loading" style="font-size: 2rem;"><i class="fa-solid fa-spinner fa-spin"></i></div>
+</div>
+
+<div id="screen-game" class="screen">
+    
+    <div style="opacity: 0.6; font-family: var(--font-data); letter-spacing: 2px;">VEZ DE</div>
+    <div id="current-player-name" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; color: white;">...</div>
+    
+    <div class="strikes-container" id="game-strikes-display">
+        <div class="strike-dot" id="s1"></div>
+        <div class="strike-dot" id="s2"></div>
+        <div class="strike-dot" id="s3"></div>
+    </div>
+    
+    <div class="card">
+        <h3 style="opacity: 0.5; font-size: 0.9rem; margin-bottom: 15px; color: var(--neon-red);">O DESAFIO</h3>
+        <div id="challenge-text" style="font-size: 1.6rem; font-weight: 700; line-height: 1.2;">...</div>
+    </div>
+
+    <div id="controls-area" style="width: 100%;">
+        </div>
+    
+    <p id="wait-msg" class="pulse-text" style="margin-top:20px; display:none;">Aguardando ação...</p>
+</div>
+
+<div id="screen-voting-ui" style="display:none; width:100%;">
+    <p>O desafio foi cumprido?</p>
+    <div class="vote-row">
+        <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ (STRIKE)</button>
+        <button class="btn btn-pass" onclick="castVote('pass')">FEZ (SAFE)</button>
+    </div>
+</div>
+
+<div id="screen-action-ui" style="display:none; width:100%;">
+    <p>Cumpra o desafio para sobreviver.</p>
+    <button class="btn" style="background: white; color: black;" onclick="triggerVoting()">JÁ FIZ (JULGAMENTO)</button>
+</div>
+
+<div id="screen-banned" class="screen" style="background: #1a0000;">
+    <div class="banned-stamp">BANIDO</div>
+    <h2 id="elim-name" style="margin-bottom: 10px; color: white;">VOCÊ</h2>
+    <p>Atingiu 3 Strikes e foi removido.</p>
+    <p style="font-size: 0.8rem; opacity: 0.5;">Agora você só pode assistir e julgar.</p>
+</div>
+
+<div id="screen-winner" class="screen" style="background: var(--neon-green); color: black;">
+    <i class="fa-solid fa-trophy" style="font-size: 5rem; margin-bottom: 20px;"></i>
+    <h1>SOBREVIVENTE</h1>
+    <h2 id="winner-name" style="font-size: 3rem;">NOME</h2>
+    <p style="color: black; font-weight: bold;">Todos os outros foram eliminados.</p>
+    <button class="btn" style="background: black; color: white; margin-top: 30px;" onclick="window.location.href='index.html'">VOLTAR AO INÍCIO</button>
+</div>
+
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // Use a mesma config do Wrapped
+    const firebaseConfig = {
+        apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
+        authDomain: "wrapped-fad94.firebaseapp.com",
+        databaseURL: "https://wrapped-fad94-default-rtdb.firebaseio.com",
+        projectId: "wrapped-fad94",
+        storageBucket: "wrapped-fad94.firebasestorage.app",
+        messagingSenderId: "360236097664",
+        appId: "1:360236097664:web:76777f529c18623bf1c665"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const challenges = [
+        "Ligue para a ex e pergunte se ela está feliz.",
+        "Deixe o grupo ler sua última conversa no WhatsApp.",
+        "Imite um animal escolhido pelo grupo até a próxima rodada.",
+        "Mande 'Oi sumido(a)' para a terceira pessoa do seu direct.",
+        "Beba um shot sem usar as mãos.",
+        "Faça uma dança sensual com uma cadeira.",
+        "Deixe alguém postar um status no seu Instagram.",
+        "Conte o seu segredo mais vergonhoso.",
+        "Fale com sotaque gringo pelas próximas 3 rodadas.",
+        "Dê um beijo na bochecha da pessoa à sua direita.",
+        "Mostre sua galeria de fotos por 10 segundos.",
+        "Faça 10 flexões agora.",
+        "Revele quem do grupo você beijaria."
+    ];
+
+    // Setup Inicial
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get('room');
+    const myId = localStorage.getItem('wrapped_uid');
+    
+    let myName = "Player";
+    let amIHost = false;
+    let localStrikes = 0;
+
+    if(!roomCode || !myId) {
+        alert("Erro: Entre pelo Wrapped.");
+        window.location.href = 'index.html';
+    }
+
+    // Pega o nome do usuário e inicia
+    get(ref(db, `rooms/${roomCode}/players/${myId}`)).then(snap => {
+        if(snap.exists()) {
+            myName = snap.val().name;
+            // Inicializa strikes se não existir
+            update(ref(db, `rooms/${roomCode}/players/${myId}`), { strikes: 0 });
+        }
+        initGameLoop();
+    });
+
+    function initGameLoop() {
+        const roomRef = ref(db, `rooms/${roomCode}`);
+        
+        onValue(roomRef, (snap) => {
+            const data = snap.val();
+            if(!data) return;
+
+            document.getElementById('loading').style.display = 'none';
+            if(data.host === myId) amIHost = true;
+
+            // STATUS: BANIDO
+            const myData = data.players[myId];
+            if(myData && myData.strikes >= 3) {
+                showScreen('screen-banned');
+                document.getElementById('elim-name').innerText = myName;
+                return; // Se tá banido, para aqui (só vê a tela de ban)
+                // OBS: Para permitir que banidos assistam, teríamos que mudar a lógica, 
+                // mas o pedido foi "retirada do jogo". Vamos manter simples.
+            }
+
+            // MÁQUINA DE ESTADOS
+            if(data.nomercy_status === 'game_over') {
+                showScreen('screen-winner');
+                document.getElementById('winner-name').innerText = data.winnerName;
+            }
+            else if(data.nomercy_status === 'round') {
+                showScreen('screen-game');
+                renderGameRound(data);
+            }
+            else {
+                // Início ou Lobby interno
+                if(amIHost) startNewRound(data.players); // Host inicia o 1º round
+                else document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
+            }
+        });
+    }
+
+    function renderGameRound(data) {
+        const currentPlayerId = data.roundPlayer;
+        const isMyTurn = (currentPlayerId === myId);
+        const playerStrikes = data.players[currentPlayerId].strikes || 0;
+
+        // Infos visuais
+        document.getElementById('current-player-name').innerText = data.roundPlayerName;
+        document.getElementById('challenge-text').innerText = data.roundChallenge;
+        
+        // Renderizar bolinhas de strike
+        document.getElementById('s1').className = playerStrikes >= 1 ? 'strike-dot active' : 'strike-dot';
+        document.getElementById('s2').className = playerStrikes >= 2 ? 'strike-dot active' : 'strike-dot';
+        document.getElementById('s3').className = playerStrikes >= 3 ? 'strike-dot active' : 'strike-dot';
+
+        // Lógica de Controles
+        const controls = document.getElementById('controls-area');
+        controls.innerHTML = ""; // Limpa
+        document.getElementById('wait-msg').style.display = 'none';
+
+        if(data.roundState === 'action') {
+            if(isMyTurn) {
+                // Minha vez: Botão de "Já fiz"
+                const ui = document.getElementById('screen-action-ui').cloneNode(true);
+                ui.style.display = 'block';
+                controls.appendChild(ui);
+            } else {
+                // Vez do outro: Apenas espera
+                document.getElementById('wait-msg').innerText = `${data.roundPlayerName} está cumprindo o desafio...`;
+                document.getElementById('wait-msg').style.display = 'block';
+            }
+        } 
+        else if(data.roundState === 'voting') {
+            if(isMyTurn) {
+                // Minha vez: Reze
+                document.getElementById('wait-msg').innerText = "O grupo está votando seu destino...";
+                document.getElementById('wait-msg').style.display = 'block';
+            } else {
+                // Vez do outro: Eu voto
+                const hasVoted = data.roundVotes && data.roundVotes[myId];
+                if(hasVoted) {
+                    document.getElementById('wait-msg').innerText = "Voto registrado.";
+                    document.getElementById('wait-msg').style.display = 'block';
+                } else {
+                    const ui = document.getElementById('screen-voting-ui').cloneNode(true);
+                    ui.style.display = 'block';
+                    controls.appendChild(ui);
+                }
+            }
+            
+            // Host processa votos
+            if(amIHost) checkVotes(data);
+        }
+    }
+
+    // --- AÇÕES ---
+
+    window.triggerVoting = function() {
+        update(ref(db, `rooms/${roomCode}`), { roundState: 'voting', roundVotes: {} });
+    }
+
+    window.castVote = function(vote) {
+        // vote: 'pass' or 'fail'
+        set(ref(db, `rooms/${roomCode}/roundVotes/${myId}`), vote);
+        // Feedback visual imediato
+        document.getElementById('controls-area').innerHTML = '<p class="pulse-text">Voto enviado.</p>';
+    }
+
+    // --- LÓGICA DO HOST ---
+
+    function startNewRound(players) {
+        // Filtra quem tem menos de 3 strikes
+        const activeIds = Object.keys(players).filter(id => (players[id].strikes || 0) < 3);
+
+        if(activeIds.length === 0) return; // Ninguém?
+        if(activeIds.length === 1) {
+            // Temos um vencedor
+            update(ref(db, `rooms/${roomCode}`), { 
+                nomercy_status: 'game_over', 
+                winnerName: players[activeIds[0]].name 
+            });
+            return;
+        }
+
+        const rndId = activeIds[Math.floor(Math.random() * activeIds.length)];
+        const rndName = players[rndId].name;
+        const rndChall = challenges[Math.floor(Math.random() * challenges.length)];
+
+        update(ref(db, `rooms/${roomCode}`), {
+            nomercy_status: 'round',
+            roundPlayer: rndId,
+            roundPlayerName: rndName,
+            roundChallenge: rndChall,
+            roundState: 'action', // action -> voting
+            roundVotes: null
+        });
+    }
+
+    function checkVotes(data) {
+        const votes = data.roundVotes || {};
+        const activePlayersCount = Object.values(data.players).filter(p => (p.strikes||0) < 3).length;
+        // O jogador da vez não vota, então total esperado é active - 1
+        const expectedVotes = activePlayersCount - 1;
+        const votesCast = Object.keys(votes).length;
+
+        if(votesCast >= expectedVotes && expectedVotes > 0) {
+            // Processar resultado
+            let fails = 0;
+            Object.values(votes).forEach(v => { if(v==='fail') fails++; });
+            const passes = votesCast - fails;
+
+            if(fails > passes) {
+                // STRIKE!
+                const pid = data.roundPlayer;
+                const currentStrikes = (data.players[pid].strikes || 0) + 1;
+                
+                // Atualiza strikes
+                update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: currentStrikes })
+                .then(() => {
+                    // Espera um pouco para mostrar o drama
+                    setTimeout(() => startNewRound(data.players), 3000); 
+                });
+                
+                // Feedback visual na sala (opcional, pode ser adicionado status 'punish')
+            } else {
+                // SAFE
+                setTimeout(() => startNewRound(data.players), 2000);
+            }
+        }
+    }
+
+</script>
+</body>
+</html>
