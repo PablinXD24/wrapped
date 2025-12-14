@@ -157,7 +157,7 @@
         <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">JOGADA POR:</div>
         <h1 id="winner-name" style="font-size: 2.5rem; color: white; margin: 0;">PLAYER</h1>
         
-        <p style="margin-top:40px; opacity:0.7; font-family:var(--font-data);">Próxima rodada em 5s...</p>
+        <p style="margin-top:40px; opacity:0.7; font-family:var(--font-data);">Próxima rodada em 6s...</p>
     </div>
 
     <div id="game-over-modal" class="modal win-screen">
@@ -174,7 +174,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update, push, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    /* --- CONFIGURAÇÃO --- */
+    /* --- SETUP --- */
     const firebaseConfig = {
         apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
         authDomain: "wrapped-fad94.firebaseapp.com",
@@ -246,6 +246,10 @@
     /* --- GAME CONNECT --- */
     const roomRef = ref(db, `rooms/${roomCode}`);
     
+    // Inicializar e mostrar a tela correta
+    document.getElementById('screen-game').classList.add('active');
+    document.getElementById('screen-game').style.display = 'flex';
+
     onValue(roomRef, (snap) => {
         const data = snap.val();
         document.getElementById('loading').style.display = 'none';
@@ -254,11 +258,13 @@
         if(data.host === myId) isHost = true;
         if(data.players && data.players[myId]) myName = data.players[myId].name;
 
-        // Render Score & Check Winner
+        // Atualizar Placar
         updateScoreBoard(data.players);
+        
+        // Checar Fim de Jogo
         checkGameOver(data.players);
 
-        // Game Logic
+        // Lógica do Round
         if(!gameOver) {
             if(data.fdp_match) {
                 updateInterface(data.fdp_match);
@@ -268,15 +274,24 @@
         }
     });
 
-    /* --- STATE LISTENERS (WINNER & HAND) --- */
-    
-    // Listener de Vencedor: Mostra o modal para TODOS
+    // Sincronizar Mão
+    onValue(ref(db, `rooms/${roomCode}/players/${myId}/hand_fdp`), (snap) => {
+        if(snap.exists()) {
+            hand = snap.val();
+            const status = document.getElementById('game-status').innerText;
+            if(status.includes("ESCOLHA")) renderHand(hand);
+        } else {
+            fillHand();
+        }
+    });
+
+    // Sincronizar Vencedor da Rodada
     onValue(ref(db, `rooms/${roomCode}/fdp_match/winner`), (snap) => {
         const win = snap.val();
         if(win && !gameOver) {
             document.getElementById('winner-name').innerText = win.name;
             document.getElementById('winner-card-display').innerHTML = `
-                <div style="font-size:0.8rem; opacity:0.6; margin-bottom:15px; border-bottom:1px solid #ccc; padding-bottom:10px;">${win.black}</div>
+                <div style="font-size:0.75rem; opacity:0.6; margin-bottom:15px; border-bottom:1px solid #ccc; padding-bottom:5px;">${win.black}</div>
                 <div style="font-size:1.4rem;">${win.text}</div>
             `;
             document.getElementById('winner-modal').style.display = 'flex';
@@ -285,49 +300,34 @@
         }
     });
 
-    // Listener da Mão
-    onValue(ref(db, `rooms/${roomCode}/players/${myId}/hand_fdp`), (snap) => {
-        if(snap.exists()) {
-            hand = snap.val();
-            // Apenas renderiza se estivermos na fase de escolha
-            const status = document.getElementById('game-status').innerText;
-            if(status.includes("ESCOLHA")) renderHand(hand);
-        } else {
-            fillHand();
-        }
-    });
-
     /* --- INTERFACE UPDATER --- */
     function updateInterface(matchData) {
         document.getElementById('black-text').innerText = matchData.blackCard;
         
-        // Cores do Fundo
         const colors = ['#0aff60', '#b537f2', '#ff2a6d', '#f5e625'];
         const color = colors[(matchData.roundCount || 0) % colors.length];
         document.getElementById('ambilight').style.background = `radial-gradient(circle at 50% 30%, ${color}, #000)`;
 
-        // --- FASE 1: ESCOLHA (PICKING) ---
+        // --- FASE 1: ESCOLHER CARTA (PICKING) ---
         if(matchData.state === 'PICKING') {
             document.getElementById('table-area').style.display = 'none';
+            document.getElementById('winner-modal').style.display = 'none';
             
             const myPlay = matchData.table ? matchData.table[myId] : null;
             
             if(myPlay) {
-                // Já joguei
                 document.getElementById('game-status').innerText = "ESPERANDO OS OUTROS...";
                 document.getElementById('hand-area').style.display = 'none';
                 document.getElementById('btn-action').style.display = 'none';
                 
-                // Info visual
                 if(matchData.table) {
                     const count = Object.keys(matchData.table).length;
                     document.getElementById('game-status').innerText = `AGUARDANDO (${count} JOGARAM)...`;
                 }
             } else {
-                // Minha vez
                 document.getElementById('game-status').innerText = "ESCOLHA SUA MELHOR CARTA";
                 document.getElementById('hand-area').style.display = 'flex';
-                document.getElementById('btn-action').style.display = 'none';
+                document.getElementById('btn-action').style.display = 'none'; 
                 renderHand(hand);
             }
         }
@@ -350,7 +350,7 @@
         }
     }
 
-    /* --- RENDERIZAÇÃO --- */
+    /* --- RENDER FUNCTIONS --- */
     function renderHand(handData) {
         const div = document.getElementById('hand-area');
         div.innerHTML = '';
@@ -371,7 +371,6 @@
         });
     }
 
-    // CORREÇÃO CRUCIAL: Mostrar o TEXTO das cartas na mesa
     function renderVotingTable(tableData, votesData, iVoted) {
         const div = document.getElementById('table-area');
         div.innerHTML = '';
@@ -381,10 +380,8 @@
             const card = document.createElement('div');
             card.className = 'fdp-card card-white table-card';
             
-            // AGORA MOSTRA O TEXTO!
-            card.innerHTML = item.text; 
+            card.innerHTML = item.text; // MOSTRA O TEXTO!
             
-            // Contagem de Votos
             let voteCount = 0;
             if(votesData) {
                 Object.values(votesData).forEach(votedId => { if(votedId === uid) voteCount++; });
@@ -393,7 +390,6 @@
                 card.innerHTML += `<div class="vote-badge">${voteCount}</div>`;
             }
 
-            // Ação de Votar
             if(!iVoted && uid !== myId) {
                 card.onclick = () => { if(confirm("Votar nesta carta?")) submitVote(uid); };
             } else if (iVoted) {
@@ -428,22 +424,20 @@
             gameOver = true;
             document.getElementById('champion-name').innerText = winner;
             document.getElementById('game-over-modal').style.display = 'flex';
-            document.getElementById('winner-modal').style.display = 'none'; // Esconde modal de round
+            document.getElementById('winner-modal').style.display = 'none';
         }
     }
 
-    /* --- AÇÕES DO JOGADOR --- */
+    /* --- PLAYER ACTIONS --- */
     function submitCard() {
         if(selectedCardIdx === -1) return;
         const text = hand[selectedCardIdx];
         
-        // Repor
         const newHand = [...hand];
         newHand.splice(selectedCardIdx, 1);
         newHand.push(whiteCardsData[Math.floor(Math.random() * whiteCardsData.length)]);
         update(ref(db, `rooms/${roomCode}/players/${myId}`), { hand_fdp: newHand });
 
-        // Enviar
         update(ref(db, `rooms/${roomCode}/fdp_match/table/${myId}`), { text: text, ownerName: myName });
 
         document.getElementById('hand-area').style.display = 'none';
@@ -463,15 +457,13 @@
         hand = h;
     }
 
-    /* --- LÓGICA DO HOST --- */
+    /* --- HOST LOGIC --- */
     async function hostStartNewRound() {
         if(!isHost || gameOver) return;
         const matchRef = ref(db, `rooms/${roomCode}/fdp_match`);
         const s = await get(matchRef);
         const current = s.val() || { roundCount: 0 };
         
-        // Se já tem vencedor definido e não passou o tempo, não reseta ainda.
-        // O reset é feito pelo timeout do finalize.
         if(current.state === 'WINNER') return; 
 
         const nextBlack = blackCards[Math.floor(Math.random() * blackCards.length)];
@@ -486,18 +478,25 @@
         });
     }
 
+    // CORREÇÃO CRÍTICA NA CONTAGEM
     async function hostCheckAllPlayed() {
         if(!isHost) return;
-        const snap = await get(ref(db, `rooms/${roomCode}`));
-        const data = snap.val();
-        
-        const totalP = Object.keys(data.players).length;
-        const played = data.fdp_match.table ? Object.keys(data.fdp_match.table).length : 0;
-        
-        // Se todos jogaram (aqui todos jogam, não tem juiz de fora)
-        if(played >= totalP && totalP > 0) {
-            update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'VOTING' });
-        }
+        // Pequeno atraso para garantir sincronia do ultimo envio
+        setTimeout(async () => {
+            const snap = await get(ref(db, `rooms/${roomCode}`));
+            const data = snap.val();
+            
+            const players = data.players || {};
+            const table = data.fdp_match?.table || {};
+            
+            const totalPlayers = Object.keys(players).length;
+            const playedCount = Object.keys(table).length;
+            
+            // Se todos jogaram, vai para Votação
+            if(playedCount >= totalPlayers && totalPlayers > 0) {
+                update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'VOTING' });
+            }
+        }, 500);
     }
 
     async function hostCheckAllVoted() {
@@ -506,19 +505,18 @@
             const snap = await get(ref(db, `rooms/${roomCode}`));
             const data = snap.val();
             
-            const totalP = Object.keys(data.players).length;
-            const votes = data.fdp_match.votes ? Object.keys(data.fdp_match.votes).length : 0;
+            const totalPlayers = Object.keys(data.players).length;
+            const votesCount = data.fdp_match.votes ? Object.keys(data.fdp_match.votes).length : 0;
 
-            if(votes >= totalP && totalP > 0) {
+            if(votesCount >= totalPlayers && totalPlayers > 0) {
                 hostFinalizeRound(data.fdp_match.votes, data.fdp_match.table, data.fdp_match.blackCard);
             }
-        }, 800);
+        }, 500);
     }
 
     function hostFinalizeRound(votes, table, blackText) {
         if(!isHost) return;
 
-        // Contagem
         const counts = {};
         let maxVotes = 0;
         let winnerId = null;
@@ -531,26 +529,25 @@
             }
         });
 
-        // Se deu empate ou winnerId existe
         if(winnerId && table[winnerId]) {
             const winnerCard = table[winnerId];
             
-            // 1. Atualiza Estado para WINNER (Aciona Modal nos clientes)
+            // Anuncia Vencedor
             update(ref(db, `rooms/${roomCode}/fdp_match`), {
                 state: 'WINNER',
                 winner: { name: winnerCard.ownerName, text: winnerCard.text, black: blackText }
             });
 
-            // 2. Dá o ponto
+            // Pontua
             get(ref(db, `rooms/${roomCode}/players/${winnerId}/score_fdp`)).then(s => {
                 const pts = (s.val() || 0) + 1;
                 update(ref(db, `rooms/${roomCode}/players/${winnerId}`), { score_fdp: pts });
                 
-                // Se alguém ganhou o jogo, não inicia nova rodada
+                // Se ninguém ganhou o jogo todo, prepara próxima rodada
                 if(pts < 5) {
                     setTimeout(() => {
                         hostStartNewRoundClean(); 
-                    }, 6000); // 6 segundos de modal
+                    }, 6000); 
                 }
             });
         }
