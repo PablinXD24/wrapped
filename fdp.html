@@ -97,6 +97,7 @@
             transition: 0.3s;
         }
         .btn:active { transform: scale(0.95); }
+        .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; box-shadow: none; margin-top: 10px; }
 
         .score-board { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-bottom: 10px; scrollbar-width: none; }
         .player-chip { 
@@ -173,7 +174,12 @@
         <h1 style="font-size: 3rem; margin-bottom: 20px; line-height: 1; font-weight: 900;">CAMPEÃO<br>SUPREMO</h1>
         <h2 id="champion-name" style="font-size: 2.5rem; background: black; color: white; padding: 15px 40px; border-radius: 50px;">NOME</h2>
         <p style="margin-top: 30px; font-weight: bold; font-family: var(--font-data);">CHEGOU A 5 PONTOS!</p>
-        <button class="btn" style="background: black; color: white; margin-top: 50px;" onclick="location.reload()">NOVO JOGO</button>
+        
+        <div id="host-end-actions" style="width: 100%; margin-top: 40px; display: none;">
+            <button class="btn" style="background: black; color: white;" onclick="hostResetMatch()">REVANCHE 🔄</button>
+            <button class="btn btn-outline" style="border-color: black; color: black;" onclick="hostReturnToMenu()">VOLTAR AO MENU 🏠</button>
+        </div>
+        <p id="client-wait-msg" style="margin-top:40px; opacity:0.7; display:none;">Aguardando o Host decidir...</p>
     </div>
 
 </div>
@@ -207,31 +213,49 @@
     let selectedCardIdx = -1;
     let gameOver = false;
 
-    // --- FUNÇÃO DE EMERGÊNCIA GLOBAL ---
+    // --- FUNÇÕES GLOBAIS HOST ---
     window.forceNextPhase = function() {
         if(!isHost) return;
         get(ref(db, `rooms/${roomCode}/fdp_match/state`)).then(s => {
             const st = s.val();
             if(st === 'PICKING') update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'VOTING' });
             if(st === 'VOTING') {
-                // Força um vencedor se travar
                 get(ref(db, `rooms/${roomCode}/fdp_match/table`)).then(t => {
                     if(t.exists()) {
                         const entries = Object.entries(t.val());
                         const random = entries[Math.floor(Math.random() * entries.length)];
                         const black = document.getElementById('black-text').innerText;
-                        
-                        update(ref(db, `rooms/${roomCode}/fdp_match`), {
-                            state: 'WINNER',
-                            winner: { name: random[1].ownerName, text: random[1].text, black: black }
-                        });
-                        
-                        // Reseta após delay
+                        update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'WINNER', winner: { name: random[1].ownerName, text: random[1].text, black: black } });
                         setTimeout(() => hostStartNewRoundClean(), 6000);
                     }
                 });
             }
         });
+    }
+
+    window.hostResetMatch = async function() {
+        if(!isHost) return;
+        const updates = {};
+        // Resetar match
+        const nextBlack = blackCards[Math.floor(Math.random() * blackCards.length)];
+        updates[`rooms/${roomCode}/fdp_match`] = {
+            state: 'PICKING',
+            blackCard: nextBlack,
+            roundCount: 0
+        };
+        // Resetar Scores
+        const snap = await get(ref(db, `rooms/${roomCode}/players`));
+        if(snap.exists()) {
+            Object.keys(snap.val()).forEach(pid => {
+                updates[`rooms/${roomCode}/players/${pid}/score_fdp`] = 0;
+            });
+        }
+        update(ref(db), updates);
+    }
+
+    window.hostReturnToMenu = function() {
+        if(!isHost) return;
+        update(ref(db, `rooms/${roomCode}`), { status: 'lobby' });
     }
 
     /* --- DATABASE --- */
@@ -258,7 +282,7 @@
         "A grávida de Taubaté.", "Dívida no Serasa.", "Um Fiat Marea Turbo.", "Comer o cu de quem tá lendo.", "Um cadáver fresco.",
         "Pagar pensão alimentícia.", "Um travesti de 2 metros.", "Cheirar cocaína no pau de um palhaço.", "Oito litros de Corote.",
         "Demitir o estagiário.", "Calcinha comestível sabor bacon.", "Minha dignidade.", "Um peido silencioso e mortal.", "Vender foto do pé.",
-        "O Agostinho Carrara.", "Gemidão do Zap.", "Chutar mendigo.", "A harmonização facial do demônio.", "Vira-lata caramelo.",
+        "O Agostinho Carrara.", "Gemidão do Zap.", "Chutar mendigo.", "A harmonização facial do demonio.", "Vira-lata caramelo.",
         "Boleto vencido.", "Café frio e cigarro.", "Uma coxinha mordida.", "O véio da Havan.", "Um áudio de 5 minutos da sua mãe.",
         "Arroz com uva passa.", "Pavê ou pacumê.", "Um Palio 98 rebaixado.", "Churrasco de gato.", "Três reais de pão.",
         "A sandália Havaiana da sua mãe voando.", "Um PM de folga.", "Dois caras numa moto.", "O filme do Pelé.", "Uma garrafa pet no relógio de luz.",
@@ -281,7 +305,9 @@
     /* --- GAME CONNECT --- */
     const roomRef = ref(db, `rooms/${roomCode}`);
     
-    // UI Refs
+    document.getElementById('screen-game').classList.add('active');
+    document.getElementById('screen-game').style.display = 'flex';
+
     const els = {
         loading: document.getElementById('loading'),
         scoreBoard: document.getElementById('score-board'),
@@ -292,23 +318,32 @@
         btnAction: document.getElementById('btn-action'),
         modalWinner: document.getElementById('winner-modal'),
         modalGameover: document.getElementById('game-over-modal'),
-        ambilight: document.getElementById('ambilight'),
-        forceBtn: document.getElementById('btn-force')
+        forceBtn: document.getElementById('btn-force'),
+        hostActions: document.getElementById('host-end-actions'),
+        clientMsg: document.getElementById('client-wait-msg')
     };
-
-    // Inicializar
-    document.getElementById('screen-game').classList.add('active');
-    document.getElementById('screen-game').style.display = 'flex';
 
     onValue(roomRef, (snap) => {
         const data = snap.val();
         els.loading.style.display = 'none';
         if(!data) return;
 
+        // REDIRECT SE VOLTAR AO MENU
+        if(data.status === 'lobby') {
+            window.location.href = `index.html`;
+            return;
+        }
+
         if(data.host === myId) {
             isHost = true;
             els.forceBtn.style.display = 'block';
+            els.hostActions.style.display = 'block';
+            els.clientMsg.style.display = 'none';
+        } else {
+            els.hostActions.style.display = 'none';
+            els.clientMsg.style.display = 'block';
         }
+
         if(data.players && data.players[myId]) myName = data.players[myId].name;
 
         updateScoreBoard(data.players);
@@ -317,7 +352,6 @@
         if(!gameOver) {
             if(data.fdp_match) {
                 updateInterface(data.fdp_match);
-                // LÓGICA REATIVA DO HOST (Monitora o jogo sempre que algo muda)
                 if(isHost) checkRoundProgress(data);
             } else if (isHost) {
                 hostStartNewRound();
@@ -325,37 +359,32 @@
         }
     });
 
-    /* --- LÓGICA DO HOST (MONITORAMENTO) --- */
+    /* --- HOST LOGIC --- */
     function checkRoundProgress(data) {
         if(!data.fdp_match) return;
-        
         const state = data.fdp_match.state;
         const totalPlayers = Object.keys(data.players).length;
         
-        // FASE 1: TODOS JOGARAM?
         if(state === 'PICKING') {
             const playedCount = data.fdp_match.table ? Object.keys(data.fdp_match.table).length : 0;
-            // Se todos jogaram, passa para votação
             if(playedCount >= totalPlayers && totalPlayers > 0) {
                 update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'VOTING' });
             }
         }
         
-        // FASE 2: TODOS VOTARAM?
         if(state === 'VOTING') {
             const votesCount = data.fdp_match.votes ? Object.keys(data.fdp_match.votes).length : 0;
-            // Se todos votaram, finaliza
             if(votesCount >= totalPlayers && totalPlayers > 0) {
                 hostFinalizeRound(data.fdp_match.votes, data.fdp_match.table, data.fdp_match.blackCard);
             }
         }
     }
 
-    // --- SINCRONIA DE DADOS ---
     onValue(ref(db, `rooms/${roomCode}/players/${myId}/hand_fdp`), (snap) => {
         if(snap.exists()) {
             hand = snap.val();
-            if(document.getElementById('game-status').innerText.includes("ESCOLHA")) renderHand(hand);
+            const status = document.getElementById('game-status').innerText;
+            if(status.includes("ESCOLHA")) renderHand(hand);
         } else {
             fillHand();
         }
@@ -365,23 +394,19 @@
         const win = snap.val();
         if(win && !gameOver) {
             document.getElementById('winner-name').innerText = win.name;
-            document.getElementById('winner-card-display').innerHTML = `
-                <div style="font-size:0.75rem; opacity:0.6; margin-bottom:15px; border-bottom:1px solid #ccc; padding-bottom:10px;">${win.black}</div>
-                <div style="font-size:1.4rem;">${win.text}</div>
-            `;
+            document.getElementById('winner-card-display').innerHTML = `<div style="font-size:0.75rem; opacity:0.6; margin-bottom:15px; border-bottom:1px solid #ccc; padding-bottom:10px;">${win.black}</div><div style="font-size:1.4rem;">${win.text}</div>`;
             els.modalWinner.style.display = 'flex';
         } else {
             els.modalWinner.style.display = 'none';
         }
     });
 
-    /* --- UPDATE INTERFACE --- */
+    /* --- INTERFACE --- */
     function updateInterface(matchData) {
         document.getElementById('black-text').innerText = matchData.blackCard;
-        
         const colors = ['#0aff60', '#b537f2', '#ff2a6d', '#f5e625'];
         const color = colors[(matchData.roundCount || 0) % colors.length];
-        els.ambilight.style.background = `radial-gradient(circle at 50% 30%, ${color}, #000)`;
+        document.getElementById('ambilight').style.background = `radial-gradient(circle at 50% 30%, ${color}, #000)`;
 
         if(matchData.state === 'PICKING') {
             els.table.style.display = 'none';
@@ -399,6 +424,7 @@
             } else {
                 els.status.innerText = "ESCOLHA SUA MELHOR CARTA";
                 els.hand.style.display = 'flex';
+                els.btnAction.style.display = 'none'; 
                 renderHand(hand);
             }
         }
@@ -408,16 +434,12 @@
             els.table.style.display = 'grid';
             
             const myVote = matchData.votes ? matchData.votes[myId] : null;
-            if(myVote) {
-                els.status.innerText = "VOTO COMPUTADO. AGUARDANDO...";
-            } else {
-                els.status.innerText = "VOTE NA CARTA MAIS ENGRAÇADA!";
-            }
+            if(myVote) els.status.innerText = "VOTO COMPUTADO. AGUARDANDO...";
+            else els.status.innerText = "VOTE NA CARTA MAIS ENGRAÇADA!";
             renderVotingTable(matchData.table, matchData.votes, !!myVote);
         }
     }
 
-    /* --- RENDER --- */
     function renderHand(handData) {
         els.hand.innerHTML = '';
         handData.forEach((text, idx) => {
@@ -439,18 +461,15 @@
     function renderVotingTable(tableData, votesData, iVoted) {
         els.table.innerHTML = '';
         if(!tableData) return;
-
         Object.entries(tableData).forEach(([uid, item], idx) => {
             const card = document.createElement('div');
             card.className = 'fdp-card card-white table-card';
-            card.innerHTML = item.text; // MOSTRA O TEXTO PARA TODOS!
-            
+            card.innerHTML = item.text; 
             let voteCount = 0;
             if(votesData) {
                 Object.values(votesData).forEach(votedId => { if(votedId === uid) voteCount++; });
             }
             if(voteCount > 0) card.innerHTML += `<div class="vote-badge">${voteCount}</div>`;
-
             if(!iVoted && uid !== myId) {
                 card.onclick = () => { if(confirm("Votar nesta carta?")) submitVote(uid); };
             } else if (iVoted) {
@@ -474,36 +493,39 @@
     }
 
     function checkGameOver(players) {
-        if(!players || gameOver) return;
+        if(!players) return;
         let winner = null;
         Object.values(players).forEach(p => { if((p.score_fdp || 0) >= 5) winner = p.name; });
 
         if(winner) {
+            // Se já estava em game over, não faz nada
+            if(gameOver) return;
+            
             gameOver = true;
             document.getElementById('champion-name').innerText = winner;
             els.modalGameover.style.display = 'flex';
             els.modalWinner.style.display = 'none';
+        } else {
+            // Se não tem vencedor e estava true, reseta (caso de revanche)
+            if(gameOver) {
+                gameOver = false;
+                els.modalGameover.style.display = 'none';
+            }
         }
     }
 
-    /* --- ACTIONS --- */
     function submitCard() {
         if(selectedCardIdx === -1) return;
         const text = hand[selectedCardIdx];
-        
         const newHand = [...hand];
         newHand.splice(selectedCardIdx, 1);
         newHand.push(whiteCardsData[Math.floor(Math.random() * whiteCardsData.length)]);
         update(ref(db, `rooms/${roomCode}/players/${myId}`), { hand_fdp: newHand });
-
         update(ref(db, `rooms/${roomCode}/fdp_match/table/${myId}`), { text: text, ownerName: myName });
-
         els.hand.style.display = 'none';
         els.btnAction.style.display = 'none';
-        // A lógica do Host vai detectar a mudança automaticamente
     }
 
-    // CORREÇÃO CRÍTICA: USAR 'SET' PARA O VOTO
     function submitVote(targetUid) {
         set(ref(db, `rooms/${roomCode}/fdp_match/votes/${myId}`), targetUid);
     }
@@ -515,83 +537,45 @@
         hand = h;
     }
 
-    /* --- HOST --- */
     async function hostStartNewRound() {
         if(!isHost || gameOver) return;
         const matchRef = ref(db, `rooms/${roomCode}/fdp_match`);
         const s = await get(matchRef);
         const current = s.val() || { roundCount: 0 };
-        
         if(current.state === 'WINNER') return; 
-
         const nextBlack = blackCards[Math.floor(Math.random() * blackCards.length)];
-        
-        update(matchRef, {
-            state: 'PICKING',
-            blackCard: nextBlack,
-            table: null,
-            votes: null,
-            winner: null,
-            roundCount: (current.roundCount || 0) + 1
-        });
+        update(matchRef, { state: 'PICKING', blackCard: nextBlack, table: null, votes: null, winner: null, roundCount: (current.roundCount || 0) + 1 });
     }
 
     function hostFinalizeRound(votes, table, blackText) {
         if(!isHost) return;
-
         const counts = {};
         let maxVotes = 0;
         let winnerId = null;
-
         if(votes) {
             Object.values(votes).forEach(targetId => {
                 counts[targetId] = (counts[targetId] || 0) + 1;
-                if(counts[targetId] > maxVotes) {
-                    maxVotes = counts[targetId];
-                    winnerId = targetId;
-                }
+                if(counts[targetId] > maxVotes) { maxVotes = counts[targetId]; winnerId = targetId; }
             });
         }
-
-        // Se não tem vencedor (ninguém votou), pega aleatório da mesa
         if(!winnerId && table) {
              const keys = Object.keys(table);
              if(keys.length > 0) winnerId = keys[Math.floor(Math.random() * keys.length)];
         }
-
         if(winnerId && table[winnerId]) {
             const winnerCard = table[winnerId];
-            
-            update(ref(db, `rooms/${roomCode}/fdp_match`), {
-                state: 'WINNER',
-                winner: { name: winnerCard.ownerName, text: winnerCard.text, black: blackText }
-            });
-
+            update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'WINNER', winner: { name: winnerCard.ownerName, text: winnerCard.text, black: blackText } });
             get(ref(db, `rooms/${roomCode}/players/${winnerId}/score_fdp`)).then(s => {
                 const pts = (s.val() || 0) + 1;
                 update(ref(db, `rooms/${roomCode}/players/${winnerId}`), { score_fdp: pts });
-                
-                if(pts < 5) {
-                    setTimeout(() => { hostStartNewRoundClean(); }, 6000); 
-                }
+                if(pts < 5) setTimeout(() => hostStartNewRoundClean(), 6000); 
             });
         }
     }
 
     async function hostStartNewRoundClean() {
         const nextBlack = blackCards[Math.floor(Math.random() * blackCards.length)];
-        const matchRef = ref(db, `rooms/${roomCode}/fdp_match`);
-        const s = await get(matchRef);
-        const current = s.val();
-
-        update(matchRef, {
-            state: 'PICKING',
-            blackCard: nextBlack,
-            table: null,
-            votes: null,
-            winner: null,
-            roundCount: (current.roundCount || 0) + 1
-        });
+        update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'PICKING', blackCard: nextBlack, table: null, votes: null, winner: null, roundCount: (Math.floor(Math.random()*100)) });
     }
 
 </script>
