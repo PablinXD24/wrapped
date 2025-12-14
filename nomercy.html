@@ -196,6 +196,20 @@
         window.location.href = 'index.html';
     }
 
+    // --- FUNÇÃO QUE FALTAVA (CORREÇÃO DO ERRO) ---
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => {
+            s.classList.remove('active');
+            s.style.display = 'none';
+        });
+        const target = document.getElementById(id);
+        if(target) {
+            target.style.display = 'flex';
+            setTimeout(() => target.classList.add('active'), 10);
+        }
+    }
+    // ---------------------------------------------
+
     // Pega o nome do usuário e inicia
     get(ref(db, `rooms/${roomCode}/players/${myId}`)).then(snap => {
         if(snap.exists()) {
@@ -221,9 +235,7 @@
             if(myData && myData.strikes >= 3) {
                 showScreen('screen-banned');
                 document.getElementById('elim-name').innerText = myName;
-                return; // Se tá banido, para aqui (só vê a tela de ban)
-                // OBS: Para permitir que banidos assistam, teríamos que mudar a lógica, 
-                // mas o pedido foi "retirada do jogo". Vamos manter simples.
+                return; 
             }
 
             // MÁQUINA DE ESTADOS
@@ -365,7 +377,6 @@
                     setTimeout(() => startNewRound(data.players), 3000); 
                 });
                 
-                // Feedback visual na sala (opcional, pode ser adicionado status 'punish')
             } else {
                 // SAFE
                 setTimeout(() => startNewRound(data.players), 2000);
