@@ -44,6 +44,14 @@
             @media(min-width:768px){ height: 90vh; border: 1px solid rgba(255,255,255,0.1); border-radius:30px; overflow:hidden; box-shadow: 0 20px 80px rgba(0,0,0,0.6); background: rgba(0,0,0,0.2); backdrop-filter: blur(20px); }
         }
 
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; padding: 24px;
+            overflow-y: auto; scrollbar-width: none;
+        }
+        .screen.active { display: flex; animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         /* --- UI COMPONENTS --- */
         .fdp-card {
             padding: 24px; border-radius: 20px; font-weight: 700; font-size: 1.2rem; line-height: 1.3;
@@ -105,7 +113,7 @@
         }
         .score-val { background: white; color: black; width: 20px; height: 20px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
 
-        /* MODALS */
+        /* Modals */
         .modal { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.95); z-index: 200; display: none; 
@@ -113,6 +121,12 @@
             padding: 30px; text-align: center; backdrop-filter: blur(10px);
         }
         .win-screen { background: var(--neon-green); color: black; }
+        
+        .host-force-btn {
+            position: absolute; top: 10px; right: 10px; background: rgba(255,0,0,0.2); 
+            color: rgba(255,255,255,0.5); font-size: 0.6rem; padding: 5px 10px; border: 1px solid rgba(255,0,0,0.3);
+            border-radius: 5px; cursor: pointer; z-index: 9999; display: none;
+        }
         
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
         
@@ -125,6 +139,8 @@
 <div id="loading">CONECTANDO...</div>
 <div class="noise"></div>
 <div class="ambilight-bg" id="ambilight"></div>
+
+<button id="btn-force" class="host-force-btn" onclick="forceNextPhase()">⚠ FORÇAR AVANÇO</button>
 
 <div class="app-container">
 
@@ -174,7 +190,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update, push, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    /* --- SETUP --- */
+    /* --- CONFIGURAÇÃO --- */
     const firebaseConfig = {
         apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
         authDomain: "wrapped-fad94.firebaseapp.com",
@@ -198,6 +214,32 @@
     let hand = [];
     let selectedCardIdx = -1;
     let gameOver = false;
+
+    // EXPONDO FUNÇÃO GLOBAL PARA O BOTÃO DE EMERGÊNCIA
+    window.forceNextPhase = function() {
+        if(!isHost) return;
+        get(ref(db, `rooms/${roomCode}/fdp_match/state`)).then(s => {
+            const st = s.val();
+            if(st === 'PICKING') update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'VOTING' });
+            if(st === 'VOTING') {
+                // Se travar na votação, força um vencedor aleatório
+                get(ref(db, `rooms/${roomCode}/fdp_match/table`)).then(t => {
+                    if(t.exists()) {
+                        const entries = Object.entries(t.val());
+                        const random = entries[Math.floor(Math.random() * entries.length)];
+                        const black = document.getElementById('black-text').innerText;
+                        
+                        update(ref(db, `rooms/${roomCode}/fdp_match`), {
+                            state: 'WINNER',
+                            winner: { name: random[1].ownerName, text: random[1].text, black: black }
+                        });
+                        
+                        setTimeout(() => hostStartNewRoundClean(), 6000);
+                    }
+                });
+            }
+        });
+    }
 
     /* --- DATABASE --- */
     const blackCards = [
@@ -223,7 +265,7 @@
         "A grávida de Taubaté.", "Dívida no Serasa.", "Um Fiat Marea Turbo.", "Comer o cu de quem tá lendo.", "Um cadáver fresco.",
         "Pagar pensão alimentícia.", "Um travesti de 2 metros.", "Cheirar cocaína no pau de um palhaço.", "Oito litros de Corote.",
         "Demitir o estagiário.", "Calcinha comestível sabor bacon.", "Minha dignidade.", "Um peido silencioso e mortal.", "Vender foto do pé.",
-        "O Agostinho Carrara.", "Gemidão do Zap.", "Chutar mendigo.", "A harmonização facial do demônio.", "Vira-lata caramelo.",
+        "O Agostinho Carrara.", "Gemidão do Zap.", "Chutar mendigo.", "A harmonização facial do demonio.", "Vira-lata caramelo.",
         "Boleto vencido.", "Café frio e cigarro.", "Uma coxinha mordida.", "O véio da Havan.", "Um áudio de 5 minutos da sua mãe.",
         "Arroz com uva passa.", "Pavê ou pacumê.", "Um Palio 98 rebaixado.", "Churrasco de gato.", "Três reais de pão.",
         "A sandália Havaiana da sua mãe voando.", "Um PM de folga.", "Dois caras numa moto.", "O filme do Pelé.", "Uma garrafa pet no relógio de luz.",
@@ -250,12 +292,29 @@
     document.getElementById('screen-game').classList.add('active');
     document.getElementById('screen-game').style.display = 'flex';
 
+    const els = {
+        loading: document.getElementById('loading'),
+        scoreBoard: document.getElementById('score-board'),
+        status: document.getElementById('game-status'),
+        blackText: document.getElementById('black-text'),
+        table: document.getElementById('table-area'),
+        hand: document.getElementById('hand-area'),
+        btnAction: document.getElementById('btn-action'),
+        modalWinner: document.getElementById('winner-modal'),
+        modalGameover: document.getElementById('game-over-modal'),
+        ambilight: document.getElementById('ambilight'),
+        forceBtn: document.getElementById('btn-force')
+    };
+
     onValue(roomRef, (snap) => {
         const data = snap.val();
-        document.getElementById('loading').style.display = 'none';
+        els.loading.style.display = 'none';
         if(!data) return;
 
-        if(data.host === myId) isHost = true;
+        if(data.host === myId) {
+            isHost = true;
+            els.forceBtn.style.display = 'block'; // Mostra botão de emergência
+        }
         if(data.players && data.players[myId]) myName = data.players[myId].name;
 
         // Atualizar Placar
@@ -268,11 +327,39 @@
         if(!gameOver) {
             if(data.fdp_match) {
                 updateInterface(data.fdp_match);
+                // REACTIVE HOST LOGIC: Checks every time data changes
+                if(isHost) checkRoundProgress(data);
             } else if (isHost) {
                 hostStartNewRound();
             }
         }
     });
+
+    /* --- HOST REACTIVE LOGIC (O CORAÇÃO DA CORREÇÃO) --- */
+    function checkRoundProgress(data) {
+        if(!data.fdp_match) return;
+        
+        const state = data.fdp_match.state;
+        const totalPlayers = Object.keys(data.players).length;
+        
+        // CHECK FASE DE ESCOLHA (TODOS JOGARAM?)
+        if(state === 'PICKING') {
+            const playedCount = data.fdp_match.table ? Object.keys(data.fdp_match.table).length : 0;
+            // Se todos jogaram, avança para votação
+            if(playedCount >= totalPlayers && totalPlayers > 0) {
+                update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'VOTING' });
+            }
+        }
+        
+        // CHECK FASE DE VOTAÇÃO (TODOS VOTARAM?)
+        if(state === 'VOTING') {
+            const votesCount = data.fdp_match.votes ? Object.keys(data.fdp_match.votes).length : 0;
+            // Se todos votaram, finaliza round
+            if(votesCount >= totalPlayers && totalPlayers > 0) {
+                hostFinalizeRound(data.fdp_match.votes, data.fdp_match.table, data.fdp_match.blackCard);
+            }
+        }
+    }
 
     // Sincronizar Mão
     onValue(ref(db, `rooms/${roomCode}/players/${myId}/hand_fdp`), (snap) => {
@@ -291,12 +378,12 @@
         if(win && !gameOver) {
             document.getElementById('winner-name').innerText = win.name;
             document.getElementById('winner-card-display').innerHTML = `
-                <div style="font-size:0.75rem; opacity:0.6; margin-bottom:15px; border-bottom:1px solid #ccc; padding-bottom:5px;">${win.black}</div>
+                <div style="font-size:0.75rem; opacity:0.6; margin-bottom:15px; border-bottom:1px solid #ccc; padding-bottom:10px;">${win.black}</div>
                 <div style="font-size:1.4rem;">${win.text}</div>
             `;
-            document.getElementById('winner-modal').style.display = 'flex';
+            els.modalWinner.style.display = 'flex';
         } else {
-            document.getElementById('winner-modal').style.display = 'none';
+            els.modalWinner.style.display = 'none';
         }
     });
 
@@ -306,44 +393,44 @@
         
         const colors = ['#0aff60', '#b537f2', '#ff2a6d', '#f5e625'];
         const color = colors[(matchData.roundCount || 0) % colors.length];
-        document.getElementById('ambilight').style.background = `radial-gradient(circle at 50% 30%, ${color}, #000)`;
+        els.ambilight.style.background = `radial-gradient(circle at 50% 30%, ${color}, #000)`;
 
         // --- FASE 1: ESCOLHER CARTA (PICKING) ---
         if(matchData.state === 'PICKING') {
-            document.getElementById('table-area').style.display = 'none';
-            document.getElementById('winner-modal').style.display = 'none';
+            els.table.style.display = 'none';
+            els.modalWinner.style.display = 'none';
             
             const myPlay = matchData.table ? matchData.table[myId] : null;
             
             if(myPlay) {
-                document.getElementById('game-status').innerText = "ESPERANDO OS OUTROS...";
-                document.getElementById('hand-area').style.display = 'none';
-                document.getElementById('btn-action').style.display = 'none';
+                els.status.innerText = "ESPERANDO OS OUTROS...";
+                els.hand.style.display = 'none';
+                els.btnAction.style.display = 'none';
                 
                 if(matchData.table) {
                     const count = Object.keys(matchData.table).length;
-                    document.getElementById('game-status').innerText = `AGUARDANDO (${count} JOGARAM)...`;
+                    els.status.innerText = `AGUARDANDO (${count} JOGARAM)...`;
                 }
             } else {
-                document.getElementById('game-status').innerText = "ESCOLHA SUA MELHOR CARTA";
-                document.getElementById('hand-area').style.display = 'flex';
-                document.getElementById('btn-action').style.display = 'none'; 
+                els.status.innerText = "ESCOLHA SUA MELHOR CARTA";
+                els.hand.style.display = 'flex';
+                els.btnAction.style.display = 'none'; 
                 renderHand(hand);
             }
         }
 
         // --- FASE 2: VOTAÇÃO (DEMOCRACIA) ---
         else if (matchData.state === 'VOTING') {
-            document.getElementById('hand-area').style.display = 'none';
-            document.getElementById('btn-action').style.display = 'none';
-            document.getElementById('table-area').style.display = 'grid';
+            els.hand.style.display = 'none';
+            els.btnAction.style.display = 'none';
+            els.table.style.display = 'grid';
             
             const myVote = matchData.votes ? matchData.votes[myId] : null;
             
             if(myVote) {
-                document.getElementById('game-status').innerText = "VOTO COMPUTADO. AGUARDANDO...";
+                els.status.innerText = "VOTO COMPUTADO. AGUARDANDO...";
             } else {
-                document.getElementById('game-status').innerText = "VOTE NA CARTA MAIS ENGRAÇADA!";
+                els.status.innerText = "VOTE NA CARTA MAIS ENGRAÇADA!";
             }
 
             renderVotingTable(matchData.table, matchData.votes, !!myVote);
@@ -352,8 +439,7 @@
 
     /* --- RENDER FUNCTIONS --- */
     function renderHand(handData) {
-        const div = document.getElementById('hand-area');
-        div.innerHTML = '';
+        els.hand.innerHTML = '';
         handData.forEach((text, idx) => {
             const card = document.createElement('div');
             card.className = 'fdp-card card-white hand-card';
@@ -362,25 +448,22 @@
                 document.querySelectorAll('.hand-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 selectedCardIdx = idx;
-                const btn = document.getElementById('btn-action');
-                btn.style.display = 'block';
-                btn.innerText = "JOGAR CARTA";
-                btn.onclick = submitCard;
+                els.btnAction.style.display = 'block';
+                els.btnAction.innerText = "JOGAR CARTA";
+                els.btnAction.onclick = submitCard;
             };
-            div.appendChild(card);
+            els.hand.appendChild(card);
         });
     }
 
     function renderVotingTable(tableData, votesData, iVoted) {
-        const div = document.getElementById('table-area');
-        div.innerHTML = '';
+        els.table.innerHTML = '';
         if(!tableData) return;
 
         Object.entries(tableData).forEach(([uid, item], idx) => {
             const card = document.createElement('div');
             card.className = 'fdp-card card-white table-card';
-            
-            card.innerHTML = item.text; // MOSTRA O TEXTO!
+            card.innerHTML = item.text; 
             
             let voteCount = 0;
             if(votesData) {
@@ -399,17 +482,16 @@
                      card.style.opacity = "1";
                 }
             }
-            div.appendChild(card);
+            els.table.appendChild(card);
         });
     }
 
     function updateScoreBoard(players) {
-        const div = document.getElementById('score-board');
-        div.innerHTML = '';
+        els.scoreBoard.innerHTML = '';
         if(!players) return;
         Object.values(players).forEach(p => {
             const score = p.score_fdp || 0;
-            div.innerHTML += `<div class="player-chip"><span>${p.name}</span><div class="score-val">${score}</div></div>`;
+            els.scoreBoard.innerHTML += `<div class="player-chip"><span>${p.name}</span><div class="score-val">${score}</div></div>`;
         });
     }
 
@@ -423,8 +505,8 @@
         if(winner) {
             gameOver = true;
             document.getElementById('champion-name').innerText = winner;
-            document.getElementById('game-over-modal').style.display = 'flex';
-            document.getElementById('winner-modal').style.display = 'none';
+            els.modalGameover.style.display = 'flex';
+            els.modalWinner.style.display = 'none';
         }
     }
 
@@ -440,14 +522,13 @@
 
         update(ref(db, `rooms/${roomCode}/fdp_match/table/${myId}`), { text: text, ownerName: myName });
 
-        document.getElementById('hand-area').style.display = 'none';
-        document.getElementById('btn-action').style.display = 'none';
-        hostCheckAllPlayed();
+        els.hand.style.display = 'none';
+        els.btnAction.style.display = 'none';
+        // Não chamamos checkManual aqui mais, deixamos o listener do host fazer
     }
 
     function submitVote(targetUid) {
         update(ref(db, `rooms/${roomCode}/fdp_match/votes/${myId}`), targetUid);
-        hostCheckAllVoted();
     }
 
     function fillHand() {
@@ -464,7 +545,7 @@
         const s = await get(matchRef);
         const current = s.val() || { roundCount: 0 };
         
-        if(current.state === 'WINNER') return; 
+        if(current.state === 'WINNER') return; // Bloqueia reset duplo
 
         const nextBlack = blackCards[Math.floor(Math.random() * blackCards.length)];
         
@@ -478,42 +559,6 @@
         });
     }
 
-    // CORREÇÃO CRÍTICA NA CONTAGEM
-    async function hostCheckAllPlayed() {
-        if(!isHost) return;
-        // Pequeno atraso para garantir sincronia do ultimo envio
-        setTimeout(async () => {
-            const snap = await get(ref(db, `rooms/${roomCode}`));
-            const data = snap.val();
-            
-            const players = data.players || {};
-            const table = data.fdp_match?.table || {};
-            
-            const totalPlayers = Object.keys(players).length;
-            const playedCount = Object.keys(table).length;
-            
-            // Se todos jogaram, vai para Votação
-            if(playedCount >= totalPlayers && totalPlayers > 0) {
-                update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'VOTING' });
-            }
-        }, 500);
-    }
-
-    async function hostCheckAllVoted() {
-        if(!isHost) return;
-        setTimeout(async () => {
-            const snap = await get(ref(db, `rooms/${roomCode}`));
-            const data = snap.val();
-            
-            const totalPlayers = Object.keys(data.players).length;
-            const votesCount = data.fdp_match.votes ? Object.keys(data.fdp_match.votes).length : 0;
-
-            if(votesCount >= totalPlayers && totalPlayers > 0) {
-                hostFinalizeRound(data.fdp_match.votes, data.fdp_match.table, data.fdp_match.blackCard);
-            }
-        }, 500);
-    }
-
     function hostFinalizeRound(votes, table, blackText) {
         if(!isHost) return;
 
@@ -521,18 +566,24 @@
         let maxVotes = 0;
         let winnerId = null;
 
-        Object.values(votes).forEach(targetId => {
-            counts[targetId] = (counts[targetId] || 0) + 1;
-            if(counts[targetId] > maxVotes) {
-                maxVotes = counts[targetId];
-                winnerId = targetId;
-            }
-        });
+        if(votes) {
+            Object.values(votes).forEach(targetId => {
+                counts[targetId] = (counts[targetId] || 0) + 1;
+                if(counts[targetId] > maxVotes) {
+                    maxVotes = counts[targetId];
+                    winnerId = targetId;
+                }
+            });
+        } else {
+            // Fallback se ninguém votar: escolhe aleatório da mesa
+            const entries = Object.keys(table);
+            winnerId = entries[Math.floor(Math.random() * entries.length)];
+        }
 
         if(winnerId && table[winnerId]) {
             const winnerCard = table[winnerId];
             
-            // Anuncia Vencedor
+            // Anuncia Vencedor (Isso ativa o modal nos clientes)
             update(ref(db, `rooms/${roomCode}/fdp_match`), {
                 state: 'WINNER',
                 winner: { name: winnerCard.ownerName, text: winnerCard.text, black: blackText }
