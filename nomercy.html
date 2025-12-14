@@ -78,8 +78,10 @@
 
         /* Voting UI */
         .vote-row { display: flex; gap: 15px; width: 100%; margin-top: 20px; }
-        .btn-fail { background: rgba(255, 50, 50, 0.15); border: 2px solid var(--neon-red); color: var(--neon-red); }
-        .btn-pass { background: rgba(30, 215, 96, 0.15); border: 2px solid var(--neon-green); color: var(--neon-green); }
+        .btn-fail { background: rgba(255, 50, 50, 0.15); border: 2px solid var(--neon-red); color: var(--neon-red); transition: 0.2s; }
+        .btn-pass { background: rgba(30, 215, 96, 0.15); border: 2px solid var(--neon-green); color: var(--neon-green); transition: 0.2s; }
+        
+        .btn-fail:active, .btn-pass:active { transform: scale(0.95); opacity: 0.8; }
 
         /* Effects */
         .pulse-text { animation: pulse 1.5s infinite; }
@@ -116,10 +118,10 @@
     <div id="controls-area" style="width: 100%;">
         </div>
     
-    <p id="wait-msg" class="pulse-text" style="margin-top:20px; display:none;">Aguardando ação...</p>
+    <p id="wait-msg" class="pulse-text" style="margin-top:20px; display:none; font-family: var(--font-data); font-size: 0.8rem;"></p>
 </div>
 
-<div id="screen-voting-ui" style="display:none; width:100%;">
+<div id="template-voting-ui" style="display:none; width:100%;">
     <p>O desafio foi cumprido?</p>
     <div class="vote-row">
         <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ (STRIKE)</button>
@@ -127,9 +129,9 @@
     </div>
 </div>
 
-<div id="screen-action-ui" style="display:none; width:100%;">
-    <p>Cumpra o desafio para sobreviver.</p>
-    <button class="btn" style="background: white; color: black;" onclick="triggerVoting()">JÁ FIZ (JULGAMENTO)</button>
+<div id="template-action-ui" style="display:none; width:100%;">
+    <p class="pulse-text" style="color: var(--neon-green);">Cumpra o desafio!</p>
+    <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 10px;">O grupo está votando...</p>
 </div>
 
 <div id="screen-banned" class="screen" style="background: #1a0000;">
@@ -152,7 +154,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // Use a mesma config do Wrapped
     const firebaseConfig = {
         apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
         authDomain: "wrapped-fad94.firebaseapp.com",
@@ -182,21 +183,19 @@
         "Revele quem do grupo você beijaria."
     ];
 
-    // Setup Inicial
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get('room');
     const myId = localStorage.getItem('wrapped_uid');
     
     let myName = "Player";
     let amIHost = false;
-    let localStrikes = 0;
 
     if(!roomCode || !myId) {
         alert("Erro: Entre pelo Wrapped.");
         window.location.href = 'index.html';
     }
 
-    // --- FUNÇÃO QUE FALTAVA (CORREÇÃO DO ERRO) ---
+    // --- FUNÇÃO DE UTILIDADE ---
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => {
             s.classList.remove('active');
@@ -208,13 +207,11 @@
             setTimeout(() => target.classList.add('active'), 10);
         }
     }
-    // ---------------------------------------------
+    // ---------------------------
 
-    // Pega o nome do usuário e inicia
     get(ref(db, `rooms/${roomCode}/players/${myId}`)).then(snap => {
         if(snap.exists()) {
             myName = snap.val().name;
-            // Inicializa strikes se não existir
             update(ref(db, `rooms/${roomCode}/players/${myId}`), { strikes: 0 });
         }
         initGameLoop();
@@ -230,15 +227,20 @@
             document.getElementById('loading').style.display = 'none';
             if(data.host === myId) amIHost = true;
 
-            // STATUS: BANIDO
+            // CHECAGEM DE BANIMENTO (LOCAL)
             const myData = data.players[myId];
             if(myData && myData.strikes >= 3) {
                 showScreen('screen-banned');
                 document.getElementById('elim-name').innerText = myName;
+                
+                // Se banido for Host e estivermos em round, ele ainda precisa calcular votos
+                if(amIHost && data.nomercy_status === 'round') {
+                    checkVotes(data);
+                }
                 return; 
             }
 
-            // MÁQUINA DE ESTADOS
+            // ESTADOS DO JOGO
             if(data.nomercy_status === 'game_over') {
                 showScreen('screen-winner');
                 document.getElementById('winner-name').innerText = data.winnerName;
@@ -246,10 +248,13 @@
             else if(data.nomercy_status === 'round') {
                 showScreen('screen-game');
                 renderGameRound(data);
+                
+                // HOST CHECA VOTOS A CADA ATUALIZAÇÃO
+                if(amIHost) checkVotes(data);
             }
             else {
-                // Início ou Lobby interno
-                if(amIHost) startNewRound(data.players); // Host inicia o 1º round
+                // Lobby inicial
+                if(amIHost) startNewRound(data.players); 
                 else document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
             }
         });
@@ -260,77 +265,54 @@
         const isMyTurn = (currentPlayerId === myId);
         const playerStrikes = data.players[currentPlayerId].strikes || 0;
 
-        // Infos visuais
         document.getElementById('current-player-name').innerText = data.roundPlayerName;
         document.getElementById('challenge-text').innerText = data.roundChallenge;
         
-        // Renderizar bolinhas de strike
+        // Renderizar Strikes
         document.getElementById('s1').className = playerStrikes >= 1 ? 'strike-dot active' : 'strike-dot';
         document.getElementById('s2').className = playerStrikes >= 2 ? 'strike-dot active' : 'strike-dot';
         document.getElementById('s3').className = playerStrikes >= 3 ? 'strike-dot active' : 'strike-dot';
 
-        // Lógica de Controles
+        // Lógica de UI (SIMULTÂNEA)
         const controls = document.getElementById('controls-area');
-        controls.innerHTML = ""; // Limpa
-        document.getElementById('wait-msg').style.display = 'none';
+        controls.innerHTML = "";
+        
+        const waitMsg = document.getElementById('wait-msg');
+        waitMsg.style.display = 'none';
 
-        if(data.roundState === 'action') {
-            if(isMyTurn) {
-                // Minha vez: Botão de "Já fiz"
-                const ui = document.getElementById('screen-action-ui').cloneNode(true);
+        if(isMyTurn) {
+            // Jogador vê instrução apenas
+            const ui = document.getElementById('template-action-ui').cloneNode(true);
+            ui.style.display = 'block';
+            controls.appendChild(ui);
+        } else {
+            // Todos os outros veem VOTAÇÃO IMEDIATAMENTE
+            const myVote = data.roundVotes ? data.roundVotes[myId] : null;
+
+            if(myVote) {
+                // Já votou
+                waitMsg.innerText = `Voto registrado: ${myVote === 'pass' ? 'FEZ 👍' : 'NÃO FEZ 👎'}`;
+                waitMsg.style.display = 'block';
+            } else {
+                // Não votou: Mostra botões
+                const ui = document.getElementById('template-voting-ui').cloneNode(true);
                 ui.style.display = 'block';
                 controls.appendChild(ui);
-            } else {
-                // Vez do outro: Apenas espera
-                document.getElementById('wait-msg').innerText = `${data.roundPlayerName} está cumprindo o desafio...`;
-                document.getElementById('wait-msg').style.display = 'block';
             }
-        } 
-        else if(data.roundState === 'voting') {
-            if(isMyTurn) {
-                // Minha vez: Reze
-                document.getElementById('wait-msg').innerText = "O grupo está votando seu destino...";
-                document.getElementById('wait-msg').style.display = 'block';
-            } else {
-                // Vez do outro: Eu voto
-                const hasVoted = data.roundVotes && data.roundVotes[myId];
-                if(hasVoted) {
-                    document.getElementById('wait-msg').innerText = "Voto registrado.";
-                    document.getElementById('wait-msg').style.display = 'block';
-                } else {
-                    const ui = document.getElementById('screen-voting-ui').cloneNode(true);
-                    ui.style.display = 'block';
-                    controls.appendChild(ui);
-                }
-            }
-            
-            // Host processa votos
-            if(amIHost) checkVotes(data);
         }
     }
 
-    // --- AÇÕES ---
-
-    window.triggerVoting = function() {
-        update(ref(db, `rooms/${roomCode}`), { roundState: 'voting', roundVotes: {} });
-    }
-
     window.castVote = function(vote) {
-        // vote: 'pass' or 'fail'
         set(ref(db, `rooms/${roomCode}/roundVotes/${myId}`), vote);
-        // Feedback visual imediato
-        document.getElementById('controls-area').innerHTML = '<p class="pulse-text">Voto enviado.</p>';
     }
 
     // --- LÓGICA DO HOST ---
 
     function startNewRound(players) {
-        // Filtra quem tem menos de 3 strikes
         const activeIds = Object.keys(players).filter(id => (players[id].strikes || 0) < 3);
 
-        if(activeIds.length === 0) return; // Ninguém?
+        if(activeIds.length === 0) return;
         if(activeIds.length === 1) {
-            // Temos um vencedor
             update(ref(db, `rooms/${roomCode}`), { 
                 nomercy_status: 'game_over', 
                 winnerName: players[activeIds[0]].name 
@@ -347,19 +329,20 @@
             roundPlayer: rndId,
             roundPlayerName: rndName,
             roundChallenge: rndChall,
-            roundState: 'action', // action -> voting
             roundVotes: null
         });
     }
 
     function checkVotes(data) {
         const votes = data.roundVotes || {};
-        const activePlayersCount = Object.values(data.players).filter(p => (p.strikes||0) < 3).length;
-        // O jogador da vez não vota, então total esperado é active - 1
-        const expectedVotes = activePlayersCount - 1;
+        const activePlayers = Object.values(data.players).filter(p => (p.strikes||0) < 3);
+        const totalVoters = activePlayers.length - 1; // O jogador da vez não vota
+        
         const votesCast = Object.keys(votes).length;
 
-        if(votesCast >= expectedVotes && expectedVotes > 0) {
+        // Se todos (ou a maioria suficiente) votaram
+        if(votesCast >= totalVoters && totalVoters > 0) {
+            
             // Processar resultado
             let fails = 0;
             Object.values(votes).forEach(v => { if(v==='fail') fails++; });
@@ -370,19 +353,24 @@
                 const pid = data.roundPlayer;
                 const currentStrikes = (data.players[pid].strikes || 0) + 1;
                 
-                // Atualiza strikes
+                // Atualiza strikes e reinicia
                 update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: currentStrikes })
                 .then(() => {
-                    // Espera um pouco para mostrar o drama
-                    setTimeout(() => startNewRound(data.players), 3000); 
+                    setTimeout(() => startNewRound(data.players), 2500); 
                 });
                 
             } else {
                 // SAFE
-                setTimeout(() => startNewRound(data.players), 2000);
+                setTimeout(() => startNewRound(data.players), 1500);
             }
+            
+            // Trava para não rodar múltiplas vezes enquanto espera o timeout
+            update(ref(db, `rooms/${roomCode}`), { roundVotes: { ...votes, processed: true } });
         }
     }
+    
+    // EXPOSIÇÃO GLOBAL
+    window.castVote = castVote;
 
 </script>
 </body>
