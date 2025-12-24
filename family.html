@@ -83,8 +83,6 @@
         .vote-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; padding-bottom: 80px; }
         .vote-card { background: white; border: 1px solid rgba(0,0,0,0.08); padding: 15px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; transition: 0.2s; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         .vote-card:active { background: var(--text-main); color: white; transform: scale(0.95); }
-        
-        /* ESTILO NOVO: Card Selecionado (para Match) */
         .vote-card.selected { border: 3px solid var(--neon-blue); background: rgba(52, 152, 219, 0.1); transform: scale(0.95); }
 
         .avatar { width: 45px; height: 45px; background: rgba(0,0,0,0.08); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; color: var(--text-main); }
@@ -360,7 +358,7 @@
     <div id="screen-tribunal" class="screen" style="text-align: center; border: 4px solid var(--neon-red);">
         <div style="background: var(--neon-red); color: white; padding: 5px 15px; border-radius: 50px; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-weight: bold; font-size: 0.8rem;">TRIBUNAL EM SESSÃO</div>
         
-        <h3 id="tribunal-round-info" style="margin-top: 50px; opacity: 0.7;">PERGUNTA 1/5</h3>
+        <h3 id="tribunal-round-info" style="margin-top: 50px; opacity: 0.7;">REVISÃO DE VOTOS</h3>
         <h1 id="tribunal-q" style="font-size: 1.5rem; margin: 20px 0; min-height: 60px;">...</h1>
         
         <div class="vs-container">
@@ -447,13 +445,8 @@
         { type: 'vote', q: "Quem reclama da comida?", roast: ["Crítico gastronômico.", "Falta sal.", "A da minha mãe é melhor."] }
     ];
 
-    const duelQuestions = [
-        "Quem venderia o outro por um Tupperware?",
-        "Quem sobreviveria a um almoço sem carne?",
-        "Quem chora assistindo novela?",
-        "Quem tem o pior gosto musical?",
-        "Quem seria deserdado primeiro?"
-    ];
+    // Array duelQuestions não é mais usado na nova lógica, mas mantido para evitar erros de referência se houver
+    const duelQuestions = [];
 
     const themes = ["#2ecc71", "#e74c3c", "#3498db", "#f1c40f", "#e91e63"];
 
@@ -478,21 +471,10 @@
     let protestCatSelected = "";
     let courtHistoryData = [];
     let courtSlideIdx = 0;
-    let matchBuffer = []; // Buffer para votos duplos
+    let matchBuffer = []; 
 
-    // --- NOVA FUNÇÃO DE INÍCIO FDP ---
-    function startFDP() {
-        if(confirm("Iniciar modo FDP (Cartas)? Isso vai redirecionar todos.")) {
-            update(roomRef, { status: 'redirecting_to_fdp' });
-        }
-    };
-
-    // --- NOVA FUNÇÃO DE INÍCIO NO MERCY ---
-    function startNoMercy() {
-        if(confirm("Iniciar NO MERCY? O jogo ficará pesado.")) {
-            update(roomRef, { status: 'redirecting_to_nomercy' });
-        }
-    };
+    function startFDP() { if(confirm("Iniciar modo FDP (Cartas)?")) update(roomRef, { status: 'redirecting_to_fdp' }); };
+    function startNoMercy() { if(confirm("Iniciar NO MERCY?")) update(roomRef, { status: 'redirecting_to_nomercy' }); };
 
     function resetGameUI() {
         clearTimeout(timer);
@@ -555,7 +537,7 @@
 
             if(data.status === 'redirecting_to_fdp') { window.location.href = `fdp.html?room=${roomCode}`; return; }
             if(data.status === 'redirecting_to_nomercy') { window.location.href = `nomercy.html?room=${roomCode}`; return; }
-            if(data.status === 'redirecting_to_family') { } // Ignora
+            if(data.status === 'redirecting_to_family') { } 
 
             currentPlayers = {};
             const list = document.getElementById('lobby-list');
@@ -646,12 +628,10 @@
         const q = questions[localQIdx];
         const theme = themes[localQIdx % themes.length];
         
-        // Reset buffers
         matchBuffer = [];
 
         document.getElementById('q-text').innerText = q.q;
         
-        // Match specific UI
         const subText = document.getElementById('q-sub');
         if(q.type === 'match') {
             subText.style.display = 'block';
@@ -671,45 +651,30 @@
             const div = document.createElement('div');
             div.className = 'vote-card';
             div.innerHTML = `<div class="avatar">${name[0]}</div><span>${name}</span>`;
-            
-            // Alterado para usar nova função de clique
             div.onclick = function() { handleVoteClick(name, this); };
-            
             grid.appendChild(div);
         });
     }
 
-    // --- NOVA FUNÇÃO DE CLIQUE ---
     function handleVoteClick(targetName, cardElement) {
         const q = questions[localQIdx];
 
         if (q.type === 'vote') {
-            // Voto simples: envia direto
             castVote(targetName);
         } else if (q.type === 'match') {
-            // Lógica de Match (Dupla)
             if (matchBuffer.includes(targetName)) {
-                // Se já clicou, remove (desmarcar)
                 matchBuffer = matchBuffer.filter(n => n !== targetName);
                 cardElement.classList.remove('selected');
             } else {
-                // Se não clicou, adiciona se tiver espaço
                 if (matchBuffer.length < 2) {
                     matchBuffer.push(targetName);
                     cardElement.classList.add('selected');
                 }
             }
-
-            // Se selecionou 2, envia
             if (matchBuffer.length === 2) {
-                // Ordena para garantir que "João + Maria" seja igual a "Maria + João"
                 matchBuffer.sort();
                 const pairString = matchBuffer.join(' + ');
-                
-                // Pequeno delay para feedback visual
-                setTimeout(() => {
-                    castVote(pairString);
-                }, 300);
+                setTimeout(() => { castVote(pairString); }, 300);
             }
         }
     }
@@ -751,10 +716,7 @@
             calcRes[idx] = counts;
             const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
             if(sorted.length > 0) {
-                const w = sorted[0][0]; // Pode ser "Nome" ou "Nome1 + Nome2"
-                
-                // Só conta vitórias individuais para perguntas tipo 'vote'
-                // Perguntas match não somam no MVP individual (opcional, mas faz sentido)
+                const w = sorted[0][0]; 
                 if(q.type === 'vote') {
                     if(wins[w]!==undefined) wins[w]++;
                     Object.entries(counts).forEach(([p,c]) => { if(totalV[p]!==undefined) totalV[p]+=c; });
@@ -841,11 +803,8 @@
             
             if(q.type === 'match') {
                 document.getElementById('res-match-container').style.display='block';
-                
-                // Parse do resultado "NomeA + NomeB"
                 const winnerString = sorted[0] ? sorted[0][0] : "? + ?";
                 const names = winnerString.split(' + ');
-                
                 document.getElementById('m-name-1').innerText = names[0] ? names[0] : "?";
                 document.getElementById('m-name-2').innerText = names[1] ? names[1] : "?";
             } else {
@@ -949,26 +908,17 @@
         const list = document.getElementById('protest-cat-list');
         list.innerHTML = '';
         let found = false;
-
         questions.forEach((q, idx) => {
             if(q.type === 'vote' && finalResults[idx]) {
                 const res = finalResults[idx];
                 const sorted = Object.entries(res).sort((a,b)=>b[1]-a[1]);
                 if(sorted.length > 0 && sorted[0][0] === myName) {
                     found = true;
-                    list.innerHTML += `
-                        <button class="cat-btn" onclick="showOffenders(${idx}, '${q.q}')">
-                            <span>${q.q}</span>
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                    `;
+                    list.innerHTML += `<button class="cat-btn" onclick="showOffenders(${idx}, '${q.q}')"><span>${q.q}</span><i class="fa-solid fa-chevron-right"></i></button>`;
                 }
             }
         });
-
-        if(!found) {
-            list.innerHTML = "<p>Você não ganhou nada para protestar.</p>";
-        }
+        if(!found) list.innerHTML = "<p>Você não ganhou nada para protestar.</p>";
         showScreen('screen-protest-menu');
     }
 
@@ -986,9 +936,7 @@
         const allVotes = fullRoomData.votes[qIdx] || {};
         const culprits = [];
         Object.entries(allVotes).forEach(([voterId, targetName]) => {
-            if(targetName === myName) {
-                culprits.push(voterId);
-            }
+            if(targetName === myName) culprits.push(voterId);
         });
 
         if(culprits.length === 0) { alert("Ninguém votou em você aqui."); return; }
@@ -1007,12 +955,9 @@
     function queueProtest(defendantId, defendantName) {
         if(confirm(`Processar ${defendantName} por "${protestCatSelected}"?`)) {
             const queueData = {
-                accuser: myId,
-                accuserName: myName,
-                defendant: defendantId,
-                defendantName: defendantName,
-                category: protestCatSelected,
-                timestamp: Date.now()
+                accuser: myId, accuserName: myName,
+                defendant: defendantId, defendantName: defendantName,
+                category: protestCatSelected, timestamp: Date.now()
             };
             push(ref(db, `rooms/${roomCode}/protestQueue`), queueData);
             update(ref(db, `rooms/${roomCode}`), { status: 'court_lobby' });
@@ -1074,8 +1019,9 @@
         const isDefendant = (myId === pData.defendant);
         const isJury = !isAccuser && !isDefendant;
 
-        document.getElementById('tribunal-round-info').innerText = `PERGUNTA ${pData.round + 1}/5`;
-        document.getElementById('tribunal-q').innerText = duelQuestions[pData.round];
+        // --- CORREÇÃO SOLICITADA ---
+        document.getElementById('tribunal-round-info').innerText = "REVISÃO DE VOTOS";
+        document.getElementById('tribunal-q').innerText = pData.category; // Usa a categoria original
         
         document.getElementById('vs-av-1').innerText = pData.accuserName[0];
         document.getElementById('vs-name-1').innerText = pData.accuserName;
@@ -1102,6 +1048,7 @@
                 document.getElementById('silence-area').style.display = 'none';
             }
         } else {
+            // Protestante e Desafiado não votam
             document.getElementById('jury-area').style.display = 'none';
             document.getElementById('silence-area').style.display = 'flex';
             document.querySelector('#silence-area h2').innerText = "SILÊNCIO!";
@@ -1116,15 +1063,12 @@
             if(votesCast >= juryCount && juryCount > 0) {
                 let aCount = 0; let dCount = 0;
                 Object.values(currentVotes).forEach(v => v === 'accuser' ? aCount++ : dCount++);
-                const winner = aCount > dCount ? 'accuser' : 'defendant';
+                
+                // Envia contagem direta e encerra
+                const finalScores = { accuser: aCount, defendant: dCount };
+                
                 setTimeout(() => {
-                    const newScores = pData.scores || { accuser: 0, defendant: 0 };
-                    newScores[winner]++;
-                    if(pData.round < 4) {
-                        update(ref(db, `rooms/${roomCode}/currentCase`), { round: pData.round + 1, scores: newScores });
-                    } else {
-                        endTribunal(newScores, pData);
-                    }
+                    endTribunal(finalScores, pData);
                 }, 1500);
             }
         }
@@ -1143,52 +1087,43 @@
         const caseResult = {
             winner: winnerName,
             loser: (winnerName === pData.accuserName ? pData.defendantName : pData.accuserName),
-            score: `${scores.accuser} - ${scores.defendant}`,
+            score: `${scores.accuser} - ${scores.defendant}`, // Exibe placar real
             category: pData.category
         };
         push(ref(db, `rooms/${roomCode}/courtHistory`), caseResult);
         if(pData.queueKey) remove(ref(db, `rooms/${roomCode}/protestQueue/${pData.queueKey}`));
         update(ref(db, `rooms/${roomCode}`), { status: 'court_lobby', currentCase: null });
-        alert(`JULGAMENTO ENCERRADO!`);
+        alert(`JULGAMENTO ENCERRADO! Vencedor: ${winnerName}`);
     }
 
-    // --- SHARE FUNCTION FIXED ---
     async function processShare(type) { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); };
     
     async function shareSlide() {
         isPaused = true; 
         clearTimeout(timer);
-        
         const btnShare = document.getElementById('btn-share');
         const oldIcon = btnShare.innerHTML;
         btnShare.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
-
         const activeNav = document.querySelector('.nav-fill.active'); 
         if(activeNav) activeNav.classList.add('paused');
-        
         const canvasEl = document.getElementById('export-canvas');
         const q = questions[slideIdx];
         const theme = themes[slideIdx % themes.length];
-
         canvasEl.style.display = 'flex';
-        
         const bgLayer = document.getElementById('ex-bg');
         if(slideIdx >= questions.length) { 
              const award = awardSlides[slideIdx - questions.length];
              if(award.type === 'cover') bgLayer.style.background = '#000';
              else bgLayer.style.background = '#fff';
         } else {
-             // Ajuste para canvas export no modo light
              bgLayer.style.background = `radial-gradient(circle at 50% 50%, ${theme}, #fff)`;
         }
-
         const isAwardPhase = slideIdx >= questions.length;
         document.getElementById('ex-standard-ui').style.display = 'none';
         document.getElementById('ex-match-ui').style.display = 'none';
         document.getElementById('ex-match-text').style.display = 'none';
         document.getElementById('ex-white-ui').style.display = 'none';
         document.getElementById('ex-intro-ui').style.display = 'none';
-
         if(isAwardPhase) {
             const award = awardSlides[slideIdx - questions.length];
             if(award.type === 'cover') {
@@ -1205,37 +1140,28 @@
             document.getElementById('ex-cat').innerText = q.q;
             const results = finalResults[slideIdx] || {};
             const sorted = Object.entries(results).sort((a,b) => b[1] - a[1]);
-            
             if(q.type === 'match') {
                 document.getElementById('ex-match-ui').style.display = 'flex';
                 document.getElementById('ex-match-text').style.display = 'block';
-                
-                // Parse do match (NomeA + NomeB)
                 const winnerString = sorted[0] ? sorted[0][0] : "? + ?";
                 const names = winnerString.split(' + ');
-
                 document.getElementById('ex-m-p1').innerText = names[0] ? names[0][0] : "?";
                 document.getElementById('ex-m-p2').innerText = names[1] ? names[1][0] : "?";
             } else {
                 document.getElementById('ex-standard-ui').style.display = 'block';
                 document.getElementById('ex-winner').innerText = sorted[0] ? sorted[0][0] : "Ninguém";
                 document.getElementById('ex-roast').innerText = q.roast[1] || "...";
-                
                 const dataHTML = document.getElementById('res-data').innerHTML;
                 const exData = document.getElementById('ex-data');
                 exData.innerHTML = dataHTML;
-                
                 exData.querySelectorAll('.data-row').forEach(row => { 
-                    row.style.fontSize = '3rem'; 
-                    row.style.marginBottom = '40px'; 
-                    row.style.fontWeight = 'bold'; 
+                    row.style.fontSize = '3rem'; row.style.marginBottom = '40px'; row.style.fontWeight = 'bold'; 
                 });
                 exData.querySelectorAll('.data-bar-fill').forEach(bar => { 
                     bar.style.backgroundColor = 'var(--text-main)'; 
                 });
             }
         }
-
         setTimeout(async () => {
             try {
                 const canvas = await html2canvas(canvasEl, { scale: 1, useCORS: true, logging: false, allowTaint: true }); 
@@ -1244,23 +1170,14 @@
                     document.getElementById('share-modal').style.display = 'flex'; 
                     btnShare.innerHTML = oldIcon; 
                 }); 
-            } catch(e) { 
-                console.error(e);
-                alert("Erro ao criar imagem.");
-                closeShareModal(); 
-                btnShare.innerHTML = oldIcon; 
-            } finally {
-                document.getElementById('export-canvas').style.display = 'none';
-            }
+            } catch(e) { console.error(e); alert("Erro ao criar imagem."); closeShareModal(); btnShare.innerHTML = oldIcon; } finally { document.getElementById('export-canvas').style.display = 'none'; }
         }, 100); 
     }
 
     function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { slideIdx++; loadSlide(); }, 2000); }
 
-    // --- AUTO-JOIN LOGIC FOR FAMILY MODE ---
     const urlParams = new URLSearchParams(window.location.search);
     const autoRoomCode = urlParams.get('room');
-
     if(autoRoomCode) {
         get(child(ref(db), `rooms/${autoRoomCode}/players/${myId}`)).then((snapshot) => {
             if (snapshot.exists()) {
@@ -1275,7 +1192,6 @@
         });
     }
 
-    // --- EXPOSIÇÃO GLOBAL ---
     window.goToMenu = goToMenu;
     window.createRoomReal = createRoomReal;
     window.showJoinInput = showJoinInput;
