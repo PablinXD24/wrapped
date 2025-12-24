@@ -237,6 +237,9 @@
             <p id="simulation-status" style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 10px;">...</p>
             
             <button id="btn-start-game" class="btn" style="background: var(--neon-green); display:none;" onclick="startGameReal()">INICIAR WRAPPED</button>
+            
+            <button id="btn-start-family" class="btn" style="background: var(--neon-blue); display:none; color: white;" onclick="startFamily()">👨‍👩‍👧‍👦 MODO FAMÍLIA</button>
+
             <button id="btn-start-fdp" class="btn" style="background: var(--neon-purple); display:none; color: white;" onclick="startFDP()">JOGAR FDP 🔞</button>
             
             <button id="btn-start-nomercy" class="btn" style="background: var(--neon-red); display:none; color: white; border: 1px solid white;" onclick="startNoMercy()">💀 NO MERCY (Eliminação)</button>
@@ -481,6 +484,13 @@
         }
     };
 
+    // --- NOVA FUNÇÃO DE INÍCIO FAMÍLIA ---
+    function startFamily() {
+        if(confirm("Iniciar Modo Família? Isso vai redirecionar todos.")) {
+            update(roomRef, { status: 'redirecting_to_family' });
+        }
+    };
+
     function resetGameUI() {
         clearTimeout(timer);
         isPaused = false;
@@ -552,6 +562,12 @@
                 return;
             }
 
+            // REDIRECIONAMENTO FAMÍLIA
+            if(data.status === 'redirecting_to_family') {
+                window.location.href = `family.html?room=${roomCode}`;
+                return;
+            }
+
             currentPlayers = {};
             const list = document.getElementById('lobby-list');
             list.innerHTML = '';
@@ -565,19 +581,22 @@
             const btnStart = document.getElementById('btn-start-game');
             const btnStartFDP = document.getElementById('btn-start-fdp');
             const btnStartNM = document.getElementById('btn-start-nomercy');
+            const btnStartFamily = document.getElementById('btn-start-family');
             const msgWait = document.getElementById('msg-waiting-host');
             
             if(data.host === myId) { 
                 amIHost = true; 
                 btnStart.style.display = 'block'; 
-                btnStartFDP.style.display = 'block'; // Mostra botão FDP
-                btnStartNM.style.display = 'block'; // Mostra botão No Mercy
+                btnStartFDP.style.display = 'block'; 
+                btnStartNM.style.display = 'block';
+                btnStartFamily.style.display = 'block';
                 msgWait.style.display='none'; 
             }
             else { 
                 btnStart.style.display='none'; 
                 btnStartFDP.style.display='none';
                 btnStartNM.style.display='none';
+                btnStartFamily.style.display='none';
                 msgWait.style.display='block'; 
             }
 
@@ -1197,7 +1216,8 @@
     window.joinRoomReal = joinRoomReal;
     window.startGameReal = startGameReal;
     window.startFDP = startFDP;
-    window.startNoMercy = startNoMercy; // EXPOSTO
+    window.startNoMercy = startNoMercy;
+    window.startFamily = startFamily; // EXPOSTO
     window.handleStoryClick = handleStoryClick;
     window.shareSlide = shareSlide;
     window.processShare = processShare;
