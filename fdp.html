@@ -20,7 +20,7 @@
             --card-black-bg: #222;
             --card-black-text: #fff;
             
-            --accent: #00e5ff; 
+            --accent: #00e5ff; /* Ciano Neon */
             
             /* Tamanhos */
             --card-width: 220px;
@@ -67,13 +67,16 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             will-change: transform;
-            overflow: hidden;
+            /* overflow: hidden removido para permitir badges flutuantes na mesa */
         }
+        
+        /* Correção para textura não vazar */
         .card::before {
             content: ''; position: absolute; inset: 0;
             background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.05;
-            pointer-events: none;
+            pointer-events: none; border-radius: var(--card-radius);
         }
+
         .card-brand {
             font-family: 'Permanent Marker', cursive;
             font-size: 0.8rem; opacity: 0.3; align-self: flex-end; margin-top: auto;
@@ -85,7 +88,15 @@
         .card-content.long-text { font-size: 1rem; }
         .card-content.very-long-text { font-size: 0.85rem; }
 
-        .is-black { background: var(--card-black-bg); color: var(--card-black-text); border: 1px solid rgba(255,255,255,0.15); }
+        /* Estilo da Carta Preta (Pergunta) */
+        .is-black { 
+            background: var(--card-black-bg); 
+            color: var(--card-black-text); 
+            /* Borda colorida e brilho suave */
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.15), inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        
         .is-white { background: var(--card-white-bg); color: var(--card-white-text); }
 
         /* --- FASE 1: ESCOLHA --- */
@@ -100,7 +111,9 @@
         }
         .black-card-display {
             width: 100%; max-width: 320px; min-height: 180px;
-            transform: rotateX(5deg); box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            transform: rotateX(5deg); 
+            /* Sombra mais forte para destacar */
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(0, 229, 255, 0.1);
         }
 
         .hand-area { height: 380px; position: relative; }
@@ -117,7 +130,7 @@
             scroll-snap-align: center; 
             flex-shrink: 0; width: var(--card-width); height: var(--card-height);
         }
-        .hand-card-wrapper .card { width: 100%; height: 100%; cursor: grab; }
+        .hand-card-wrapper .card { width: 100%; height: 100%; cursor: grab; overflow: hidden; /* Mantém hidden na mão pra ficar bonito */ }
         .hand-card-wrapper .card:active { cursor: grabbing; }
 
         /* ESTADO "CARTA ENVIADA" (WAITING) */
@@ -162,8 +175,30 @@
         .table-card {
             min-height: 160px; font-size: 0.9rem;
             animation: dealCard 0.4s backwards;
+            overflow: visible; /* Garante que o badge saia pra fora */
         }
-        .table-card.selected { box-shadow: 0 0 0 4px var(--accent); transform: scale(1.02); }
+        .table-card.selected { 
+            box-shadow: 0 0 0 4px var(--accent); 
+            transform: scale(1.02); 
+            z-index: 10;
+        }
+
+        /* Badge de votos flutuante */
+        .vote-badge {
+            position: absolute; 
+            top: -10px; right: -10px; 
+            background: var(--accent); 
+            color: black; 
+            width: 32px; height: 32px; 
+            border-radius: 50%; 
+            display: flex; justify-content: center; align-items: center; 
+            font-weight: 900; 
+            font-size: 1rem;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+            z-index: 20;
+            border: 2px solid #fff;
+            animation: popBadge 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
         /* --- MODAIS --- */
         .modal-overlay {
@@ -184,6 +219,7 @@
         @keyframes fadeInOut { 0%,100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 0.8; transform: translateY(-5px); } }
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popBadge { from { transform: scale(0); } to { transform: scale(1); } }
         
         .flying { animation: flyUp 0.5s ease-in forwards !important; pointer-events: none; }
     </style>
@@ -287,7 +323,7 @@
         }
 
         let champ = null;
-        if(data.players) Object.values(data.players).forEach(p => { if((p.score_fdp || 0) >= 5) champ = p.name; });
+        if(data.players) Object.values(data.players).forEach(p => { if((p.score_fdp || 0) >= 10) champ = p.name; }); // Meta de 10 pontos
         
         if(champ) {
             els.gameOverModal.style.display = 'flex';
@@ -346,7 +382,7 @@
             if(played) {
                 els.status.innerText = "AGUARDANDO OPONENTES...";
                 document.getElementById('gesture-hint').style.display = 'none';
-                // Novo Visual "Carta Enviada"
+                // Novo Visual "Carta Enviada" com icone
                 els.handCarousel.innerHTML = `
                     <div class="waiting-state">
                         <div class="ghost-card">
@@ -458,8 +494,9 @@
             let count = 0;
             if(votes) Object.values(votes).forEach(v => { if(v === uid) count++ });
             if(count > 0) {
+                // Badge corrigido para aparecer EM CIMA da carta
                 const badge = document.createElement('div');
-                badge.style.cssText = "position:absolute; top:-10px; right:-10px; background:var(--accent); color:black; width:30px; height:30px; border-radius:50%; display:flex; justify-content:center; align-items:center; font-weight:bold; box-shadow:0 5px 10px rgba(0,0,0,0.3);";
+                badge.className = 'vote-badge';
                 badge.innerText = count;
                 card.appendChild(badge);
             }
@@ -511,7 +548,7 @@
             const sSnap = await get(pRef);
             const score = (sSnap.val() || 0) + 1;
             update(ref(db, `rooms/${roomCode}/players/${winnerId}`), { score_fdp: score });
-            if(score < 5) setTimeout(hostStartRound, 6000);
+            if(score < 10) setTimeout(hostStartRound, 6000);
         } else { hostStartRound(); }
     }
 
