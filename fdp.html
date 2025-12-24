@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#121212">
-    <title>FDP - Mobile Deluxe</title>
+    <title>FDP - Deluxe Fixed</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Permanent+Marker&display=swap" rel="stylesheet">
@@ -80,7 +80,7 @@
         }
         .card-content {
             font-weight: 700; font-size: 1.25rem; line-height: 1.2;
-            word-wrap: break-word; pointer-events: none; /* Importante para o touch */
+            word-wrap: break-word; pointer-events: none; 
         }
         .card-content.long-text { font-size: 1rem; }
         .card-content.very-long-text { font-size: 0.85rem; }
@@ -120,6 +120,31 @@
         .hand-card-wrapper .card { width: 100%; height: 100%; cursor: grab; }
         .hand-card-wrapper .card:active { cursor: grabbing; }
 
+        /* ESTADO "CARTA ENVIADA" (WAITING) */
+        .waiting-state {
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            animation: fadeIn 0.5s;
+        }
+        .ghost-card {
+            width: 140px; height: 200px;
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 12px;
+            display: flex; justify-content: center; align-items: center;
+            background: rgba(255,255,255,0.05);
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .check-icon {
+            font-size: 3rem; color: var(--accent);
+            filter: drop-shadow(0 0 10px var(--accent));
+            animation: pulse 2s infinite;
+        }
+        .waiting-text {
+            font-size: 0.9rem; opacity: 0.6; font-weight: bold; letter-spacing: 1px;
+            font-family: 'Inter', sans-serif;
+        }
+
         .gesture-hint {
             position: absolute; top: 0; left: 0; width: 100%; text-align: center;
             font-size: 0.75rem; opacity: 0.5; pointer-events: none;
@@ -157,6 +182,8 @@
         @keyframes dealCard { from { opacity: 0; transform: translateY(50px) scale(0.8); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes flyUp { to { transform: translateY(-150vh) rotate(15deg) scale(0.8); opacity: 0; } }
         @keyframes fadeInOut { 0%,100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 0.8; transform: translateY(-5px); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         .flying { animation: flyUp 0.5s ease-in forwards !important; pointer-events: none; }
     </style>
@@ -183,7 +210,7 @@
     </div>
 
     <div class="hand-area">
-        <div class="gesture-hint"><i class="fa-solid fa-arrow-up"></i> ARRASTE PARA CIMA PARA JOGAR</div>
+        <div class="gesture-hint" id="gesture-hint"><i class="fa-solid fa-arrow-up"></i> ARRASTE PARA CIMA PARA JOGAR</div>
         <div id="hand-carousel" class="hand-carousel"></div>
     </div>
 </div>
@@ -223,6 +250,7 @@
 
     if(!roomCode || !myId) window.location.href = 'index.html';
 
+    /* --- ÁUDIO --- */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSfx(type) {
         if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -267,7 +295,11 @@
             document.getElementById('champion-name').innerText = champ;
         } else {
             els.gameOverModal.style.display = 'none';
-            if(data.fdp_match) renderState(data.fdp_match);
+            if(data.fdp_match) {
+                renderState(data.fdp_match);
+                // CRUCIAL: Host verifica avanço de fase
+                if(isHost) checkRoundProgress(data);
+            }
             else if(isHost) hostStartRound();
         }
     });
@@ -277,6 +309,31 @@
         else { drawCards(7); }
     });
 
+    /* --- LÓGICA DE PROGRESSO DO HOST (CORREÇÃO DE BUG) --- */
+    function checkRoundProgress(data) {
+        if(!data.fdp_match || !data.players) return;
+        const match = data.fdp_match;
+        const totalPlayers = Object.keys(data.players).length;
+
+        // Avança de PICKING para VOTING
+        if (match.state === 'PICKING') {
+            const playedCount = match.table ? Object.keys(match.table).length : 0;
+            // Se todos jogaram, avança (min 2 players pra ter jogo)
+            if (playedCount >= totalPlayers && totalPlayers > 1) {
+                update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'VOTING' });
+            }
+        }
+        
+        // Avança de VOTING para WINNER
+        if (match.state === 'VOTING') {
+            const votesCount = match.votes ? Object.keys(match.votes).length : 0;
+            // Se todos votaram
+            if (votesCount >= totalPlayers && totalPlayers > 1) {
+                finalizeRound(match);
+            }
+        }
+    }
+
     function renderState(match) {
         gameState = match.state;
         els.blackText.innerText = match.blackCard;
@@ -284,9 +341,28 @@
 
         if(match.state === 'PICKING') {
             els.picking.style.display = 'flex'; els.voting.style.display = 'none'; els.winnerModal.style.display = 'none';
+            
             const played = match.table && match.table[myId];
-            if(played) { els.status.innerText = "AGUARDANDO OPONENTES..."; els.handCarousel.innerHTML = '<div style="opacity:0.5; color:white; font-size:0.9rem;">Carta enviada! 🚀</div>'; } 
-            else { els.status.innerText = "SUA VEZ DE JOGAR"; renderHand(hand); }
+            if(played) {
+                els.status.innerText = "AGUARDANDO OPONENTES...";
+                document.getElementById('gesture-hint').style.display = 'none';
+                // Novo Visual "Carta Enviada"
+                els.handCarousel.innerHTML = `
+                    <div class="waiting-state">
+                        <div class="ghost-card">
+                            <i class="fa-solid fa-check check-icon"></i>
+                        </div>
+                        <div class="waiting-text">CARTA ENVIADA</div>
+                    </div>
+                `;
+            } else {
+                els.status.innerText = "SUA VEZ DE JOGAR";
+                document.getElementById('gesture-hint').style.display = 'flex';
+                // Só renderiza se a mão no DOM estiver diferente ou vazia
+                if(els.handCarousel.children.length === 0 || els.handCarousel.querySelector('.waiting-state')) {
+                    renderHand(hand);
+                }
+            }
         }
         else if (match.state === 'VOTING') {
             els.picking.style.display = 'none'; els.voting.style.display = 'grid'; els.winnerModal.style.display = 'none';
@@ -330,9 +406,8 @@
                 
                 // Só arrasta se for pra cima
                 if(delta < 0) { 
-                    e.preventDefault(); // Bloqueia scroll
+                    e.preventDefault(); 
                     isDragging = true;
-                    // Efeito visual de puxar
                     card.style.transform = `translateY(${delta}px) rotate(${delta * 0.02}deg) scale(${1 + (delta * -0.0005)})`;
                 }
             }, {passive: false});
@@ -342,14 +417,12 @@
                 const delta = currentY - startY;
                 
                 // LIMITE DE DISPARO: 250px (bem alto)
-                // Se o usuário não arrastou (isDragging false) ou arrastou pouco, reseta.
                 if (isDragging && delta < -250) {
                     card.classList.add('flying');
                     playSfx('swish');
                     if(navigator.vibrate) navigator.vibrate(50);
                     setTimeout(() => submitCard(idx), 500);
                 } else {
-                    // Volta pra mão (Elástico)
                     card.style.transform = 'translateY(0) rotate(0) scale(1)';
                 }
                 isDragging = false;
@@ -358,7 +431,6 @@
 
             // CLIQUE NO DESKTOP (Fallback)
             card.onclick = () => {
-                // Verificação segura para saber se NÃO é touch
                 if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
                     if(confirm("Jogar esta carta?")) {
                         card.classList.add('flying');
