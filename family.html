@@ -12,7 +12,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
         :root {
-            /* CORES FAMÍLIA (MAIS CLARAS E VIBRANTES) */
+            /* CORES FAMÍLIA (Light Mode / Pastel) */
             --neon-green: #2ecc71;
             --neon-purple: #9b59b6;
             --neon-blue: #3498db;
@@ -20,6 +20,7 @@
             --neon-yellow: #f1c40f;
             --neon-gold: #f39c12;
             --neon-red: #e74c3c;
+            
             --bg-dark: #f0f2f5; /* Fundo Claro */
             --text-main: #2c3e50; /* Texto Escuro */
             
@@ -45,7 +46,8 @@
         }
 
         .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.03; pointer-events: none; z-index: 999; }
-        /* Ambilight ajustado para fundo claro (mais sutil) */
+        
+        /* Ambilight ajustado para fundo claro */
         .ambilight-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.15; filter: blur(90px); background: radial-gradient(circle at 50% 50%, #ddd, #fff); transition: background 0.8s ease; }
         
         .app-container { 
@@ -66,12 +68,10 @@
         h2 { font-size: clamp(1.2rem, 5vw, 2rem); font-weight: 700; margin-bottom: 20px; text-transform: uppercase; line-height: 1.1; }
         p { font-size: clamp(0.9rem, 4vw, 1.1rem); opacity: 0.8; line-height: 1.5; margin-bottom: 30px; font-weight: 500; }
 
-        /* Inputs adaptados para fundo claro */
         input { width: 100%; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); color: var(--text-main); padding: 20px; border-radius: 12px; font-family: var(--font-data); font-size: 1.2rem; outline: none; margin-bottom: 20px; text-align: center; text-transform: uppercase; }
         input:focus { border-color: var(--neon-blue); background: white; box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2); }
         input::placeholder { color: rgba(0,0,0,0.3); }
 
-        /* Botões adaptados */
         .btn { background: #2c3e50; color: white; border: none; padding: 18px; border-radius: 50px; font-family: var(--font-display); font-weight: 700; font-size: 1rem; width: 100%; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .btn:active { transform: scale(0.96); }
         .btn-outline { background: transparent; border: 2px solid rgba(0,0,0,0.2); color: var(--text-main); }
@@ -88,7 +88,6 @@
         .avatar { width: 45px; height: 45px; background: rgba(0,0,0,0.08); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; color: var(--text-main); }
         .vote-card:active .avatar { background: white; color: black; }
 
-        /* Story Styles */
         .story-nav { display: flex; gap: 4px; margin: 10px 0 20px 0; width: 100%; z-index: 50; }
         .nav-fill { height: 4px; background: var(--text-main); width: 0%; border-radius: 2px; }
         .nav-fill.active { width: 100%; transition: width 5.5s linear; }
@@ -96,7 +95,6 @@
         .nav-fill.paused { width: 100% !important; transition: none !important; opacity: 0.5; }
         .nav-dash { flex: 1; background: rgba(0,0,0,0.1); height: 4px; border-radius: 2px; }
         
-        /* White mode logic slightly reversed for already light theme, but kept for consistency */
         .white-mode .nav-dash { background: rgba(0,0,0,0.1); } .white-mode .nav-fill { background: black; }
 
         .res-cat { text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 10px; font-size: 1rem; opacity: 0.6; color: var(--text-main); }
@@ -248,8 +246,6 @@
             
             <button id="btn-start-game" class="btn" style="background: var(--neon-green); display:none;" onclick="startGameReal()">INICIAR WRAPPED</button>
             
-            <button id="btn-start-family" class="btn" style="background: var(--neon-blue); display:none; color: white;" onclick="startFamily()">👨‍👩‍👧‍👦 MODO FAMÍLIA</button>
-
             <button id="btn-start-fdp" class="btn" style="background: var(--neon-purple); display:none; color: white;" onclick="startFDP()">JOGAR FDP 🔞</button>
             
             <button id="btn-start-nomercy" class="btn" style="background: var(--neon-red); display:none; color: white; border: 1px solid white;" onclick="startNoMercy()">💀 NO MERCY (Eliminação)</button>
@@ -493,13 +489,8 @@
             update(roomRef, { status: 'redirecting_to_nomercy' });
         }
     };
-
-    // --- NOVA FUNÇÃO DE INÍCIO FAMÍLIA ---
-    function startFamily() {
-        if(confirm("Iniciar Modo Família? Isso vai redirecionar todos.")) {
-            update(roomRef, { status: 'redirecting_to_family' });
-        }
-    };
+    
+    // (startFamily removido aqui para evitar loop)
 
     function resetGameUI() {
         clearTimeout(timer);
@@ -572,10 +563,9 @@
                 return;
             }
 
-            // REDIRECIONAMENTO FAMÍLIA
+            // REDIRECIONAMENTO FAMÍLIA (Se já estiver aqui, ignora ou recarrega)
             if(data.status === 'redirecting_to_family') {
-                window.location.href = `family.html?room=${roomCode}`;
-                return;
+                // Já estamos aqui, não faz nada
             }
 
             currentPlayers = {};
@@ -591,7 +581,6 @@
             const btnStart = document.getElementById('btn-start-game');
             const btnStartFDP = document.getElementById('btn-start-fdp');
             const btnStartNM = document.getElementById('btn-start-nomercy');
-            const btnStartFamily = document.getElementById('btn-start-family');
             const msgWait = document.getElementById('msg-waiting-host');
             
             if(data.host === myId) { 
@@ -599,14 +588,12 @@
                 btnStart.style.display = 'block'; 
                 btnStartFDP.style.display = 'block'; 
                 btnStartNM.style.display = 'block';
-                btnStartFamily.style.display = 'block';
                 msgWait.style.display='none'; 
             }
             else { 
                 btnStart.style.display='none'; 
                 btnStartFDP.style.display='none';
                 btnStartNM.style.display='none';
-                btnStartFamily.style.display='none';
                 msgWait.style.display='block'; 
             }
 
@@ -1221,7 +1208,37 @@
 
     function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { slideIdx++; loadSlide(); }, 2000); }
 
-    // --- EXPOSIÇÃO GLOBAL (FIX) ---
+    // --- AUTO-JOIN LOGIC FOR FAMILY MODE ---
+    // Verifica se a URL tem ?room=ABCD e se o usuário já existe na sala.
+    // Se existir, pula todas as telas iniciais e vai direto para o lobby.
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoRoomCode = urlParams.get('room');
+
+    if(autoRoomCode) {
+        // Tenta recuperar o nome do usuário nesta sala específica
+        get(child(ref(db), `rooms/${autoRoomCode}/players/${myId}`)).then((snapshot) => {
+            if (snapshot.exists()) {
+                // Usuário encontrado! Vamos logar automaticamente.
+                const playerData = snapshot.val();
+                myName = playerData.name;
+                roomCode = autoRoomCode;
+                roomRef = ref(db, 'rooms/' + roomCode);
+                
+                // Atualiza UI básica
+                document.getElementById('display-name').innerText = myName;
+                document.getElementById('lobby-code').innerText = roomCode;
+                
+                // Vai direto para o lobby
+                enterLobbyReal();
+            } else {
+                console.log("Usuário não encontrado na sala, fluxo normal.");
+            }
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    // --- EXPOSIÇÃO GLOBAL ---
     window.goToMenu = goToMenu;
     window.createRoomReal = createRoomReal;
     window.showJoinInput = showJoinInput;
@@ -1229,7 +1246,7 @@
     window.startGameReal = startGameReal;
     window.startFDP = startFDP;
     window.startNoMercy = startNoMercy;
-    window.startFamily = startFamily; // EXPOSTO
+    // window.startFamily removido para evitar loop
     window.handleStoryClick = handleStoryClick;
     window.shareSlide = shareSlide;
     window.processShare = processShare;
