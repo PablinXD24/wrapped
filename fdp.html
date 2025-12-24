@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FDP - 300+ Cartas (Versão Final)</title>
+    <title>FDP - Deluxe Edition</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
@@ -11,18 +11,22 @@
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
         :root {
-            --neon-green: #0aff60;
-            --neon-purple: #b537f2;
-            --neon-pink: #ff2a6d;
-            --neon-yellow: #f5e625;
+            /* TEMA PADRÃO (NEON VERDE) */
+            --primary: #0aff60;
+            --accent: #b537f2;
             --bg-dark: #050505;
-            --card-black: rgba(20, 20, 20, 0.95);
-            --card-white: rgba(255, 255, 255, 0.95);
+            --card-back: #ffffff;
+            --card-text: #111111;
             --font-display: 'Space Grotesk', sans-serif;
             --font-data: 'Space Mono', monospace;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        /* TEMAS (CLASSES) */
+        body.theme-red { --primary: #ff2a2a; --accent: #f5e625; }
+        body.theme-blue { --primary: #2d46b9; --accent: #0aff60; }
+        body.theme-gold { --primary: #ffd700; --accent: #ffffff; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         
         body {
             background-color: var(--bg-dark);
@@ -31,9 +35,10 @@
             font-family: var(--font-display);
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
+            transition: --primary 0.5s;
         }
 
-        /* --- EFEITOS DE FUNDO --- */
+        /* --- VISUAL FX --- */
         .noise { position: fixed; inset: 0; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.04; pointer-events: none; z-index: 0; }
         .ambilight-bg { position: fixed; inset: 0; z-index: -1; opacity: 0.5; filter: blur(120px); background: radial-gradient(circle at 50% 30%, #333, #000); transition: background 2s ease; }
 
@@ -43,7 +48,18 @@
             @media(min-width:768px){ height: 90vh; border: 1px solid rgba(255,255,255,0.1); border-radius:30px; overflow:hidden; box-shadow: 0 20px 80px rgba(0,0,0,0.6); background: rgba(0,0,0,0.2); backdrop-filter: blur(20px); }
         }
 
-        /* --- CARTAS GERAIS --- */
+        /* --- DRAG & DROP ZONES --- */
+        .drop-zone {
+            position: absolute; top: 20%; left: 10%; width: 80%; height: 40%;
+            border: 3px dashed rgba(255,255,255,0.2); border-radius: 20px;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 40; pointer-events: none; opacity: 0; transition: 0.3s;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(5px);
+        }
+        .drop-zone.active { opacity: 1; border-color: var(--primary); transform: scale(1.05); }
+        .drop-zone-text { font-family: var(--font-data); color: var(--primary); font-weight: bold; font-size: 1.2rem; letter-spacing: 2px; }
+
+        /* --- CARTAS --- */
         .fdp-card {
             padding: 20px; border-radius: 20px; font-weight: 700; line-height: 1.2;
             display: flex; flex-direction: column; justify-content: center;
@@ -52,130 +68,110 @@
             backface-visibility: hidden;
         }
         
-        /* CARTA PRETA (PERGUNTA) */
-        .card-black { 
-            background: var(--card-black); color: white; border: 1px solid rgba(255,255,255,0.2); 
-            min-height: 160px; margin-top: 10px;
-        }
+        .card-black { background: #1a1a1a; color: white; border: 1px solid rgba(255,255,255,0.2); min-height: 160px; margin-top: 10px; }
+        .card-white { background: var(--card-back); color: var(--card-text); border: none; cursor: grab; }
         
-        /* CARTA BRANCA (RESPOSTA) */
-        .card-white { background: var(--card-white); color: #111; border: none; cursor: pointer; }
+        /* CARTA SENDO ARRASTADA (CLONE) */
+        .card-dragging {
+            position: fixed; z-index: 9999; pointer-events: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            transform: scale(1.1) rotate(-5deg);
+            opacity: 0.9; cursor: grabbing;
+        }
 
-        /* --- ÁREA DA MESA (VOTAÇÃO) --- */
+        /* --- ÁREAS --- */
         .table-area { 
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
-            padding: 10px 0; overflow-y: auto; align-content: start; flex-grow: 1;
-            padding-right: 5px; 
+            padding: 10px 0; overflow-y: auto; align-content: start; flex-grow: 1; padding-right: 5px; 
         }
-        .table-card { 
-            min-height: 130px; font-size: 0.9rem; animation: popIn 0.4s backwards; position: relative;
-        }
-        .vote-badge {
-            position: absolute; top: -10px; right: -10px; background: var(--neon-pink); color: white;
-            width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-family: var(--font-data); box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            animation: popIn 0.3s; z-index: 10;
+        .table-card { min-height: 130px; font-size: 0.9rem; animation: popIn 0.4s backwards; position: relative; }
+        
+        /* AVATAR DO VENCEDOR (SOLUÇÃO VISUAL) */
+        .winner-avatar {
+            width: 50px; height: 50px; background: var(--primary); color: black;
+            border-radius: 50%; position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%);
+            display: flex; justify-content: center; align-items: center; font-weight: 900;
+            border: 4px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 20;
         }
 
-        /* --- ÁREA DA MÃO (SCROLL HORIZONTAL "LEQUE") --- */
+        /* MÃO (LEQUE) */
         .hand-scroll { 
             display: flex; gap: 0; height: 260px; flex-shrink: 0;
             overflow-x: auto; scrollbar-width: none; perspective: 1000px;
-            margin: 0 -20px; padding: 20px 30px;
-            align-items: center;
+            margin: 0 -20px; padding: 20px 30px; align-items: center;
             position: relative; z-index: 50; 
         }
         .hand-card { 
-            min-width: 150px; width: 150px; height: 220px; 
-            margin-right: -60px; /* Efeito de sobreposição */
-            transform: rotate(4deg); 
-            border: 1px solid rgba(0,0,0,0.1);
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            min-width: 150px; width: 150px; height: 220px; margin-right: -60px; 
+            transform: rotate(4deg); border: 1px solid rgba(0,0,0,0.1);
+            transition: transform 0.3s, margin 0.3s; flex-shrink: 0; background: #fff;
             box-shadow: -5px 0 15px rgba(0,0,0,0.3);
-            flex-shrink: 0;
-            background: #fff;
         }
-        .hand-card:hover, .hand-card.selected { 
-            transform: translateY(-50px) rotate(0deg) scale(1.1); 
-            z-index: 100; margin-right: 25px; margin-left: 10px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
-            border: 4px solid var(--neon-green);
-        }
+        /* Efeito ao tocar/arrastar */
+        .hand-card:active { transform: scale(0.95); }
+        .hand-card.selected { transform: translateY(-50px) rotate(0deg) scale(1.1); z-index: 100; margin-right: 25px; margin-left: 10px; border: 4px solid var(--primary); }
+        .hand-card.ghost { opacity: 0; pointer-events: none; } /* Oculta original enquanto arrasta */
 
-        /* --- BOTÃO DE AÇÃO (CORRIGIDO) --- */
+        /* --- BOTÃO (Fallback) --- */
         .action-container {
-            position: absolute; 
-            /* Posiciona logo acima da área da mão */
-            bottom: 250px; 
-            left: 0; width: 100%; 
-            padding: 0 20px; 
-            z-index: 200; /* Garante que fique acima de tudo */
-            pointer-events: none; /* Permite clicar através da área vazia */
-            display: flex; justify-content: center;
+            position: absolute; bottom: 250px; left: 0; width: 100%; padding: 0 20px; 
+            z-index: 200; pointer-events: none; display: flex; justify-content: center;
         }
-        
         .btn { 
-            background: var(--neon-green); color: black; border: none; padding: 16px 30px; 
-            border-radius: 50px; font-weight: 800; font-size: 1rem; width: 100%; max-width: 300px;
-            text-transform: uppercase; cursor: pointer; box-shadow: 0 10px 40px rgba(10, 255, 96, 0.4); 
-            transition: 0.3s; pointer-events: auto; /* Reabilita o clique no botão */
-            animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: var(--primary); color: black; border: none; padding: 16px 30px; 
+            border-radius: 50px; font-weight: 800; font-size: 1rem; text-transform: uppercase; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4); transition: 0.3s; pointer-events: auto;
         }
-        .btn:active { transform: scale(0.95); }
-        .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; box-shadow: none; margin-top: 10px; }
 
-        /* --- UTILITÁRIOS DE TEXTO --- */
-        .text-sm { font-size: 0.85rem; }
-        .text-md { font-size: 1rem; }
-        .text-lg { font-size: 1.3rem; letter-spacing: -0.5px; }
-
-        /* --- PLACAR --- */
+        /* --- UI ELEMENTS --- */
         .score-board { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-bottom: 5px; scrollbar-width: none; flex-shrink: 0; }
-        .player-chip { 
-            background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 30px; 
-            white-space: nowrap; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 8px;
-        }
+        .player-chip { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 30px; white-space: nowrap; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 8px; }
         .score-val { background: white; color: black; width: 20px; height: 20px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
         
-        .status-container { text-align: center; margin: 5px 0; }
-        .status-msg { color: var(--neon-pink); font-family: var(--font-data); font-size: 0.75rem; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+        /* CHUVA DE EMOJIS */
+        .emoji-rain { position: fixed; top: -50px; font-size: 2rem; animation: fall linear forwards; z-index: 9999; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
 
-        /* --- MODAIS --- */
+        /* MODAIS */
         .modal { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.95); z-index: 300; display: none; 
             flex-direction: column; justify-content: center; align-items: center; 
             padding: 30px; text-align: center; backdrop-filter: blur(10px);
         }
-        .win-screen { background: var(--neon-green); color: black; }
-        .host-force-btn {
-            position: absolute; top: 10px; right: 10px; background: rgba(255,0,0,0.2); 
-            color: rgba(255,255,255,0.5); font-size: 0.6rem; padding: 5px 10px; border: 1px solid rgba(255,0,0,0.3);
-            border-radius: 5px; cursor: pointer; z-index: 9999; display: none;
-        }
+        .text-sm { font-size: 0.85rem; } .text-md { font-size: 1rem; } .text-lg { font-size: 1.3rem; letter-spacing: -0.5px; }
+        
+        /* Host Controls */
+        .host-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 9999; }
+        .mini-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 5px 8px; border-radius: 5px; font-size: 0.7rem; cursor: pointer; }
 
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
-        #loading { position: fixed; inset:0; background:black; z-index:999; display:flex; justify-content:center; align-items:center; color:white; font-family:var(--font-data); }
-        .screen { display: none; flex-direction: column; padding: 20px; height: 100%; }
     </style>
 </head>
 <body>
 
-<div id="loading">CARREGANDO 300 CARTAS...</div>
+<div id="loading">CARREGANDO...</div>
 <div class="noise"></div>
 <div class="ambilight-bg" id="ambilight"></div>
 
-<button id="btn-force" class="host-force-btn" onclick="forceNextPhase()">⚠ FORÇAR</button>
+<div class="host-controls" id="host-controls" style="display:none;">
+    <button class="mini-btn" onclick="toggleTheme()">🎨 TEMA</button>
+    <button class="mini-btn" onclick="forceNextPhase()">⚠ AVANÇAR</button>
+</div>
 
 <div class="app-container">
 
-    <div id="screen-game" class="screen" style="display: flex;">
+    <div id="drop-zone" class="drop-zone">
+        <div class="drop-zone-text">SOLTE PARA JOGAR</div>
+    </div>
+
+    <div id="screen-game" class="screen" style="display: flex; flex-direction: column; padding: 20px; height: 100%;">
         <div class="score-board" id="score-board"></div>
 
         <div style="flex-shrink: 0;">
-            <div class="status-container"><span id="game-status" class="status-msg">...</span></div>
+            <div style="text-align: center; margin: 5px 0;">
+                <span id="game-status" style="color: var(--accent); font-family: var(--font-data); font-size: 0.75rem; text-transform: uppercase; font-weight: bold;">...</span>
+            </div>
             <div id="black-card" class="fdp-card card-black">
                 <span id="black-text" class="text-md">Carregando...</span>
                 <i class="fa-solid fa-masks-theater" style="align-self: flex-end; opacity: 0.3; margin-top: auto;"></i>
@@ -192,20 +188,23 @@
     </div>
 
     <div id="winner-modal" class="modal">
-        <h2 style="color: var(--neon-yellow); margin-bottom: 20px; letter-spacing: 2px;">VENCEDOR</h2>
-        <div id="winner-card-display" class="fdp-card card-white" style="transform: rotate(-2deg); margin: 0 20px 40px 20px; width: 90%; max-width: 320px; color: black;"></div>
-        <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">JOGADA POR:</div>
-        <h1 id="winner-name" style="font-size: 2.5rem; color: white; margin: 0;">PLAYER</h1>
+        <h2 style="color: var(--primary); margin-bottom: 20px; letter-spacing: 2px;">VENCEDOR</h2>
+        
+        <div style="position: relative;">
+            <div id="winner-card-display" class="fdp-card card-white" style="transform: rotate(-2deg); margin: 0 20px 40px 20px; width: 280px; color: black;"></div>
+            <div id="winner-avatar" class="winner-avatar">?</div>
+        </div>
+        
+        <h1 id="winner-name" style="font-size: 2rem; color: white; margin: 0;">PLAYER</h1>
         <p style="margin-top:40px; opacity:0.7; font-family:var(--font-data);">Próxima rodada em 6s...</p>
     </div>
 
-    <div id="game-over-modal" class="modal win-screen">
+    <div id="game-over-modal" class="modal" style="background: var(--primary); color: black;">
         <h1 style="font-size: 5rem; margin-bottom: 10px;">🏆</h1>
         <h1 style="font-size: 3rem; margin-bottom: 20px; line-height: 1; font-weight: 900;">CAMPEÃO</h1>
         <h2 id="champion-name" style="font-size: 2.5rem; background: black; color: white; padding: 15px 40px; border-radius: 50px;">NOME</h2>
         <div id="host-end-actions" style="width: 100%; margin-top: 40px; display: none;">
             <button class="btn" style="background: black; color: white;" onclick="hostResetMatch()">REVANCHE 🔄</button>
-            <button class="btn btn-outline" style="border-color: black; color: black;" onclick="hostReturnToMenu()">SAIR 🏠</button>
         </div>
         <p id="client-wait-msg" style="margin-top:40px; opacity:0.7; display:none;">Aguardando Host...</p>
     </div>
@@ -216,7 +215,148 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update, runTransaction, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    /* --- CONFIGURAÇÃO --- */
+    /* --- SISTEMA DE ÁUDIO SINTETIZADO (GAME JUICE) --- */
+    // Cria sons matematicamente para não depender de arquivos externos
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(type) {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'swoosh') {
+            // Som de carta deslizando (Ruído filtrado simulado ou tom caindo rápido)
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        } else if (type === 'pop') {
+            // Som de seleção/clique
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+        } else if (type === 'impact') {
+            // Som de vitória (Pau!)
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+        }
+    }
+
+    /* --- DRAG AND DROP LOGIC (Touch & Mouse) --- */
+    let draggedEl = null;
+    let cloneEl = null;
+    let startX, startY;
+    let selectedCardIndexForDrag = -1;
+
+    function initDrag(element, index) {
+        element.addEventListener('touchstart', (e) => startDrag(e.touches[0], element, index), {passive: false});
+        element.addEventListener('mousedown', (e) => startDrag(e, element, index));
+    }
+
+    function startDrag(e, element, index) {
+        // Se não for a vez de jogar, não arrasta
+        const status = document.getElementById('game-status').innerText;
+        if (!status.includes("ESCOLHA")) return;
+
+        draggedEl = element;
+        selectedCardIndexForDrag = index;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        // Cria clone visual
+        cloneEl = element.cloneNode(true);
+        cloneEl.classList.add('card-dragging');
+        cloneEl.style.width = element.offsetWidth + 'px';
+        cloneEl.style.height = element.offsetHeight + 'px';
+        // Remove classes de rotação originais para o clone
+        cloneEl.style.margin = '0'; 
+        cloneEl.style.transform = 'scale(1.1)';
+        
+        document.body.appendChild(cloneEl);
+        updateClonePos(e.clientX, e.clientY);
+
+        // Feedback visual original
+        element.classList.add('ghost');
+        document.getElementById('drop-zone').classList.add('active');
+        playTone('pop');
+        if(navigator.vibrate) navigator.vibrate(20);
+
+        // Listeners globais
+        document.addEventListener('touchmove', onDragMove, {passive: false});
+        document.addEventListener('touchend', onDragEnd);
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+    }
+
+    function onDragMove(e) {
+        e.preventDefault(); // Evita scroll da tela
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        updateClonePos(clientX, clientY);
+    }
+
+    function updateClonePos(x, y) {
+        if(cloneEl) {
+            cloneEl.style.left = (x - cloneEl.offsetWidth/2) + 'px';
+            cloneEl.style.top = (y - cloneEl.offsetHeight/2) + 'px';
+        }
+    }
+
+    function onDragEnd(e) {
+        document.removeEventListener('touchmove', onDragMove);
+        document.removeEventListener('touchend', onDragEnd);
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+
+        const dropZone = document.getElementById('drop-zone');
+        dropZone.classList.remove('active');
+
+        // Check Collision
+        const rect = dropZone.getBoundingClientRect();
+        const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+        const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+
+        if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+            // DROP VÁLIDO
+            playTone('swoosh');
+            if(navigator.vibrate) navigator.vibrate(50);
+            submitCardDrag(selectedCardIndexForDrag);
+        } else {
+            // CANCELA
+            if(draggedEl) draggedEl.classList.remove('ghost');
+        }
+
+        if(cloneEl) cloneEl.remove();
+        draggedEl = null;
+        cloneEl = null;
+    }
+
+    /* --- CHUVA DE EMOJIS --- */
+    function triggerEmojiRain() {
+        const emojis = ['😂', '🔥', '🍆', '💀', '🤡', '🎉', '🏆'];
+        for (let i = 0; i < 40; i++) {
+            const el = document.createElement('div');
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.className = 'emoji-rain';
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            el.style.fontSize = (Math.random() * 2 + 1.5) + 'rem';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 4000);
+        }
+        playTone('impact');
+    }
+
+    /* --- LOGICA FIREBASE --- */
     const firebaseConfig = { apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc", authDomain: "wrapped-fad94.firebaseapp.com", databaseURL: "https://wrapped-fad94-default-rtdb.firebaseio.com", projectId: "wrapped-fad94", storageBucket: "wrapped-fad94.firebasestorage.app", messagingSenderId: "360236097664", appId: "1:360236097664:web:76777f529c18623bf1c665" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -224,7 +364,7 @@
     const roomCode = urlParams.get('room');
     const myId = localStorage.getItem('wrapped_uid');
     
-    if(!roomCode || !myId) { alert("Erro de acesso. Entre pelo Wrapped."); window.location.href='index.html'; }
+    if(!roomCode || !myId) { alert("Erro de acesso."); window.location.href='index.html'; }
 
     let myName = "Eu";
     let isHost = false;
@@ -240,7 +380,15 @@
         return 'text-sm';
     }
 
-    // --- FUNÇÕES HOST ---
+    // --- FUNÇÕES GLOBAIS ---
+    window.toggleTheme = function() {
+        const themes = ['', 'theme-red', 'theme-blue', 'theme-gold'];
+        const current = document.body.className;
+        let nextIdx = (themes.indexOf(current) + 1) % themes.length;
+        // Host muda tema globalmente
+        update(ref(db, `rooms/${roomCode}/theme`), themes[nextIdx]);
+    };
+
     window.forceNextPhase = function() {
         if(!isHost) return;
         get(ref(db, `rooms/${roomCode}/fdp_match/state`)).then(s => {
@@ -277,166 +425,10 @@
         }
         update(ref(db), updates);
     }
-    window.hostReturnToMenu = function() { if(isHost) update(ref(db, `rooms/${roomCode}`), { status: 'lobby' }); }
 
-    // --- BASE DE DADOS COMPLETA ---
-    const MASTER_BLACK = [
-        "Para fazer amor gostoso, eu preciso de _____.", "O que o Bolsonaro esconde no cofre?", "Minha mãe chorou quando viu _____.",
-        "Qual é o segredo para uma vida feliz?", "O que deu errado na minha vida sexual?", "Brasileiro gosta mesmo é de _____.",
-        "Em um mundo perfeito, não existiria _____.", "O novo sabor de Doritos é: _____.", "A causa da minha morte será _____.",
-        "O que eu trouxe da minha viagem ao Paraguai?", "Desculpe, professor, não fiz o dever porque estava ocupado com _____.",
-        "O que o Padre Marcelo Rossi toma no café da manhã?", "Qual é o cheiro do transporte público às 18h?",
-        "O Brasil só vai para frente quando liberarem _____.", "Em briga de marido e mulher, ninguém mete _____.",
-        "O que a Anitta vai lançar no próximo clipe?", "No meu velório, eu quero que sirvam _____.", "Minha fantasia de carnaval esse ano é _____.",
-        "O que eu faria por um iPhone 15?", "O verdadeiro motivo do fim do mundo é _____.", "O que eu encontrei no histórico do navegador do meu pai?",
-        "A nova política da empresa proíbe _____ no escritório.", "O que me faz questionar minha heterossexualidade?", "A única coisa que me acalma é _____.",
-        "O presente perfeito para o Dia das Mães é _____.", "Por que eu fui demitido do McDonald's?", "O que o Faustão guarda na churrasqueira?",
-        "A solução para a crise econômica é _____.", "Qual é o superpoder mais inútil?", "O que eu disse para o policial quando fui parado?",
-        "A Xuxa fez um pacto com _____.", "O que não pode faltar no almoço de domingo?", "Motivo do meu último término: _____.",
-        "O médico receitou _____ para a minha ansiedade.", "O que a vizinha fofoqueira viu pela janela?", "Harry Potter e o mistério de _____.",
-        "O que me impede de ser rico?", "Qual o nome do grupo da família no WhatsApp?", "O que eu faria se fosse invisível por uma hora?",
-        "Deus perdoa, mas _____ não.", "O próximo BBB vai ter _____.", "Minha vida amorosa resumida em uma palavra: _____.",
-        "O que o Lula bebe escondido?", "O segredo do sucesso do Pablo Marçal é _____.", "A coisa mais nojenta que eu já comi foi _____.",
-        "O que não pode faltar na ceia de Natal?", "Qual é o pior presente de amigo secreto?", "O que eu faria se ganhasse na Mega Sena?",
-        "A única coisa que o dinheiro não compra é _____.", "O que me dá mais medo que boleto vencido?", "A verdadeira causa do aquecimento global é _____.",
-        "O que o Batman faz nas horas vagas?", "Qual é o nome do meu filme pornô?", "O que eu esconderia se a polícia batesse na minha porta?",
-        "O que a Grávida de Taubaté usou na barriga?", "O que tem no final do arco-íris?", "Qual é o cheiro do Rio Tietê?",
-        "O que eu faria por um pix de 100 reais?", "O que não pode faltar num churrasco de pobre?", "Qual é a senha do wi-fi do inferno?",
-        "O que o Silvio Santos levou pro caixão?", "A cura para a ressaca é _____.", "O que eu falaria pro meu 'eu' do passado?",
-        "Qual é o maior defeito do brasileiro?", "O que eu colocaria numa cápsula do tempo?", "Qual é o meu talento inútil?",
-        "O que me faz perder a fé na humanidade?", "A coisa mais cara que eu já quebrei foi _____.", "O que eu faria se fosse presidente por um dia?",
-        "A nova moda no TikTok é o desafio de _____.", "Minha vó infartou quando eu mostrei _____ pra ela.", "O Fantástico de domingo vai fazer uma matéria especial sobre _____.",
-        "Em 2026, o Brasil será governado por _____.", "O que realmente aconteceu no banheiro da balada?", "O segredo para um casamento duradouro é ignorar _____.",
-        "O que eu usaria para me defender em um apocalipse zumbi?", "Antes de morrer, o Chaves revelou que o barril tinha _____.", "A única coisa capaz de derrotar o Thanos é _____.",
-        "O que a NASA encontrou em Marte, mas escondeu?", "Minha professora do primário sempre cheirava a _____.", "O que me fez ser expulso da igreja?",
-        "No meu perfil do Tinder, a foto principal é _____.", "A regra número 1 do Clube da Luta é: nunca fale sobre _____.", "O que o Neymar faz quando cai no chão?",
-        "A nova taxa do Haddad é sobre _____.", "O que a Gretchen está rebolando agora?", "O que tem dentro da mala do Scooby-Doo?",
-        "O verdadeiro motivo da separação da Sandy foi _____.", "Qual é a melhor utilidade para um diploma universitário?", "O que eu venderia para pagar um agiota?",
-        "A Disney anunciou o novo filme: 'Branca de Neve e _____'.", "O que eu faria com 5 minutos de fama?", "Qual a pior coisa para se dizer durante o sexo?",
-        "O que o meu psicólogo anotou no caderno dele?", "A única coisa mais dura que diamante é _____.", "O que eu levaria para uma ilha deserta?",
-        "A nova skin do Fortnite é baseada em _____.", "O que o Celso Russomanno foi fiscalizar hoje?", "Qual é o ingrediente secreto do cachorro-quente da esquina?",
-        "O que me dá mais prazer do que chocolate?", "A verdadeira razão pela qual os dinossauros foram extintos foi _____.", "O que eu achei embaixo do banco do ônibus?",
-        "O que a Ana Maria Braga colocou no Mais Você hoje?", "O novo hit do Carnaval vai se chamar 'Senta no _____'.", "O que eu gritei quando bati o dedinho na quina?",
-        "A inteligência artificial vai substituir _____.", "O que o Papai Noel faz no dia 26 de dezembro?", "O que eu compraria no camelô por 10 reais?",
-        "A única coisa que cresce mais que a inflação é _____.", "O que a minha ex levou embora quando foi embora?", "O que eu usaria para limpar a cena do crime?",
-        "Qual é o nome da minha banda de rock fracassada?", "O que o entregador do iFood comeu do meu pedido?", "O que o Gugu pintinho amarelinho comeu?",
-        "No céu tem pão? E tem _____?", "O que eu faria se acordasse no corpo da Anitta?", "O que o Uber falou que me fez dar 1 estrela?",
-        "A única coisa que me tira da cama cedo é _____.", "O que eu escreveria na minha lápide?", "O que o meu cachorro pensa quando me vê pelado?",
-        "A nova atração do Beto Carrero World é _____.", "O que o dono da boca de fumo me deu de troco?", "O que eu achei no bolso da minha calça jeans velha?",
-        "A melhor forma de terminar um namoro é usando _____.", "O que o VAR revisou no jogo de ontem?", "O que a Barbie Fascista postou no Instagram?",
-        "O que eu daria de presente pro meu pior inimigo?", "A única coisa que une a esquerda e a direita é _____.", "O que o Chapolin Colorado usa para detectar perigo?",
-        "O que eu escondo na pasta 'Trabalho' do meu PC?", "A nova lei de trânsito proíbe dirigir e _____ ao mesmo tempo.", "O que o meu vizinho faz às 3 da manhã?",
-        "O que eu usaria para subornar um guarda?", "A verdadeira identidade do Homem-Aranha é _____.", "O que a Eliana mostrava nos dedinhos?",
-        "O que eu faria se encontrasse o ET de Varginha?", "A única coisa que me faria voltar pra igreja é _____.", "O que eu colocaria na merenda escolar das crianças?",
-        "O que o meu chefe faz no banheiro da empresa?", "A nova dieta da moda consiste em comer apenas _____.", "O que eu usaria para apagar um incêndio?",
-        "O que o Galvão Bueno narrou com emoção?", "A única coisa que me faz chorar no banho é _____.", "O que eu encontrei na gaveta de calcinhas da minha irmã?",
-        "O que o meu pai foi comprar e nunca mais voltou?", "A nova novela da Globo vai falar sobre _____.", "O que eu usaria para convencer alguém a entrar num esquema de pirâmide?",
-        "A única coisa mais rápida que a luz é _____.", "O que eu faria se fosse abduzido por alienígenas?", "O que o meu gato trouxe de presente pra mim?",
-        "A nova religião do momento adora _____.", "O que eu usaria para fugir da prisão?", "O que o Silvio Santos perguntou pra menininha?",
-        "A única coisa que me faz sair de casa no domingo é _____.", "O que eu encontrei no lixo do vizinho?", "O que o meu dentista achou na minha boca?",
-        "A nova série da Netflix é um documentário sobre _____.", "O que eu usaria para assustar uma criança?", "O que o meu professor de educação física fazia no vestiário?",
-        "A única coisa que me deixa sem palavras é _____.", "O que eu escreveria numa carta de suicídio falsa?", "O que o meu avô fala no almoço de domingo?",
-        "A nova moda entre os jovens é fumar _____.", "O que eu usaria para temperar um churrasco?", "O que o meu chefe disse na reunião de fim de ano?",
-        "A única coisa que me faz ter esperança no futuro é _____."
-    ];
-
-    const MASTER_WHITE = [
-        "Um anão bombado.", "O Lula com 10 dedos.", "Tráfico de órgãos.", "Uma cenoura.", "Fingir orgasmo.", "A piroca do Kid Bengala.",
-        "Fazer uma chuca mal feita.", "Um golden shower surpresa.", "Bater na avó.", "Um teste de gravidez positivo.", "Pablo Marçal num coach.",
-        "A grávida de Taubaté.", "Dívida no Serasa.", "Um Fiat Marea Turbo.", "Comer o cu de quem tá lendo.", "Um cadáver fresco.",
-        "Pagar pensão alimentícia.", "Um travesti de 2 metros.", "Cheirar cocaína no pau de um palhaço.", "Oito litros de Corote.",
-        "Demitir o estagiário.", "Calcinha comestível sabor bacon.", "Minha dignidade.", "Um peido silencioso e mortal.", "Vender foto do pé.",
-        "O Agostinho Carrara.", "Gemidão do Zap.", "Chutar mendigo.", "A harmonização facial do demônio.", "Vira-lata caramelo.",
-        "Boleto vencido.", "Café frio e cigarro.", "Uma coxinha mordida.", "O véio da Havan.", "Um áudio de 5 minutos da sua mãe.",
-        "Arroz com uva passa.", "Pavê ou pacumê.", "Um Palio 98 rebaixado.", "Churrasco de gato.", "Três reais de pão.",
-        "A sandália Havaiana da sua mãe voando.", "Um PM de folga.", "Dois caras numa moto.", "O filme do Pelé.", "Uma garrafa pet no relógio de luz.",
-        "Filtro de barro.", "Mendingar like no Instagram.", "Uma Capivara raivosa.", "O Louro José (Saudades).", "Ana Maria Braga bêbada.",
-        "Silvio Santos jogando aviãozinho.", "Um soco na costela.", "Rinha de Galo.", "Jogo do Bicho.", "Sogra de biquíni.", "Tio do pavê.",
-        "Primo rico que vende Hinode.", "Luva de Pedreiro.", "Bora Bill!", "Caneta Azul.", "Calvo do Campari.", "Um vídeo do Felipe Neto.",
-        "Banheira de Nutella.", "Podcast de maromba.", "Fake News no grupo da igreja.", "Travar o Zap.", "Um nude vazado.", "A cabeleireira Leila.",
-        "Vazar o print.", "Stalkear o ex.", "Webnamoro.", "Jogar Free Fire no banheiro.", "Fazer dancinha no TikTok.", "Reagir com foguinho no story.",
-        "Herpes labial.", "Candidíase.", "Viagra vencido.", "Boneca inflável furada.", "Sexo na praia (com areia).", "Mamar no sigilo.",
-        "Um vibrador movido a diesel.", "Fetiche em pés sujos.", "Suruba na terceira idade.", "Um travesti anão.", "Incesto (Game of Thrones style).",
-        "Aborto caseiro.", "Necrofilia leve.", "Garganta profunda.", "Cagar de porta aberta.", "Limpar a bunda com lixa.", "Hitler de calcinha.",
-        "Jesus Cristo numa moto.", "Um tubarão com lasers.", "Falar mal de K-Pop.", "A inexistência do Acre.", "O Mundial do Palmeiras.",
-        "Um ataque de diarreia em público.", "Colocar feijão embaixo do arroz.", "Pizza de Strogonoff.", "Comer borda de pizza.", "Ketchup na pizza.",
-        "Veganos chatos.", "Crossfiteiro.", "Coach quântico.", "Bater palmas quando o avião pousa.", "Aplaudir o pôr do sol.", "Usar sapatênis.",
-        "Camisa polo com gola levantada.", "O Patriota do caminhão.", "Urach cuspindo na cara.", "Inês Brasil.", "Gretchen rebolando.",
-        "Um gol da Alemanha.", "O menino Neymar caindo.", "Sonegar impostos.", "Orelha do Van Gogh.", "Um rim saudável.", "Vender a alma pro diabo.",
-        "Tomar banho de chinelo.", "Secar o saco com secador.", "Depilação a cera.", "Um boleto pago.", "A senha da Netflix do vizinho.",
-        "Mandar nude errado.", "Esquecer o filho na escola.", "Peidar no elevador.", "Rir no velório.", "Chorar vendo propaganda.",
-        "Cantar Evidências no karaokê.", "Comer reboco da parede.", "Cheirar cola.", "Lamber o corrimão.", "Beber água da privada.",
-        "Usar calcinha bege.", "Ter um filho feio.", "Casar com primo.", "Votar nulo.", "Ser mesário.", "Pagar dízimo.",
-        "Fazer promessa pra Santo Antônio.", "Simpatia pra crescer o pinto.", "Ler a mão de cigana.", "Acreditar em horóscopo.",
-        "Ser vegano por modinha.", "Fazer jejum intermitente.", "Tomar chá de fita.", "Fumar orégano.", "Cheirar pó de suco.",
-        "Lamber sapo.", "Ver gnomo.", "Falar com plantas.", "Abraçar árvore.", "Ser coach de fracasso.", "Vender curso de como vender curso.",
-        "Investir em NFT de macaco.", "Perder tudo no tigrinho.", "Cair no golpe do príncipe nigeriano.", "Emprestar dinheiro pra parente.",
-        "Ser fiador.", "Ter nome sujo.", "Dever pro agiota.", "Fugir da polícia.", "Ser preso por vadiagem.", "Mijar na rua.",
-        "Cagar no mato.", "Limpar a bunda com folha.", "Usar jornal como papel higiênico.", "Tomar banho de canequinha.",
-        "Esquentar água no rabo quente.", "Comer miojo cru.", "Beber Dolly.", "Fumar cigarro paraguaio.", "Usar perfume falsificado.",
-        "Comprar roupa na 25 de Março.", "Usar 'Abidas'.", "Ter um 'Reabok'.", "Assistir novela mexicana.", "Chorar vendo Chaves.",
-        "Rir de desgraça.", "Cair de maduro.", "Bater o dedinho na quina.", "Pisar em lego.", "Morder a língua.", "Engasgar com saliva.",
-        "Espirrar e peidar.", "Tossir e cagar.", "Rir e mijar.", "Ter diarreia explosiva.", "Vomitar no uber.", "Desmaiar no ônibus.",
-        "Dormir no ponto.", "Perder o ônibus.", "Ser assaltado.", "Cair no bueiro.", "Ser atropelado por bicicleta.",
-        "Ser mordido por cachorro.", "Levar cagada de pombo.", "Pisar na bosta.", "Escorregar na banana.", "Bater a cabeça no poste.",
-        "Ser corno manso.", "Ser talarico.", "Ser maria gasolina.", "Ser maria chuteira.", "Ser sugar baby.", "Ser sugar daddy.",
-        "Ter onlyfans.", "Vender pack do pé.", "Vender água de banho.", "Fazer live dormindo.", "Ser cancelado no twitter.",
-        "Ser banido do tinder.", "Tomar ghosting.", "Levar fora.", "Ser friendzonado.", "Voltar com ex.", "Mandar mensagem bêbado.",
-        "Ligar a cobrar.", "Pedir fiado.", "Devolver o troco errado.", "Roubar wi-fi.", "Hackear o vizinho.", "Ver pornô no trabalho.",
-        "Ser demitido por justa causa.", "Processar a empresa.", "Ganhar na loteria e perder tudo.", "Ser sequestrado por alienígenas.",
-        "Ver disco voador.", "Acreditar na terra plana.", "Ser antivacina.", "Usar chapéu de alumínio.", "Falar com espíritos.",
-        "Jogar ouija.", "Fazer pacto.", "Vender a alma.", "Ser possuído.", "Exorcizar o gato.", "Batizar o cachorro.",
-        "Casar com boneca.", "Ter filho imaginário.", "Falar sozinho na rua.", "Discutir com o espelho.", "Brigar com a sombra.",
-        "Ter medo de escuro.", "Dormir de luz acesa.", "Olhar embaixo da cama.", "Ter medo de palhaço.", "Ter medo de boneca.",
-        "A careca do Alexandre de Moraes.", "Um Celta rebaixado com escada no teto.", "O urubu do pix.", "Jogo do Tigrinho.",
-        "Uma airfryer toda engordurada.", "Taxar as blusinhas da Shein.", "O Chico Moedas.", "Calcinha com freada de bicicleta.", "Um sugar daddy falido.",
-        "Fumar pen drive (Vape).", "A tornozeleira eletrônica do meu tio.", "Um vídeo de pedido de desculpas no YouTube.", "Harmonização facial que deu errado.",
-        "O boneco Fofão da Carreta Furacão.", "Uma tatuagem de henna no rosto.", "Café coado na calcinha.", "Um CD pirata do Calypso.", "A risada do Bola do Pânico.",
-        "Um Chevette pegando fogo.", "Gente que aplaude avião pousando.", "O PlayStation 2 desbloqueado.", "Bomba patch 100% atualizado.", "Um litrão de Kaiser quente.",
-        "O Fantasma do Comunismo.", "Mamadeira de Piroca.", "A dentadura do seu avô no copo d'água.", "Um Pastor gritando 'GLÓRIA'.", "A grávida de Taubaté fazendo crossfit.",
-        "Rico andando de iate.", "Pobre andando de jet ski alugado.", "Um pinscher tremendo de ódio.", "A voz da Pabllo Vittar.", "O sotaque carioca forçado.",
-        "Biscoito ou Bolacha (a discussão).", "Cuscuz paulista (nojento).", "Um podrão da esquina.", "Lamber a tampa do iogurte.", "Passar trote pro 190.",
-        "Uma briga no Casos de Família.", "O teste de DNA do Ratinho.", "Xaropinho.", "Uma boneca Annabelle.", "Fazer 'L' com a mão.", "Fazer 'arminha' com a mão.",
-        "Um patriota agarrado no caminhão.", "Marta Suplicy trocando de partido.", "O sítio de Atibaia.", "Um triplex no Guarujá.", "Joias das Arábias.",
-        "Um cartão corporativo estourado.", "Sigilo de 100 anos.", "Um Powerpoint do Dallagnol.", "O Juiz ladrão.", "A torcida do Flamengo (cheirinho).",
-        "Cair na malha fina.", "Imposto de Renda.", "IPVA atrasado.", "Multa de trânsito.", "Pontos na carteira.", "Carro de som com mensagem de amor.",
-        "Telemensagem ao vivo.", "Um buquê de flores murchas.", "Chocolate Pan (falecido).", "Guaraná Jesus.", "Catuaba Selvagem.", "Pitú com limão.",
-        "Cachaça 51.", "Velho Barreiro.", "Um copo lagoinha (americano).", "Mesa de plástico da Skol.", "Cadeira de boteco amarela.", "Ovo colorido de bar.",
-        "Torresmo peludo.", "Linguiça calabresa acebolada.", "Frango a passarinho oleoso.", "Batata frita murcha.", "Maionese verde temperada.", "Ketchup aguado.",
-        "Mostarda escura.", "Molho de pimenta caseiro.", "Farofa de ovo.", "Vinagrete azedo.", "Feijoada de quarta-feira.", "Dobradinha fedida.", "Mocotó.",
-        "Buchada de bode.", "Sarapatel.", "Acarajé quente.", "Vatapá.", "Tacacá.", "Pão de queijo amanhecido.", "Bolo de fubá seco.", "Broa de milho.",
-        "Sonho de padaria.", "Churros do Chaves.", "Pipoca com Sazon.", "Amendoim japonês.", "Bala 7 Belo.", "Pirulito Dipnlik.", "Chiclete Ping Pong.",
-        "Bala Juquinha.", "Chocolate Guarda-chuva (gordura hidrogenada).", "Moeda de chocolate.", "Cigarro de chocolate.", "Kinder Ovo (caro pra caralho).",
-        "Nutella fake.", "Leite condensado na lata.", "Doce de leite talhado.", "Goiabada com queijo.", "Romeu e Julieta.", "Pudim de pão.", "Sagu de vinho.",
-        "Arroz doce.", "Canjica.", "Curau de milho.", "Pamonha.", "Bolo de rolo.", "Cartola.", "Tapioca.", "Cuscuz de milho.", "Chimarrão.", "Tereré.",
-        "Açaí com granola.", "Cupuaçu.", "Graviola.", "Cajá.", "Umbu.", "Seriguela.", "Jabuticaba.", "Pitanga.", "Acerola.", "Caju.", "Manga com leite.",
-        "Abacaxi com sal.", "Melancia com caroço.", "Banana prata.", "Maçã do amor.", "Algodão doce.", "Pipoca doce vermelha.", "Crepe suíço.",
-        "Espetinho de gato.", "Yakisoba de feira.", "Pastel de vento.", "Caldo de cana.", "Garapa.", "Água de coco.", "Refrigerante de 3 litros.",
-        "Suco de pózinho (Tang).", "Refresco de groselha.", "Raspadinha de gelo.", "Sacolé (Chup-chup/Dindin).", "Geladinho gourmet.", "Sorvete de massa.",
-        "Picolé de fruta.", "Sundae do McDonald's (máquina quebrada).", "McFlurry.", "Milkshake de Ovomaltine.", "Bobs Burguer.", "Giraffas.", "Habib's (esfiha aberta).",
-        "China in Box.", "Pizza Hut.", "Domino's.", "Subway (15cm ou 30cm?).", "Burger King.", "KFC (frango frito).", "Taco Bell (diarreia).", "Outback (pão australiano).",
-        "Madero (hambúrguer do Junior Durski).", "Coco Bambu.", "Fogo de Chão.", "Paris 6 (prato com nome de famoso).", "Fazano.", "DOM (Alex Atala).",
-        "Masterchef Brasil.", "Erick Jacquin (tômpero).", "Paola Carosella.", "Henrique Fogaça.", "Ana Paula Padrão.", "Pesadelo na Cozinha.",
-        "Pé de Fava (desliga o freezer).", "Vergonha da profission.", "Caganeira violenta.", "Intoxicação alimentar.", "Lavagem estomacal.",
-        "Glicose na veia.", "Coma alcoólico.", "Ressaca moral.", "Amnésia alcoólica.", "PT (Perda Total).", "Samu 192.", "UPA 24h.", "Hospital Público (fila do SUS).",
-        "Plano de saúde caro.", "Unimed.", "Amil.", "Bradesco Saúde.", "SulAmérica.", "NotreDame Intermédica.", "Prevent Senior (cloroquina).",
-        "Hapvida.", "Golden Cross.", "Porto Seguro.", "Sompo Seguros.", "Allianz.", "Mapfre.", "Tokio Marine.", "Liberty Seguros.", "Zurich.", "Generali.",
-        "Chubb.", "AIG.", "MetLife.", "Prudential.", "Icatu Seguros.", "Mongeral Aegon.", "Brasilprev.", "Caixa Seguridade.", "BB Seguridade.",
-        "Itaú Seguros.", "Santander Seguros.", "Bradesco Seguros.", "Porto Seguro Auto.", "Azul Seguros.", "Itaú Auto.", "HDI Seguros.", "Yasuda Marítima.",
-        "Suhai Seguradora.", "Aliro Seguro.", "Pier Seguros.", "Youse.", "Thinkseg.", "Justos.", "Darwin.", "Gente Seguradora.", "Excelsior Seguros.",
-        "Previsul.", "Capemisa.", "MBM Seguradora.", "Sabemi.", "Sancor Seguros.", "Essor Seguros.", "Austral Seguradora.", "Fairfax Brasil.",
-        "Starr Insurance.", "Swiss Re.", "Munich Re.", "Scor.", "Hannover Re.", "PartnerRe.", "RGA.", "Gen Re.", "Mapfre Re.", "IRB Brasil Re.",
-        "Terra Brasis Re.", "Austral Re.", "Junto Resseguros.", "Áurea Ressseguros.", "Um vibrador com controle remoto.", "O botão de autodestruição.",
-        "Um e-mail do príncipe da Nigéria.", "A calcinha da avó.", "Um peido na cara.", "O cheiro de enxofre.", "Um bode na sala.", "A sogra morando junto.",
-        "Um cunhado chato.", "O tiozão do churrasco.", "A tia do zap.", "O primo maconheiro.", "A prima gostosa.", "O sobrinho pentelho.",
-        "O afilhado mimado.", "A madrinha beata.", "O padrinho bêbado.", "O vizinho barulhento.", "A síndica fofoqueira.", "O porteiro dorminhoco.",
-        "O carteiro que não toca a campainha.", "O entregador de pizza atrasado.", "O motorista de ônibus estressado.", "O cobrador de ônibus simpático.",
-        "O taxista que fala de política.", "O uber que oferece bala.", "O motoboy cachorro louco.", "O ciclista na contramão.", "O pedestre sem noção.",
-        "O mendigo filósofo.", "O artista de rua talentoso.", "O vendedor de bala insistente.", "A testemunha de Jeová domingo cedo.", "O atendente de telemarketing.",
-        "O suporte técnico que não resolve.", "O gerente do banco que quer vender título de capitalização.", "O corretor de imóveis que mente.",
-        "O advogado porta de cadeia.", "O médico que não olha na cara.", "O dentista sádico.", "O professor que reprova todo mundo.", "O aluno puxa-saco.",
-        "O colega de trabalho que rouba comida na geladeira."
-    ];
+    // --- DATABASE LISTS (Minified) ---
+    const MASTER_BLACK = ["Para fazer amor gostoso, eu preciso de _____.", "O que o Bolsonaro esconde no cofre?", "Qual é o segredo para uma vida feliz?", "Brasileiro gosta mesmo é de _____.", "Em um mundo perfeito, não existiria _____.", "A causa da minha morte será _____.", "O que o Padre Marcelo Rossi toma no café da manhã?", "Em briga de marido e mulher, ninguém mete _____.", "O que a Anitta vai lançar no próximo clipe?", "Minha fantasia de carnaval esse ano é _____.", "O que eu faria por um iPhone 15?", "A nova política da empresa proíbe _____ no escritório.", "O presente perfeito para o Dia das Mães é _____.", "O que o Faustão guarda na churrasqueira?", "A solução para a crise econômica é _____.", "O que eu disse para o policial quando fui parado?", "A Xuxa fez um pacto com _____.", "Motivo do meu último término: _____.", "O médico receitou _____ para a minha ansiedade.", "Harry Potter e o mistério de _____.", "Qual o nome do grupo da família no WhatsApp?", "Deus perdoa, mas _____ não.", "Minha vida amorosa resumida em uma palavra: _____.", "O segredo do sucesso do Pablo Marçal é _____.", "O que não pode faltar na ceia de Natal?", "O que eu faria se ganhasse na Mega Sena?", "O que me dá mais medo que boleto vencido?", "O que o Batman faz nas horas vagas?", "O que eu esconderia se a polícia batesse na minha porta?", "O que tem no final do arco-íris?", "O que eu faria por um pix de 100 reais?", "Qual é a senha do wi-fi do inferno?", "A cura para a ressaca é _____.", "Qual é o maior defeito do brasileiro?", "Qual é o meu talento inútil?", "A coisa mais cara que eu já quebrei foi _____.", "A nova moda no TikTok é o desafio de _____.", "O Fantástico de domingo vai fazer uma matéria especial sobre _____.", "Em 2026, o Brasil será governado por _____.", "O segredo para um casamento duradouro é ignorar _____.", "Antes de morrer, o Chaves revelou que o barril tinha _____.", "O que a NASA encontrou em Marte, mas escondeu?", "O que me fez ser expulso da igreja?", "A regra número 1 do Clube da Luta é: nunca fale sobre _____.", "A nova taxa do Haddad é sobre _____.", "O que tem dentro da mala do Scooby-Doo?", "Qual é a melhor utilidade para um diploma universitário?", "A Disney anunciou o novo filme: 'Branca de Neve e _____'.", "Qual a pior coisa para se dizer durante o sexo?", "A única coisa mais dura que diamante é _____.", "A nova skin do Fortnite é baseada em _____.", "Qual é o ingrediente secreto do cachorro-quente da esquina?", "A verdadeira razão pela qual os dinossauros foram extintos foi _____.", "O que a Ana Maria Braga colocou no Mais Você hoje?", "O que eu gritei quando bati o dedinho na quina?", "O que o Papai Noel faz no dia 26 de dezembro?", "A única coisa que cresce mais que a inflação é _____.", "O que eu usaria para limpar a cena do crime?", "O que o entregador do iFood comeu do meu pedido?", "No céu tem pão? E tem _____?", "O que o Uber falou que me fez dar 1 estrela?", "O que eu escreveria na minha lápide?", "A nova atração do Beto Carrero World é _____.", "O que eu achei no bolso da minha calça jeans velha?", "O que o VAR revisou no jogo de ontem?", "O que eu daria de presente pro meu pior inimigo?", "O que o Chapolin Colorado usa para detectar perigo?", "A nova lei de trânsito proíbe dirigir e _____ ao mesmo tempo.", "O que eu usaria para subornar um guarda?", "O que a Eliana mostrava nos dedinhos?", "A única coisa que me faria voltar pra igreja é _____.", "O que o meu chefe faz no banheiro da empresa?", "O que eu usaria para apagar um incêndio?", "A única coisa que me faz chorar no banho é _____.", "O que o meu pai foi comprar e nunca mais voltou?", "O que eu usaria para convencer alguém a entrar num esquema de pirâmide?", "O que eu faria se fosse abduzido por alienígenas?", "A nova religião do momento adora _____.", "O que o Silvio Santos perguntou pra menininha?", "O que eu encontrei no lixo do vizinho?", "A nova série da Netflix é um documentário sobre _____.", "O que o meu professor de educação física fazia no vestiário?", "O que eu escreveria numa carta de suicídio falsa?", "A nova moda entre os jovens é fumar _____.", "O que o meu chefe disse na reunião de fim de ano?"];
+    const MASTER_WHITE = ["Um anão bombado.", "O Lula com 10 dedos.", "Tráfico de órgãos.", "Uma cenoura.", "Fingir orgasmo.", "A piroca do Kid Bengala.", "Fazer uma chuca mal feita.", "Um golden shower surpresa.", "Bater na avó.", "Um teste de gravidez positivo.", "Pablo Marçal num coach.", "A grávida de Taubaté.", "Dívida no Serasa.", "Um Fiat Marea Turbo.", "Comer o cu de quem tá lendo.", "Um cadáver fresco.", "Pagar pensão alimentícia.", "Um travesti de 2 metros.", "Cheirar cocaína no pau de um palhaço.", "Oito litros de Corote.", "Demitir o estagiário.", "Calcinha comestível sabor bacon.", "Minha dignidade.", "Um peido silencioso e mortal.", "Vender foto do pé.", "O Agostinho Carrara.", "Gemidão do Zap.", "Chutar mendigo.", "A harmonização facial do demônio.", "Vira-lata caramelo.", "Boleto vencido.", "Café frio e cigarro.", "Uma coxinha mordida.", "O véio da Havan.", "Um áudio de 5 minutos da sua mãe.", "Arroz com uva passa.", "Pavê ou pacumê.", "Um Palio 98 rebaixado.", "Churrasco de gato.", "Três reais de pão.", "A sandália Havaiana da sua mãe voando.", "Um PM de folga.", "Dois caras numa moto.", "O filme do Pelé.", "Uma garrafa pet no relógio de luz.", "Filtro de barro.", "Mendingar like no Instagram.", "Uma Capivara raivosa.", "O Louro José (Saudades).", "Ana Maria Braga bêbada.", "Silvio Santos jogando aviãozinho.", "Um soco na costela.", "Rinha de Galo.", "Jogo do Bicho.", "Sogra de biquíni.", "Tio do pavê.", "Primo rico que vende Hinode.", "Luva de Pedreiro.", "Bora Bill!", "Caneta Azul.", "Calvo do Campari.", "Um vídeo do Felipe Neto.", "Banheira de Nutella.", "Podcast de maromba.", "Fake News no grupo da igreja.", "Travar o Zap.", "Um nude vazado.", "A cabeleireira Leila.", "Vazar o print.", "Stalkear o ex.", "Webnamoro.", "Jogar Free Fire no banheiro.", "Fazer dancinha no TikTok.", "Reagir com foguinho no story.", "Herpes labial.", "Candidíase.", "Viagra vencido.", "Boneca inflável furada.", "Sexo na praia (com areia).", "Mamar no sigilo.", "Um vibrador movido a diesel.", "Fetiche em pés sujos.", "Suruba na terceira idade.", "Um travesti anão.", "Incesto (Game of Thrones style).", "Aborto caseiro.", "Necrofilia leve.", "Garganta profunda.", "Cagar de porta aberta.", "Limpar a bunda com lixa.", "Hitler de calcinha.", "Jesus Cristo numa moto.", "Um tubarão com lasers.", "Falar mal de K-Pop.", "A inexistência do Acre.", "O Mundial do Palmeiras.", "Um ataque de diarreia em público.", "Colocar feijão embaixo do arroz.", "Pizza de Strogonoff.", "Comer borda de pizza.", "Ketchup na pizza.", "Veganos chatos.", "Crossfiteiro.", "Coach quântico.", "Bater palmas quando o avião pousa.", "Aplaudir o pôr do sol.", "Usar sapatênis.", "Camisa polo com gola levantada.", "O Patriota do caminhão.", "Urach cuspindo na cara.", "Inês Brasil.", "Gretchen rebolando.", "Um gol da Alemanha.", "O menino Neymar caindo.", "Sonegar impostos.", "Orelha do Van Gogh.", "Um rim saudável.", "Vender a alma pro diabo.", "Tomar banho de chinelo.", "Secar o saco com secador.", "Depilação a cera.", "Um boleto pago.", "A senha da Netflix do vizinho.", "Mandar nude errado.", "Esquecer o filho na escola.", "Peidar no elevador.", "Rir no velório.", "Chorar vendo propaganda.", "Cantar Evidências no karaokê.", "Comer reboco da parede.", "Cheirar cola.", "Lamber o corrimão.", "Beber água da privada.", "Usar calcinha bege.", "Ter um filho feio.", "Casar com primo.", "Votar nulo.", "Ser mesário.", "Pagar dízimo.", "Fazer promessa pra Santo Antônio.", "Simpatia pra crescer o pinto.", "Ler a mão de cigana.", "Acreditar em horóscopo.", "Ser vegano por modinha.", "Fazer jejum intermitente.", "Tomar chá de fita.", "Fumar orégano.", "Cheirar pó de suco.", "Lamber sapo.", "Ver gnomo.", "Falar com plantas.", "Abraçar árvore.", "Ser coach de fracasso.", "Vender curso de como vender curso.", "Investir em NFT de macaco.", "Perder tudo no tigrinho.", "Cair no golpe do príncipe nigeriano.", "Emprestar dinheiro pra parente.", "Ser fiador.", "Ter nome sujo.", "Dever pro agiota.", "Fugir da polícia.", "Ser preso por vadiagem.", "Mijar na rua.", "Cagar no mato.", "Limpar a bunda com folha.", "Usar jornal como papel higiênico.", "Tomar banho de canequinha.", "Esquentar água no rabo quente.", "Comer miojo cru.", "Beber Dolly.", "Fumar cigarro paraguaio.", "Usar perfume falsificado.", "Comprar roupa na 25 de Março.", "Usar 'Abidas'.", "Ter um 'Reabok'.", "Assistir novela mexicana.", "Chorar vendo Chaves.", "Rir de desgraça.", "Cair de maduro.", "Bater o dedinho na quina.", "Pisar em lego.", "Morder a língua.", "Engasgar com saliva.", "Espirrar e peidar.", "Tossir e cagar.", "Rir e mijar.", "Ter diarreia explosiva.", "Vomitar no uber.", "Desmaiar no ônibus.", "Dormir no ponto.", "Perder o ônibus.", "Ser assaltado.", "Cair no bueiro.", "Ser atropelado por bicicleta.", "Ser mordido por cachorro.", "Levar cagada de pombo.", "Pisar na bosta.", "Escorregar na banana.", "Bater a cabeça no poste.", "Ser corno manso.", "Ser talarico.", "Ser maria gasolina.", "Ser maria chuteira.", "Ser sugar baby.", "Ser sugar daddy.", "Ter onlyfans.", "Vender pack do pé.", "Vender água de banho.", "Fazer live dormindo.", "Ser cancelado no twitter.", "Ser banido do tinder.", "Tomar ghosting.", "Levar fora.", "Ser friendzonado.", "Voltar com ex.", "Mandar mensagem bêbado.", "Ligar a cobrar.", "Pedir fiado.", "Devolver o troco errado.", "Roubar wi-fi.", "Hackear o vizinho.", "Ver pornô no trabalho.", "Ser demitido por justa causa.", "Processar a empresa.", "Ganhar na loteria e perder tudo.", "Ser sequestrado por alienígenas.", "Ver disco voador.", "Acreditar na terra plana.", "Ser antivacina.", "Usar chapéu de alumínio.", "Falar com espíritos.", "Jogar ouija.", "Fazer pacto.", "Vender a alma.", "Ser possuído.", "Exorcizar o gato.", "Batizar o cachorro.", "Casar com boneca.", "Ter filho imaginário.", "Falar sozinho na rua.", "Discutir com o espelho.", "Brigar com a sombra.", "Ter medo de escuro.", "Dormir de luz acesa.", "Olhar embaixo da cama.", "Ter medo de palhaço.", "Ter medo de boneca.", "A careca do Alexandre de Moraes.", "Um Celta rebaixado com escada no teto.", "O urubu do pix.", "Jogo do Tigrinho.", "Uma airfryer toda engordurada.", "Taxar as blusinhas da Shein.", "O Chico Moedas.", "Calcinha com freada de bicicleta.", "Um sugar daddy falido.", "Fumar pen drive (Vape).", "A tornozeleira eletrônica do meu tio.", "Um vídeo de pedido de desculpas no YouTube.", "Harmonização facial que deu errado.", "O boneco Fofão da Carreta Furacão.", "Uma tatuagem de henna no rosto.", "Café coado na calcinha.", "Um CD pirata do Calypso.", "A risada do Bola do Pânico.", "Um Chevette pegando fogo.", "Gente que aplaude avião pousando.", "O PlayStation 2 desbloqueado.", "Bomba patch 100% atualizado.", "Um litrão de Kaiser quente.", "O Fantasma do Comunismo.", "Mamadeira de Piroca.", "A dentadura do seu avô no copo d'água.", "Um Pastor gritando 'GLÓRIA'.", "A grávida de Taubaté fazendo crossfit.", "Rico andando de iate.", "Pobre andando de jet ski alugado.", "Um pinscher tremendo de ódio.", "A voz da Pabllo Vittar.", "O sotaque carioca forçado.", "Biscoito ou Bolacha (a discussão).", "Cuscuz paulista (nojento).", "Um podrão da esquina.", "Lamber a tampa do iogurte.", "Passar trote pro 190.", "Uma briga no Casos de Família.", "O teste de DNA do Ratinho.", "Xaropinho.", "Uma boneca Annabelle.", "Fazer 'L' com a mão.", "Fazer 'arminha' com a mão.", "Um patriota agarrado no caminhão.", "Marta Suplicy trocando de partido.", "O sítio de Atibaia.", "Um triplex no Guarujá.", "Joias das Arábias.", "Um cartão corporativo estourado.", "Sigilo de 100 anos.", "Um Powerpoint do Dallagnol.", "O Juiz ladrão.", "A torcida do Flamengo (cheirinho).", "Cair na malha fina.", "Imposto de Renda.", "IPVA atrasado.", "Multa de trânsito.", "Pontos na carteira.", "Carro de som com mensagem de amor.", "Telemensagem ao vivo.", "Um buquê de flores murchas.", "Chocolate Pan (falecido).", "Guaraná Jesus.", "Catuaba Selvagem.", "Pitú com limão.", "Cachaça 51.", "Velho Barreiro.", "Um copo lagoinha (americano).", "Mesa de plástico da Skol.", "Cadeira de boteco amarela.", "Ovo colorido de bar.", "Torresmo peludo.", "Linguiça calabresa acebolada.", "Frango a passarinho oleoso.", "Batata frita murcha.", "Maionese verde temperada.", "Ketchup aguado.", "Mostarda escura.", "Molho de pimenta caseiro.", "Farofa de ovo.", "Vinagrete azedo.", "Feijoada de quarta-feira.", "Dobradinha fedida.", "Mocotó.", "Buchada de bode.", "Sarapatel.", "Acarajé quente.", "Vatapá.", "Tacacá.", "Pão de queijo amanhecido.", "Bolo de fubá seco.", "Broa de milho.", "Sonho de padaria.", "Churros do Chaves.", "Pipoca com Sazon.", "Amendoim japonês.", "Bala 7 Belo.", "Pirulito Dipnlik.", "Chiclete Ping Pong.", "Bala Juquinha.", "Chocolate Guarda-chuva (gordura hidrogenada).", "Moeda de chocolate.", "Cigarro de chocolate.", "Kinder Ovo (caro pra caralho).", "Nutella fake.", "Leite condensado na lata.", "Doce de leite talhado.", "Goiabada com queijo.", "Romeu e Julieta.", "Pudim de pão.", "Sagu de vinho.", "Arroz doce.", "Canjica.", "Curau de milho.", "Pamonha.", "Bolo de rolo.", "Cartola.", "Tapioca.", "Cuscuz de milho.", "Chimarrão.", "Tereré.", "Açaí com granola.", "Cupuaçu.", "Graviola.", "Cajá.", "Umbu.", "Seriguela.", "Jabuticaba.", "Pitanga.", "Acerola.", "Caju.", "Manga com leite.", "Abacaxi com sal.", "Melancia com caroço.", "Banana prata.", "Maçã do amor.", "Algodão doce.", "Pipoca doce vermelha.", "Crepe suíço.", "Espetinho de gato.", "Yakisoba de feira.", "Pastel de vento.", "Caldo de cana.", "Garapa.", "Água de coco.", "Refrigerante de 3 litros.", "Suco de pózinho (Tang).", "Refresco de groselha.", "Raspadinha de gelo.", "Sacolé (Chup-chup/Dindin).", "Geladinho gourmet.", "Sorvete de massa.", "Picolé de fruta.", "Sundae do McDonald's (máquina quebrada).", "McFlurry.", "Milkshake de Ovomaltine.", "Bobs Burguer.", "Giraffas.", "Habib's (esfiha aberta).", "China in Box.", "Pizza Hut.", "Domino's.", "Subway (15cm ou 30cm?).", "Burger King.", "KFC (frango frito).", "Taco Bell (diarreia).", "Outback (pão australiano).", "Madero (hambúrguer do Junior Durski).", "Coco Bambu.", "Fogo de Chão.", "Paris 6 (prato com nome de famoso).", "Fazano.", "DOM (Alex Atala).", "Masterchef Brasil.", "Erick Jacquin (tômpero).", "Paola Carosella.", "Henrique Fogaça.", "Ana Paula Padrão.", "Pesadelo na Cozinha.", "Pé de Fava (desliga o freezer).", "Vergonha da profission.", "Caganeira violenta.", "Intoxicação alimentar.", "Lavagem estomacal.", "Glicose na veia.", "Coma alcoólico.", "Ressaca moral.", "Amnésia alcoólica.", "PT (Perda Total).", "Samu 192.", "UPA 24h.", "Hospital Público (fila do SUS).", "Plano de saúde caro.", "Unimed.", "Amil.", "Bradesco Saúde.", "SulAmérica.", "NotreDame Intermédica.", "Prevent Senior (cloroquina).", "Hapvida.", "Golden Cross.", "Porto Seguro.", "Sompo Seguros.", "Allianz.", "Mapfre.", "Tokio Marine.", "Liberty Seguros.", "Zurich.", "Generali.", "Chubb.", "AIG.", "MetLife.", "Prudential.", "Icatu Seguros.", "Mongeral Aegon.", "Brasilprev.", "Caixa Seguridade.", "BB Seguridade.", "Itaú Seguros.", "Santander Seguros.", "Bradesco Seguros.", "Porto Seguro Auto.", "Azul Seguros.", "Itaú Auto.", "HDI Seguros.", "Yasuda Marítima.", "Suhai Seguradora.", "Aliro Seguro.", "Pier Seguros.", "Youse.", "Thinkseg.", "Justos.", "Darwin.", "Gente Seguradora.", "Excelsior Seguros.", "Previsul.", "Capemisa.", "MBM Seguradora.", "Sabemi.", "Sancor Seguros.", "Essor Seguros.", "Austral Seguradora.", "Fairfax Brasil.", "Starr Insurance.", "Swiss Re.", "Munich Re.", "Scor.", "Hannover Re.", "PartnerRe.", "RGA.", "Gen Re.", "Mapfre Re.", "IRB Brasil Re.", "Terra Brasis Re.", "Austral Re.", "Junto Resseguros.", "Áurea Ressseguros.", "Um vibrador com controle remoto.", "O botão de autodestruição.", "Um e-mail do príncipe da Nigéria.", "A calcinha da avó.", "Um peido na cara.", "O cheiro de enxofre.", "Um bode na sala.", "A sogra morando junto.", "Um cunhado chato.", "O tiozão do churrasco.", "A tia do zap.", "O primo maconheiro.", "A prima gostosa.", "O sobrinho pentelho.", "O afilhado mimado.", "A madrinha beata.", "O padrinho bêbado.", "O vizinho barulhento.", "A síndica fofoqueira.", "O porteiro dorminhoco.", "O carteiro que não toca a campainha.", "O entregador de pizza atrasado.", "O motorista de ônibus estressado.", "O cobrador de ônibus simpático.", "O taxista que fala de política.", "O uber que oferece bala.", "O motoboy cachorro louco.", "O ciclista na contramão.", "O pedestre sem noção.", "O mendigo filósofo.", "O artista de rua talentoso.", "O vendedor de bala insistente.", "A testemunha de Jeová domingo cedo.", "O atendente de telemarketing.", "O suporte técnico que não resolve.", "O gerente do banco que quer vender título de capitalização.", "O corretor de imóveis que mente.", "O advogado porta de cadeia.", "O médico que não olha na cara.", "O dentista sádico.", "O professor que reprova todo mundo.", "O aluno puxa-saco.", "O colega de trabalho que rouba comida na geladeira."];
 
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -446,7 +438,6 @@
         return array;
     }
 
-    // --- LOGICA DE JOGO ---
     const roomRef = ref(db, `rooms/${roomCode}`);
     document.getElementById('screen-game').classList.add('active');
     document.getElementById('screen-game').style.display = 'flex';
@@ -460,8 +451,9 @@
         hand: document.getElementById('hand-area'),
         btnAction: document.getElementById('btn-action'),
         modalWinner: document.getElementById('winner-modal'),
+        winnerAvatar: document.getElementById('winner-avatar'),
         modalGameover: document.getElementById('game-over-modal'),
-        forceBtn: document.getElementById('btn-force'),
+        hostControls: document.getElementById('host-controls'),
         hostActions: document.getElementById('host-end-actions'),
         clientMsg: document.getElementById('client-wait-msg'),
         ambilight: document.getElementById('ambilight')
@@ -471,9 +463,24 @@
         const data = snap.val();
         els.loading.style.display = 'none';
         if(!data) return;
+        
+        // Sincronia de Tema
+        if(data.theme) document.body.className = data.theme;
+        else document.body.className = '';
+
         if(data.status === 'lobby') { window.location.href = `index.html`; return; }
-        if(data.host === myId) { isHost = true; els.forceBtn.style.display = 'block'; els.hostActions.style.display = 'block'; els.clientMsg.style.display = 'none'; } 
-        else { els.hostActions.style.display = 'none'; els.clientMsg.style.display = 'block'; }
+        
+        if(data.host === myId) { 
+            isHost = true; 
+            els.hostControls.style.display = 'flex'; 
+            els.hostActions.style.display = 'block'; 
+            els.clientMsg.style.display = 'none'; 
+        } else { 
+            els.hostControls.style.display = 'none';
+            els.hostActions.style.display = 'none'; 
+            els.clientMsg.style.display = 'block'; 
+        }
+
         if(data.players && data.players[myId]) myName = data.players[myId].name;
         updateScoreBoard(data.players);
         checkGameOver(data.players);
@@ -511,8 +518,10 @@
         const win = snap.val();
         if(win && !gameOver) {
             document.getElementById('winner-name').innerText = win.name;
+            els.winnerAvatar.innerText = win.name.charAt(0); // Avatar simples com inicial
             document.getElementById('winner-card-display').innerHTML = `<div style="font-size:0.75rem; opacity:0.6; margin-bottom:15px; border-bottom:1px solid #ccc; padding-bottom:10px;">${win.black}</div><div style="font-size:1.4rem;">${win.text}</div>`;
             els.modalWinner.style.display = 'flex';
+            triggerEmojiRain();
         } else els.modalWinner.style.display = 'none';
     });
 
@@ -521,23 +530,23 @@
         els.blackText.className = getTextSizeClass(matchData.blackCard);
         const colors = ['#0aff60', '#b537f2', '#ff2a6d', '#f5e625'];
         const color = colors[(matchData.roundCount || 0) % colors.length];
-        els.ambilight.style.background = `radial-gradient(circle at 50% 30%, ${color}, #000)`;
+        // els.ambilight.style.background = `radial-gradient(circle at 50% 30%, ${color}, #000)`; // Desligado para respeitar tema
 
         if(matchData.state === 'PICKING') {
             els.table.style.display = 'none';
             els.modalWinner.style.display = 'none';
             const myPlay = matchData.table ? matchData.table[myId] : null;
             if(myPlay) {
-                els.status.innerText = "ESPERANDO OS OUTROS...";
+                els.status.innerText = "AGUARDANDO OS OUTROS...";
                 els.hand.style.display = 'none';
                 els.btnAction.style.display = 'none';
-                // Remove a ação de clique se já jogou
-                document.querySelectorAll('.hand-card').forEach(c => c.style.pointerEvents = 'none');
             } else {
-                els.status.innerText = "ESCOLHA SUA CARTA";
+                els.status.innerText = "ESCOLHA (ARRASTE OU CLIQUE)";
                 els.hand.style.display = 'flex';
                 els.btnAction.style.display = 'none'; 
                 renderHand(hand);
+                // VIBRAR NO INICIO DO TURNO
+                if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
             }
         } else if (matchData.state === 'VOTING') {
             els.hand.style.display = 'none';
@@ -557,14 +566,19 @@
             card.className = 'fdp-card card-white hand-card';
             const sizeClass = getTextSizeClass(text);
             card.innerHTML = `<span class="${sizeClass}">${text}</span>`;
+            
+            // ATIVA O DRAG
+            initDrag(card, idx);
+            
+            // Fallback de clique
             card.onclick = () => {
                 document.querySelectorAll('.hand-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 selectedCardIdx = idx;
-                // Exibe o botão e garante que ele flutue
                 els.btnAction.style.display = 'block';
                 els.btnAction.innerText = "JOGAR CARTA";
-                els.btnAction.onclick = submitCard;
+                els.btnAction.onclick = () => submitCardDrag(idx); // Reutiliza lógica
+                playTone('pop');
             };
             els.hand.appendChild(card);
         });
@@ -584,7 +598,7 @@
             if(!iVoted && uid !== myId) { card.onclick = () => { if(confirm("Votar nesta carta?")) submitVote(uid); }; } 
             else if (iVoted) {
                 card.style.opacity = '0.5';
-                if(votesData && votesData[myId] === uid) { card.style.border = "4px solid var(--neon-pink)"; card.style.opacity = "1"; }
+                if(votesData && votesData[myId] === uid) { card.style.border = "4px solid var(--primary)"; card.style.opacity = "1"; }
             }
             els.table.appendChild(card);
         });
@@ -602,7 +616,7 @@
     function checkGameOver(players) {
         if(!players) return;
         let winner = null;
-        Object.values(players).forEach(p => { if((p.score_fdp || 0) >= 10) winner = p.name; }); // Meta de 10 pontos
+        Object.values(players).forEach(p => { if((p.score_fdp || 0) >= 10) winner = p.name; });
         if(winner) {
             if(gameOver) return;
             gameOver = true;
@@ -612,11 +626,12 @@
         } else { if(gameOver) { gameOver = false; els.modalGameover.style.display = 'none'; } }
     }
 
-    function submitCard() {
-        if(selectedCardIdx === -1) return;
-        const text = hand[selectedCardIdx];
+    // Unificação do submit (drag ou click)
+    function submitCardDrag(idx) {
+        if(idx === -1) return;
+        const text = hand[idx];
         const newHand = [...hand];
-        newHand.splice(selectedCardIdx, 1);
+        newHand.splice(idx, 1);
         update(ref(db, `rooms/${roomCode}/players/${myId}`), { hand_fdp: newHand });
         update(ref(db, `rooms/${roomCode}/fdp_match/table/${myId}`), { text: text, ownerName: myName });
         drawCard(1);
@@ -674,7 +689,7 @@
         update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'PICKING', blackCard: nextBlack, table: null, votes: null, winner: null, roundCount: (Math.floor(Math.random()*100)) });
     }
 
-    window.forceNextPhase = forceNextPhase; window.hostResetMatch = hostResetMatch; window.hostReturnToMenu = hostReturnToMenu;
+    window.forceNextPhase = forceNextPhase; window.hostResetMatch = hostResetMatch;
 </script>
 </body>
 </html>
