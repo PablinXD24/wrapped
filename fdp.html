@@ -3,206 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FDP - Premium</title>
+    <meta name="theme-color" content="#121212">
+    <title>FDP - Mobile Deluxe</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Permanent+Marker&display=swap" rel="stylesheet">
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
-
         :root {
-            --bg-body: #0a0a0a;
-            --bg-card: #ffffff;
-            --text-card: #000000;
-            --primary: #ffffff;
-            --accent: #0aff60; /* Verde Neon suave para destaques */
-            --danger: #ff4757;
+            /* Cores */
+            --bg-dark: #121212;
+            --bg-table: #1a1a1a;
             
-            --font-main: 'Space Grotesk', sans-serif;
-            --font-mono: 'Space Mono', monospace;
+            --card-white-bg: #fdfdfd;
+            --card-white-text: #1a1a1a;
+            
+            --card-black-bg: #222;
+            --card-black-text: #fff;
+            
+            --accent: #00e5ff; /* Ciano Neon para destaques */
+            --danger: #ff2a6d;
+
+            /* Tamanhos */
+            --card-width: 220px;
+            --card-height: 320px;
+            --card-radius: 16px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         
         body {
-            background-color: var(--bg-body);
-            color: var(--primary);
-            height: 100vh; width: 100vw; overflow: hidden;
-            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: white;
+            height: 100dvh; /* Dynamic Height para Mobile */
+            width: 100vw; overflow: hidden;
+            font-family: 'Inter', sans-serif;
             display: flex; flex-direction: column;
+            background-image: radial-gradient(circle at center, #252525 0%, #000 100%);
         }
 
-        /* --- LAYOUT GERAL --- */
-        .app {
-            display: flex; flex-direction: column; height: 100%; width: 100%;
-            max-width: 600px; margin: 0 auto; position: relative;
-        }
-
-        /* HEADER */
+        /* --- UI GERAL --- */
         .header {
-            padding: 20px; display: flex; justify-content: space-between; align-items: center;
-            z-index: 20;
+            padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 50; height: 60px;
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .score-pill {
-            background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 30px;
-            font-family: var(--font-mono); font-size: 0.8rem; font-weight: bold;
-            border: 1px solid rgba(255,255,255,0.1);
+        .score-badge {
+            background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px;
+            font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;
         }
-        .status-txt {
-            font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 2px;
-            text-transform: uppercase; color: rgba(255,255,255,0.5);
+        .status-text {
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; 
+            opacity: 0.7; font-weight: bold; color: var(--accent);
         }
 
-        /* --- FASE 1: ESCOLHA (PICKING) --- */
+        /* --- OBJETO CARTA (ESTILO FÍSICO) --- */
+        .card {
+            position: relative;
+            border-radius: var(--card-radius);
+            padding: 24px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform;
+            overflow: hidden;
+        }
+        /* Efeito de papel/textura sutil */
+        .card::before {
+            content: ''; position: absolute; inset: 0;
+            background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.05;
+            pointer-events: none;
+        }
+        
+        /* Marca d'água no canto da carta */
+        .card-brand {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 0.8rem; opacity: 0.3; align-self: flex-end;
+            margin-top: auto;
+        }
+
+        .card-content {
+            font-weight: 700; font-size: 1.25rem; line-height: 1.2;
+            word-wrap: break-word;
+        }
+        /* Ajuste automático de texto */
+        .card-content.long-text { font-size: 1rem; }
+        .card-content.very-long-text { font-size: 0.85rem; }
+
+        /* Variações */
+        .is-black {
+            background: var(--card-black-bg); color: var(--card-black-text);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .is-white {
+            background: var(--card-white-bg); color: var(--card-white-text);
+        }
+
+        /* --- FASE 1: MÃO DO JOGADOR (PICKING) --- */
         .phase-picking {
             flex: 1; display: flex; flex-direction: column; justify-content: space-between;
-            position: relative; padding-bottom: 20px;
+            overflow: hidden; padding-bottom: 20px;
         }
 
-        /* CARTA PRETA (PERGUNTA) */
-        .black-card-container {
-            padding: 0 20px; margin-top: 10px;
+        /* Área da Pergunta (Topo) */
+        .question-area {
+            flex: 1; display: flex; justify-content: center; align-items: center;
+            padding: 10px 30px;
+            perspective: 1000px;
         }
-        .card-black {
-            background: #1c1c1c; color: white; border-radius: 20px;
-            padding: 25px; min-height: 200px;
-            font-size: 1.3rem; font-weight: 700; line-height: 1.3;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex; flex-direction: column; justify-content: center;
+        .black-card-display {
+            width: 100%; max-width: 320px; height: auto; min-height: 180px;
+            transform: rotateX(5deg); /* Leve inclinação 3D */
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            font-size: 1.1rem;
         }
 
-        /* CARROSSEL DE MÃO (SWIPE UP) */
+        /* Área da Mão (Carrossel Inferior) */
+        .hand-area {
+            height: 380px; position: relative;
+        }
         .hand-carousel {
-            display: flex; gap: 15px; 
-            overflow-x: auto; scroll-snap-type: x mandatory;
-            padding: 40px 50vw 40px 20px; /* Padding extra pra centralizar */
-            scroll-behavior: smooth;
-            align-items: center; height: 320px;
+            display: flex; gap: 15px;
+            overflow-x: auto; 
+            scroll-snap-type: x mandatory; /* Centraliza a carta */
+            padding: 40px 50vw 60px 50vw; /* Padding lateral gigante para centralizar o primeiro/último item */
+            align-items: center;
+            height: 100%;
         }
         .hand-carousel::-webkit-scrollbar { display: none; }
-
-        .card-white {
-            background: var(--bg-card); color: var(--text-card);
-            width: 200px; height: 280px; flex-shrink: 0;
-            border-radius: 18px; padding: 20px;
-            font-weight: 700; font-size: 1.1rem; line-height: 1.2;
-            scroll-snap-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            transform-origin: center bottom;
-            transition: transform 0.2s;
-            position: relative;
-        }
-        /* Destaque visual leve */
-        .card-white:active { transform: scale(0.98); }
         
-        /* Instrução visual */
-        .swipe-hint {
-            text-align: center; opacity: 0.4; font-family: var(--font-mono);
-            font-size: 0.7rem; margin-bottom: 10px; pointer-events: none;
-            animation: pulse 2s infinite;
+        .hand-card-wrapper {
+            scroll-snap-align: center; /* Ponto de parada */
+            flex-shrink: 0;
+            width: var(--card-width); height: var(--card-height);
+            transition: transform 0.3s;
+        }
+        /* Carta branca interativa */
+        .hand-card-wrapper .card {
+            width: 100%; height: 100%;
+            cursor: grab;
+        }
+        .hand-card-wrapper .card:active { cursor: grabbing; transform: scale(0.98); }
+
+        /* Dica Visual */
+        .gesture-hint {
+            position: absolute; top: 0; left: 0; width: 100%; text-align: center;
+            font-size: 0.75rem; opacity: 0.5; pointer-events: none;
+            display: flex; justify-content: center; gap: 5px;
+            animation: fadeInOut 2s infinite;
         }
 
-        /* --- FASE 2: VOTAÇÃO (TABLE) --- */
+        /* --- FASE 2: VOTAÇÃO (MESA) --- */
         .phase-voting {
-            display: none; flex: 1; 
-            padding: 20px; overflow-y: auto;
-            grid-template-columns: 1fr 1fr; gap: 15px; align-content: flex-start;
+            display: none; flex: 1; padding: 20px;
+            overflow-y: auto; align-content: start;
+            grid-template-columns: repeat(2, 1fr); gap: 15px; /* Grid 2 colunas mobile */
+            padding-bottom: 80px;
         }
         .table-card {
-            background: var(--bg-card); color: var(--text-card);
-            border-radius: 16px; padding: 15px; min-height: 140px;
-            font-size: 0.9rem; font-weight: 700;
-            animation: popIn 0.4s backwards;
+            min-height: 160px; font-size: 0.9rem;
+            animation: dealCard 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
         }
-        .table-card.selected { border: 4px solid var(--accent); transform: scale(1.02); }
+        .table-card.selected {
+            box-shadow: 0 0 0 4px var(--accent); transform: scale(1.02);
+        }
 
         /* --- MODAIS --- */
-        .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 100;
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 200;
             display: none; flex-direction: column; justify-content: center; align-items: center;
-            text-align: center; backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
         }
-        .winner-avatar {
-            width: 80px; height: 80px; background: var(--accent); color: #000;
-            border-radius: 50%; font-size: 2rem; font-weight: 900;
-            display: flex; justify-content: center; align-items: center;
-            margin-top: -40px; border: 5px solid #fff; position: relative; z-index: 10;
+        
+        .winner-spotlight {
+            position: relative; margin-bottom: 30px;
+        }
+        .winner-card-visual {
+            transform: rotate(-3deg) scale(1.1); width: 240px;
+            box-shadow: 0 0 50px rgba(0, 229, 255, 0.3);
+        }
+        .winner-badge {
+            position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+            background: var(--accent); color: black; padding: 5px 20px;
+            border-radius: 20px; font-weight: 900; font-size: 0.8rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); white-space: nowrap;
         }
 
-        /* HOST CONTROLS */
-        .host-btn {
-            position: fixed; top: 20px; right: 20px; z-index: 50;
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-            color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer;
+        /* --- BOTÕES DE HOST --- */
+        .fab-host {
+            position: fixed; bottom: 20px; right: 20px; z-index: 100;
+            background: #333; border: 1px solid #555; color: white;
+            width: 50px; height: 50px; border-radius: 50%;
+            font-size: 1.2rem; cursor: pointer; display: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
 
-        /* UTIL */
-        @keyframes pulse { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 0.8; transform: translateY(-5px); } }
-        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        @keyframes flyUp { to { transform: translateY(-100vh) rotate(10deg); opacity: 0; } }
-        .flying { animation: flyUp 0.5s ease-in forwards !important; pointer-events: none; }
-        .text-sm { font-size: 0.85rem; } .text-md { font-size: 1.1rem; } .text-lg { font-size: 1.4rem; }
+        /* --- ANIMAÇÕES CSS --- */
+        @keyframes dealCard { from { opacity: 0; transform: translateY(50px) scale(0.8); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes flyUp { to { transform: translateY(-120vh) rotate(10deg); opacity: 0; } }
+        @keyframes fadeInOut { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+        
+        .flying { animation: flyUp 0.6s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards !important; pointer-events: none; }
 
+        /* Utilitários de Texto */
+        .bold { font-weight: 700; }
+        
     </style>
 </head>
 <body>
 
-<div class="app">
+<div class="header">
+    <div class="score-badge">
+        <i class="fa-solid fa-trophy" style="color: gold;"></i>
+        <span id="my-score">0</span>
+    </div>
+    <div class="status-text" id="status-display">CARREGANDO...</div>
+    <div id="host-controls" style="display:none;">
+        <button onclick="forceNextPhase()" style="background:none; border:none; color:white; font-size:1.2rem;"><i class="fa-solid fa-forward-step"></i></button>
+    </div>
+</div>
+
+<div id="phase-picking" class="phase-picking">
     
-    <div class="header">
-        <div class="score-pill">🏆 <span id="my-score">0</span></div>
-        <div class="status-txt" id="status-txt">...</div>
+    <div class="question-area">
+        <div id="black-card" class="card is-black black-card-display">
+            <div id="black-text" class="card-content">...</div>
+            <div class="card-brand">FDP</div>
+        </div>
     </div>
 
-    <button id="host-btn" class="host-btn" style="display:none;" onclick="forceNextPhase()">AVANÇAR ⏩</button>
-
-    <div id="phase-picking" class="phase-picking">
-        <div class="black-card-container">
-            <div id="black-card" class="card-black">
-                <span id="black-text">Carregando pergunta...</span>
+    <div class="hand-area">
+        <div class="gesture-hint"><i class="fa-solid fa-arrow-up"></i> ARRASTE PARA CIMA PARA JOGAR</div>
+        <div id="hand-carousel" class="hand-carousel">
             </div>
-        </div>
-
-        <div>
-            <div class="swipe-hint" id="swipe-hint">ARRASTE A CARTA PARA CIMA PARA JOGAR ⬆</div>
-            <div id="hand-carousel" class="hand-carousel">
-                </div>
-        </div>
     </div>
-
-    <div id="phase-voting" class="phase-voting">
-        </div>
 
 </div>
 
-<div id="winner-modal" class="modal">
-    <h3 style="color: var(--accent); letter-spacing: 2px; margin-bottom: 50px;">VENCEDOR DA RODADA</h3>
-    
-    <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
-        <div id="winner-card" class="card-white" style="transform: rotate(-3deg); width: 220px; height: 300px; font-size: 1.3rem;">
-            Texto da carta
-        </div>
-        <div id="winner-avatar" class="winner-avatar">A</div>
+<div id="phase-voting" class="phase-voting">
     </div>
 
-    <h2 id="winner-name" style="margin-top: 20px; font-size: 2rem;">Nome do Player</h2>
-    <p style="opacity: 0.5; margin-top: 30px; font-family: var(--font-mono);">Próxima rodada em instantes...</p>
+<div id="winner-modal" class="modal-overlay">
+    <div class="winner-spotlight">
+        <div id="winner-card-visual" class="card is-white winner-card-visual">
+            <div id="winner-card-text" class="card-content">Resposta aqui</div>
+            <div class="card-brand">FDP</div>
+        </div>
+        <div class="winner-badge" id="winner-name">NOME JOGADOR</div>
+    </div>
+    <h2 style="color: white; margin-top: 10px;">VENCEDOR!</h2>
 </div>
 
-<div id="game-over-modal" class="modal" style="background: var(--accent);">
-    <h1 style="font-size: 6rem; margin: 0; color: #000;">👑</h1>
-    <h1 style="font-size: 3rem; color: #000; font-weight: 900;">CAMPEÃO</h1>
-    <h2 id="champion-name" style="background: #000; color: #fff; padding: 10px 40px; border-radius: 50px;">PLAYER</h2>
+<div id="game-over-modal" class="modal-overlay" style="background: var(--accent);">
+    <h1 style="font-size: 5rem; color: #000; margin-bottom: 0;"><i class="fa-solid fa-crown"></i></h1>
+    <h1 style="color: #000; font-weight: 900; font-size: 3rem; line-height: 1;">CAMPEÃO</h1>
+    <h2 id="champion-name" style="background: #000; color: #fff; padding: 10px 40px; border-radius: 50px; margin-top: 20px;">PLAYER</h2>
     
-    <button id="restart-btn" onclick="hostResetMatch()" style="display:none; margin-top: 40px; padding: 15px 30px; border: none; background: #000; color: #fff; font-weight: bold; border-radius: 30px; font-size: 1rem;">NOVA PARTIDA 🔄</button>
+    <div id="host-reset-area" style="margin-top: 40px; display: none;">
+        <button onclick="hostResetMatch()" style="padding: 15px 40px; background: #000; color: white; border: none; border-radius: 30px; font-weight: bold; font-size: 1rem; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">NOVA PARTIDA 🔄</button>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update, runTransaction, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    /* --- SETUP FIREBASE --- */
+    /* --- CONFIGURAÇÃO --- */
     const firebaseConfig = { apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc", authDomain: "wrapped-fad94.firebaseapp.com", databaseURL: "https://wrapped-fad94-default-rtdb.firebaseio.com", projectId: "wrapped-fad94", storageBucket: "wrapped-fad94.firebasestorage.app", messagingSenderId: "360236097664", appId: "1:360236097664:web:76777f529c18623bf1c665" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -211,9 +279,9 @@
 
     if(!roomCode || !myId) window.location.href = 'index.html';
 
-    /* --- SOM (JUICE) --- */
+    /* --- ÁUDIO (Simples) --- */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playSound(type) {
+    function playSfx(type) {
         if(audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -221,42 +289,47 @@
         gain.connect(audioCtx.destination);
         const t = audioCtx.currentTime;
 
-        if(type === 'swish') { // Som de Swipe
-            osc.frequency.setValueAtTime(200, t);
-            osc.frequency.exponentialRampToValueAtTime(600, t + 0.2);
+        if(type === 'swish') {
+            osc.frequency.setValueAtTime(300, t);
+            osc.frequency.exponentialRampToValueAtTime(800, t+0.2);
             gain.gain.setValueAtTime(0.1, t);
-            gain.gain.linearRampToValueAtTime(0, t + 0.2);
-            osc.start(); osc.stop(t + 0.2);
-        } else if (type === 'pop') { // Vitória
+            gain.gain.linearRampToValueAtTime(0, t+0.2);
+            osc.start(); osc.stop(t+0.2);
+        } else if(type === 'pop') {
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(400, t);
-            gain.gain.setValueAtTime(0.2, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-            osc.start(); osc.stop(t + 0.5);
+            osc.frequency.setValueAtTime(600, t);
+            gain.gain.setValueAtTime(0.1, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t+0.1);
+            osc.start(); osc.stop(t+0.1);
         }
     }
 
-    /* --- LÓGICA DE JOGO --- */
+    /* --- ESTADO --- */
     let isHost = false;
     let hand = [];
     let myName = "Eu";
     let gameState = "";
-    let gameOver = false;
-
-    // Elementos DOM
+    
+    /* --- REFERÊNCIAS DOM --- */
     const els = {
         picking: document.getElementById('phase-picking'),
         voting: document.getElementById('phase-voting'),
-        hand: document.getElementById('hand-carousel'),
+        handCarousel: document.getElementById('hand-carousel'),
         blackText: document.getElementById('black-text'),
-        status: document.getElementById('status-txt'),
+        status: document.getElementById('status-display'),
         winnerModal: document.getElementById('winner-modal'),
         gameOverModal: document.getElementById('game-over-modal'),
-        hostBtn: document.getElementById('host-btn'),
-        hint: document.getElementById('swipe-hint')
+        hostControls: document.getElementById('host-controls')
     };
 
-    // Listeners
+    /* --- HELPER TEXTO --- */
+    function getTextSizeClass(text) {
+        if (text.length > 80) return 'very-long-text';
+        if (text.length > 40) return 'long-text';
+        return '';
+    }
+
+    /* --- GAME LOOP --- */
     onValue(ref(db, `rooms/${roomCode}`), snap => {
         const data = snap.val();
         if(!data) return;
@@ -264,26 +337,25 @@
 
         isHost = (data.host === myId);
         if(isHost) {
-            els.hostBtn.style.display = 'block';
-            document.getElementById('restart-btn').style.display = 'block';
+            els.hostControls.style.display = 'block';
+            document.getElementById('host-reset-area').style.display = 'block';
         }
 
-        // Info Jogador
+        // Jogador
         if(data.players && data.players[myId]) {
             myName = data.players[myId].name;
             document.getElementById('my-score').innerText = data.players[myId].score_fdp || 0;
         }
 
-        // Check Fim de Jogo (5 pts)
+        // Fim de Jogo
         let champ = null;
         if(data.players) Object.values(data.players).forEach(p => { if((p.score_fdp || 0) >= 5) champ = p.name; });
+        
         if(champ) {
-            gameOver = true;
-            document.getElementById('champion-name').innerText = champ;
             els.gameOverModal.style.display = 'flex';
             els.winnerModal.style.display = 'none';
+            document.getElementById('champion-name').innerText = champ;
         } else {
-            gameOver = false;
             els.gameOverModal.style.display = 'none';
             if(data.fdp_match) renderState(data.fdp_match);
             else if(isHost) hostStartRound();
@@ -293,21 +365,19 @@
     onValue(ref(db, `rooms/${roomCode}/players/${myId}/hand_fdp`), snap => {
         if(snap.exists()) {
             hand = snap.val();
-            // Só renderiza mão se estiver na fase certa
             if(gameState === 'PICKING') renderHand(hand);
         } else {
             drawCards(7);
         }
     });
 
-    /* --- RENDERIZAÇÃO DE ESTADOS --- */
+    /* --- RENDERIZAÇÃO --- */
     function renderState(match) {
         gameState = match.state;
         
-        // Atualiza Pergunta
+        // Render Carta Preta
         els.blackText.innerText = match.blackCard;
-        // Ajuste de fonte baseado no tamanho
-        els.blackText.style.fontSize = match.blackCard.length > 80 ? '1rem' : '1.3rem';
+        els.blackText.className = `card-content ${getTextSizeClass(match.blackCard)}`;
 
         if(match.state === 'PICKING') {
             els.picking.style.display = 'flex';
@@ -316,123 +386,138 @@
             
             const played = match.table && match.table[myId];
             if(played) {
-                els.status.innerText = "AGUARDANDO OS OUTROS...";
-                els.hand.innerHTML = '<div style="margin:auto; opacity:0.5;">Carta enviada! 🚀</div>';
-                els.hint.style.display = 'none';
+                els.status.innerText = "AGUARDANDO OPONENTES...";
+                els.handCarousel.innerHTML = '<div style="opacity:0.5; color:white; font-size:0.9rem;">Carta jogada! 🚀</div>';
             } else {
-                els.status.innerText = "SUA VEZ: ARRASTE UMA CARTA PRA CIMA";
-                els.hint.style.display = 'block';
+                els.status.innerText = "SUA VEZ DE JOGAR";
                 renderHand(hand);
             }
         }
         else if (match.state === 'VOTING') {
             els.picking.style.display = 'none';
-            els.voting.style.display = 'grid'; // Grid mode
+            els.voting.style.display = 'grid'; 
             els.winnerModal.style.display = 'none';
             
             const voted = match.votes && match.votes[myId];
-            els.status.innerText = voted ? "VOTO REGISTRADO" : "TOQUE PARA VOTAR NA MELHOR";
+            els.status.innerText = voted ? "AGUARDANDO RESULTADO..." : "VOTE NA MELHOR RESPOSTA";
             
-            renderVoting(match.table, match.votes, !!voted);
+            renderTable(match.table, match.votes, !!voted);
         }
         else if (match.state === 'WINNER') {
             if(match.winner) {
+                document.getElementById('winner-card-text').innerText = match.winner.text;
+                document.getElementById('winner-card-text').className = `card-content ${getTextSizeClass(match.winner.text)}`;
                 document.getElementById('winner-name').innerText = match.winner.name;
-                document.getElementById('winner-avatar').innerText = match.winner.name.charAt(0);
-                document.getElementById('winner-card').innerText = match.winner.text;
                 els.winnerModal.style.display = 'flex';
-                playSound('pop');
-                confetti();
+                playSfx('pop');
             }
         }
     }
 
-    /* --- RENDER HAND (CARROSSEL + SWIPE UP) --- */
+    /* --- CARROSSEL + SWIPE LOGIC --- */
     function renderHand(cards) {
-        els.hand.innerHTML = '';
+        els.handCarousel.innerHTML = '';
         cards.forEach((txt, idx) => {
-            const card = document.createElement('div');
-            card.className = 'card-white';
-            card.innerText = txt;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'hand-card-wrapper';
             
-            // --- LOGICA DE SWIPE UP ---
+            const card = document.createElement('div');
+            card.className = 'card is-white';
+            card.innerHTML = `
+                <div class="card-content ${getTextSizeClass(txt)}">${txt}</div>
+                <div class="card-brand">FDP</div>
+            `;
+            
+            // Lógica Swipe Up
             let startY = 0;
             let currentY = 0;
 
             card.addEventListener('touchstart', (e) => {
                 startY = e.touches[0].clientY;
-                card.style.transition = 'none'; // Remove transição pra ficar ágil
-            });
+                card.style.transition = 'none'; 
+            }, {passive: false});
 
             card.addEventListener('touchmove', (e) => {
                 currentY = e.touches[0].clientY;
                 const delta = currentY - startY;
-                // Só move se for pra cima
-                if(delta < 0) {
-                    e.preventDefault(); // Impede scroll da pagina
-                    card.style.transform = `translateY(${delta}px) scale(1.05) rotate(${delta * 0.05}deg)`;
+                if(delta < 0) { // Movimento para cima
+                    e.preventDefault(); 
+                    // Visual feedback: Sobe, inclina e diminui levemente
+                    card.style.transform = `translateY(${delta}px) rotate(${delta * 0.02}deg) scale(${1 + (delta * -0.0005)})`;
                 }
-            });
+            }, {passive: false});
 
             card.addEventListener('touchend', (e) => {
-                card.style.transition = 'transform 0.3s ease'; // Volta a transição suave
+                card.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                 const delta = currentY - startY;
                 
-                if(delta < -150) { // Se arrastou mais de 150px pra cima
-                    // JOGAR A CARTA
-                    card.classList.add('flying'); // Animação de voo
-                    playSound('swish');
+                if(delta < -120) { // Threshold de Swipe
+                    // Jogar carta
+                    card.classList.add('flying');
+                    playSfx('swish');
                     if(navigator.vibrate) navigator.vibrate(50);
-                    setTimeout(() => submitCard(idx), 400); // Espera animação
+                    setTimeout(() => submitCard(idx), 500);
                 } else {
-                    // VOLTA PRA POSIÇÃO
-                    card.style.transform = 'translateY(0) scale(1) rotate(0)';
+                    // Reset
+                    card.style.transform = 'translateY(0) rotate(0) scale(1)';
                 }
+                currentY = 0; // Reset
             });
 
-            // Fallback para Mouse (Desktop)
+            // Click Fallback (Desktop)
             card.onclick = () => {
-                if(confirm("Jogar esta carta?")) {
+                if(window.innerWidth > 768 && confirm("Jogar esta carta?")) {
                     card.classList.add('flying');
-                    setTimeout(() => submitCard(idx), 400);
+                    setTimeout(() => submitCard(idx), 500);
                 }
-            }
+            };
 
-            els.hand.appendChild(card);
+            wrapper.appendChild(card);
+            els.handCarousel.appendChild(wrapper);
         });
     }
 
-    /* --- RENDER VOTING --- */
-    function renderVoting(table, votes, iVoted) {
+    function renderTable(table, votes, iVoted) {
         els.voting.innerHTML = '';
         if(!table) return;
         
         Object.entries(table).forEach(([uid, item]) => {
-            const el = document.createElement('div');
-            el.className = 'table-card';
-            el.innerText = item.text;
+            const card = document.createElement('div');
+            card.className = 'card is-white table-card';
+            if(iVoted && votes && votes[myId] === uid) card.classList.add('selected');
+            if(iVoted && (!votes || votes[myId] !== uid)) card.style.opacity = '0.5';
             
-            // Contagem de votos (visual pequeno)
-            let vCount = 0;
-            if(votes) Object.values(votes).forEach(v => { if(v === uid) vCount++ });
-            if(vCount > 0) el.innerHTML += `<div style="float:right; background:var(--accent); color:black; width:24px; height:24px; border-radius:50%; text-align:center; font-weight:bold;">${vCount}</div>`;
+            card.innerHTML = `
+                <div class="card-content ${getTextSizeClass(item.text)}">${item.text}</div>
+            `;
+
+            // Badge de Votos
+            let count = 0;
+            if(votes) Object.values(votes).forEach(v => { if(v === uid) count++ });
+            if(count > 0) {
+                const badge = document.createElement('div');
+                badge.style.cssText = "position:absolute; top:-10px; right:-10px; background:var(--accent); color:black; width:30px; height:30px; border-radius:50%; display:flex; justify-content:center; align-items:center; font-weight:bold; box-shadow:0 5px 10px rgba(0,0,0,0.3);";
+                badge.innerText = count;
+                card.appendChild(badge);
+            }
 
             if(!iVoted && uid !== myId) {
-                el.onclick = () => { if(confirm("Votar nesta?")) set(ref(db, `rooms/${roomCode}/fdp_match/votes/${myId}`), uid); }
-            } else if (iVoted) {
-                el.style.opacity = '0.5';
-                if(votes && votes[myId] === uid) el.classList.add('selected');
+                card.onclick = () => {
+                    if(confirm("Votar nesta resposta?")) {
+                        set(ref(db, `rooms/${roomCode}/fdp_match/votes/${myId}`), uid);
+                    }
+                }
             }
-            els.voting.appendChild(el);
+            els.voting.appendChild(card);
         });
     }
 
-    /* --- ACTIONS --- */
+    /* --- AÇÕES DE JOGO --- */
     function submitCard(idx) {
         const txt = hand[idx];
-        const newHand = [...hand];
-        newHand.splice(idx, 1);
-        update(ref(db, `rooms/${roomCode}/players/${myId}`), { hand_fdp: newHand });
+        const nh = [...hand];
+        nh.splice(idx, 1);
+        update(ref(db, `rooms/${roomCode}/players/${myId}`), { hand_fdp: nh });
         update(ref(db, `rooms/${roomCode}/fdp_match/table/${myId}`), { text: txt, ownerName: myName });
         drawCards(1);
     }
@@ -459,13 +544,11 @@
         const votes = m.votes || {};
         const counts = {};
         let winnerId = null; let max = -1;
-        
         Object.values(votes).forEach(id => {
             counts[id] = (counts[id] || 0) + 1;
             if(counts[id] > max) { max = counts[id]; winnerId = id; }
         });
 
-        // Se empatar ou ngm votar, aleatório
         if(!winnerId && m.table) {
             const ids = Object.keys(m.table);
             if(ids.length > 0) winnerId = ids[Math.floor(Math.random() * ids.length)];
@@ -475,7 +558,6 @@
             const winCard = m.table[winnerId];
             update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'WINNER', winner: { name: winCard.ownerName, text: winCard.text, black: m.blackCard } });
             
-            // Score
             const pRef = ref(db, `rooms/${roomCode}/players/${winnerId}/score_fdp`);
             const sSnap = await get(pRef);
             const score = (sSnap.val() || 0) + 1;
@@ -483,7 +565,7 @@
 
             if(score < 5) setTimeout(hostStartRound, 6000);
         } else {
-             hostStartRound(); // Ninguém jogou, next
+             hostStartRound();
         }
     }
 
@@ -505,23 +587,7 @@
         update(ref(db), updates);
     }
 
-    function confetti() {
-        const emojis = ['😂','🔥','🍆','💀','🤡','🎉'];
-        for(let i=0; i<40; i++) {
-            const e = document.createElement('div');
-            e.innerText = emojis[Math.floor(Math.random()*emojis.length)];
-            e.style.position='fixed'; e.style.left=Math.random()*100+'vw'; e.style.top='-50px';
-            e.style.fontSize=(Math.random()*2+1)+'rem'; e.style.zIndex=200;
-            e.style.animation = `drop ${Math.random()*2+2}s linear forwards`;
-            document.body.appendChild(e);
-            setTimeout(()=>e.remove(), 4000);
-        }
-    }
-    const st = document.createElement('style');
-    st.innerHTML = `@keyframes drop { to { transform: translateY(110vh) rotate(360deg); } }`;
-    document.head.appendChild(st);
-
-    /* --- DATASETS --- */
+    /* --- DATASETS (300+ Cartas) --- */
     const MASTER_BLACK = ["Para fazer amor gostoso, eu preciso de _____.", "O que o Bolsonaro esconde no cofre?", "Minha mãe chorou quando viu _____.",
         "Qual é o segredo para uma vida feliz?", "O que deu errado na minha vida sexual?", "Brasileiro gosta mesmo é de _____.",
         "Em um mundo perfeito, não existiria _____.", "O novo sabor de Doritos é: _____.", "A causa da minha morte será _____.",
