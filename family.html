@@ -445,7 +445,6 @@
         { type: 'vote', q: "Quem reclama da comida?", roast: ["Crítico gastronômico.", "Falta sal.", "A da minha mãe é melhor."] }
     ];
 
-    // Array duelQuestions não é mais usado na nova lógica, mas mantido para evitar erros de referência se houver
     const duelQuestions = [];
 
     const themes = ["#2ecc71", "#e74c3c", "#3498db", "#f1c40f", "#e91e63"];
@@ -472,6 +471,7 @@
     let courtHistoryData = [];
     let courtSlideIdx = 0;
     let matchBuffer = []; 
+    let processingVerdict = false; // TRAVA DE SEGURANÇA
 
     function startFDP() { if(confirm("Iniciar modo FDP (Cartas)?")) update(roomRef, { status: 'redirecting_to_fdp' }); };
     function startNoMercy() { if(confirm("Iniciar NO MERCY?")) update(roomRef, { status: 'redirecting_to_nomercy' }); };
@@ -479,6 +479,7 @@
     function resetGameUI() {
         clearTimeout(timer);
         isPaused = false;
+        processingVerdict = false;
         const nav = document.getElementById('story-nav');
         if(nav) nav.innerHTML = '';
         document.body.style.backgroundColor = 'var(--bg-dark)';
@@ -994,6 +995,7 @@
     }
 
     function startCourtCase(key) {
+        processingVerdict = false; // Reset lock
         get(child(ref(db, `rooms/${roomCode}/protestQueue`), key)).then(snapshot => {
             if(snapshot.exists()) {
                 const caseData = snapshot.val();
@@ -1019,9 +1021,8 @@
         const isDefendant = (myId === pData.defendant);
         const isJury = !isAccuser && !isDefendant;
 
-        // --- CORREÇÃO SOLICITADA ---
         document.getElementById('tribunal-round-info').innerText = "REVISÃO DE VOTOS";
-        document.getElementById('tribunal-q').innerText = pData.category; // Usa a categoria original
+        document.getElementById('tribunal-q').innerText = pData.category; 
         
         document.getElementById('vs-av-1').innerText = pData.accuserName[0];
         document.getElementById('vs-name-1').innerText = pData.accuserName;
@@ -1048,7 +1049,6 @@
                 document.getElementById('silence-area').style.display = 'none';
             }
         } else {
-            // Protestante e Desafiado não votam
             document.getElementById('jury-area').style.display = 'none';
             document.getElementById('silence-area').style.display = 'flex';
             document.querySelector('#silence-area h2').innerText = "SILÊNCIO!";
@@ -1061,10 +1061,12 @@
             const votesCast = Object.keys(currentVotes).length;
 
             if(votesCast >= juryCount && juryCount > 0) {
+                // TRAVA DE SEGURANÇA: Evita que entre aqui múltiplas vezes
+                if(processingVerdict) return; 
+                processingVerdict = true;
+
                 let aCount = 0; let dCount = 0;
                 Object.values(currentVotes).forEach(v => v === 'accuser' ? aCount++ : dCount++);
-                
-                // Envia contagem direta e encerra
                 const finalScores = { accuser: aCount, defendant: dCount };
                 
                 setTimeout(() => {
@@ -1083,11 +1085,12 @@
     }
 
     function endTribunal(scores, pData) {
+        processingVerdict = false; // Destrava
         const winnerName = scores.accuser > scores.defendant ? pData.accuserName : pData.defendantName;
         const caseResult = {
             winner: winnerName,
             loser: (winnerName === pData.accuserName ? pData.defendantName : pData.accuserName),
-            score: `${scores.accuser} - ${scores.defendant}`, // Exibe placar real
+            score: `${scores.accuser} - ${scores.defendant}`,
             category: pData.category
         };
         push(ref(db, `rooms/${roomCode}/courtHistory`), caseResult);
