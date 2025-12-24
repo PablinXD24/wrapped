@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FDP - 300+ Cartas (Versão Deluxe)</title>
+    <title>FDP - 300+ Cartas (Visual Clássico)</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
@@ -13,11 +13,12 @@
         :root {
             --neon-green: #0aff60;
             --neon-purple: #b537f2;
+            --neon-blue: #2d46b9;
             --neon-pink: #ff2a6d;
             --neon-yellow: #f5e625;
-            --bg-dark: #121212; 
-            --card-black: #1a1a1a;
-            --card-white: #f0f0f0;
+            --bg-dark: #050505;
+            --card-black: rgba(20, 20, 20, 0.95);
+            --card-white: rgba(255, 255, 255, 0.95);
             --font-display: 'Space Grotesk', sans-serif;
             --font-data: 'Space Mono', monospace;
         }
@@ -30,141 +31,96 @@
             height: 100vh; width: 100vw; overflow: hidden;
             font-family: var(--font-display);
             display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
         }
 
-        /* --- BACKGROUND FX --- */
-        .noise { position: fixed; inset: 0; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.05; pointer-events: none; z-index: 0; }
-        .ambilight-bg { position: fixed; inset: 0; z-index: -1; opacity: 0.6; filter: blur(100px); transition: background 2s ease; }
+        /* --- VISUAL FX --- */
+        .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.04; pointer-events: none; z-index: 999; }
+        .ambilight-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.5; filter: blur(120px); background: radial-gradient(circle at 50% 30%, #333, #000); transition: background 2s ease; }
 
         .app-container { 
-            position: relative; z-index: 10; width: 100%; height: 100%;
-            display: flex; flex-direction: column; max-width: 600px; margin: 0 auto;
-            @media(min-width:768px) { height: 90vh; margin-top: 5vh; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
-        }
-
-        /* --- HEADER FIXO (STICKY) --- */
-        .game-header {
-            flex-shrink: 0;
-            background: rgba(10,10,10,0.85);
-            backdrop-filter: blur(12px);
-            padding: 15px 20px 10px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            z-index: 50;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        }
-
-        /* --- CARTAS (DESIGN BASE) --- */
-        .fdp-card {
-            background: var(--card-white);
-            color: #111;
-            border-radius: 16px;
-            padding: 20px;
-            display: flex; flex-direction: column; justify-content: center;
-            font-weight: 700; line-height: 1.2;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            position: relative;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        /* Carta Preta (Pergunta) */
-        .card-black {
-            background: var(--card-black);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.15);
-            min-height: auto; 
-            padding: 24px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        /* --- TAMANHOS DE FONTE DINÂMICOS --- */
-        .text-sm { font-size: 0.9rem; font-weight: 600; }
-        .text-md { font-size: 1.1rem; }
-        .text-lg { font-size: 1.4rem; letter-spacing: -0.5px; }
-        .text-xl { font-size: 1.8rem; letter-spacing: -1px; line-height: 1.1; }
-
-        /* --- ÁREA DE JOGO (SCROLL) --- */
-        .game-content {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 20px;
+            position: relative; width: 100%; height: 100%; max-width: 500px; z-index: 10; 
             display: flex; flex-direction: column;
-            scroll-behavior: smooth;
+            @media(min-width:768px){ height: 90vh; border: 1px solid rgba(255,255,255,0.1); border-radius:30px; overflow:hidden; box-shadow: 0 20px 80px rgba(0,0,0,0.6); background: rgba(0,0,0,0.2); backdrop-filter: blur(20px); }
         }
 
-        /* Mão do Jogador */
-        .hand-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding-bottom: 100px; /* Espaço para botão FAB */
+        /* --- UI COMPONENTS (O ESTILO QUE VOCÊ GOSTA) --- */
+        .fdp-card {
+            padding: 20px; border-radius: 20px; font-weight: 700; line-height: 1.2;
+            display: flex; flex-direction: column; justify-content: center;
+            position: relative; transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backface-visibility: hidden;
         }
         
-        .hand-card {
-            cursor: pointer;
-            min-height: 120px;
-            border: 2px solid transparent;
+        .card-black { background: var(--card-black); color: white; border: 1px solid rgba(255,255,255,0.2); min-height: 180px; }
+        .card-white { background: var(--card-white); color: #111; border: none; cursor: pointer; }
+        
+        /* Table Area */
+        .table-area { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+            padding: 10px 0; overflow-y: auto; align-content: start; flex-grow: 1;
+            padding-right: 5px; /* Scroll space */
         }
-        .hand-card:hover { transform: scale(1.02); }
-        .hand-card.selected {
-            border-color: var(--neon-green);
-            background: white;
-            transform: scale(1.03);
-            box-shadow: 0 10px 30px rgba(10, 255, 96, 0.3);
-            z-index: 2;
+        .table-card { 
+            min-height: 140px; font-size: 0.9rem; animation: popIn 0.4s backwards; position: relative;
         }
-
-        /* Mesa de Votação (Grid) */
-        .table-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 15px;
-            padding-bottom: 50px;
-        }
-        .table-card {
-            aspect-ratio: 3/4;
-            font-size: 0.9rem;
-            cursor: pointer;
-            animation: dealCard 0.4s backwards;
+        .vote-badge {
+            position: absolute; top: -10px; right: -10px; background: var(--neon-pink); color: white;
+            width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-family: var(--font-data); box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: popIn 0.3s; z-index: 10;
         }
 
-        /* --- UI ELEMENTS --- */
-        .status-badge {
-            display: inline-block;
-            font-family: var(--font-data);
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--neon-purple);
-            background: rgba(181, 55, 242, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            margin-bottom: 8px;
+        /* --- A MÃO DO JOGADOR (ESTILO LEQUE/BARALHO) --- */
+        .hand-scroll { 
+            display: flex; gap: 0; height: 260px; flex-shrink: 0;
+            overflow-x: auto; scrollbar-width: none; perspective: 1000px;
+            margin: 0 -20px; padding: 20px 30px;
+            align-items: center;
+        }
+        .hand-card { 
+            min-width: 150px; width: 150px; height: 220px; 
+            margin-right: -60px; /* Sobreposição */
+            transform: rotate(4deg); 
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        .hand-card:hover, .hand-card.selected { 
+            transform: translateY(-40px) rotate(0deg) scale(1.1); 
+            z-index: 100; margin-right: 15px; margin-left: 15px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+            border: 4px solid var(--neon-green);
         }
 
-        .btn-fab {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--neon-green); color: black;
-            border: none; padding: 18px 40px;
-            border-radius: 50px;
-            font-weight: 800; font-size: 1rem; text-transform: uppercase;
-            box-shadow: 0 10px 40px rgba(10, 255, 96, 0.4);
-            transition: 0.2s; z-index: 100;
-            width: 85%; max-width: 350px;
-            cursor: pointer;
-        }
-        .btn-fab:active { transform: translateX(-50%) scale(0.95); }
+        /* --- TIPOGRAFIA DINÂMICA (MANTIDA POIS É ÚTIL) --- */
+        .text-sm { font-size: 0.85rem; }
+        .text-md { font-size: 1rem; }
+        .text-lg { font-size: 1.3rem; letter-spacing: -0.5px; }
 
-        .score-strip {
-            display: flex; gap: 10px; overflow-x: auto; padding: 10px 0;
-            scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;
+        /* Buttons & Status */
+        .status-container { text-align: center; margin: 10px 0; }
+        .status-msg { color: var(--neon-pink); font-family: var(--font-data); font-size: 0.8rem; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+
+        .btn { 
+            background: var(--neon-green); color: black; border: none; padding: 18px; 
+            border-radius: 50px; font-weight: 800; font-size: 1rem; width: 100%; 
+            text-transform: uppercase; cursor: pointer; box-shadow: 0 0 30px rgba(10, 255, 96, 0.4); 
+            transition: 0.3s;
         }
+        .btn:active { transform: scale(0.95); }
+        .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; box-shadow: none; margin-top: 10px; }
+
+        .score-board { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-bottom: 10px; scrollbar-width: none; }
         .player-chip { 
             background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 30px; 
             white-space: nowrap; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 8px;
         }
         .score-val { background: white; color: black; width: 20px; height: 20px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
 
-        /* Modals (Vencedor / Game Over) */
+        /* Modals */
         .modal { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.95); z-index: 200; display: none; 
@@ -174,15 +130,15 @@
         .win-screen { background: var(--neon-green); color: black; }
         
         .host-force-btn {
-            position: absolute; top: 5px; right: 5px; background: rgba(255,0,0,0.2); 
+            position: absolute; top: 10px; right: 10px; background: rgba(255,0,0,0.2); 
             color: rgba(255,255,255,0.5); font-size: 0.6rem; padding: 5px 10px; border: 1px solid rgba(255,0,0,0.3);
             border-radius: 5px; cursor: pointer; z-index: 9999; display: none;
         }
-
-        @keyframes dealCard { from { opacity: 0; transform: translateY(20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
         
         #loading { position: fixed; inset:0; background:black; z-index:999; display:flex; justify-content:center; align-items:center; color:white; font-family:var(--font-data); }
-        .screen { display: none; flex-direction: column; padding: 0; height: 100%; }
+        .screen { display: none; flex-direction: column; padding: 24px; height: 100%; }
     </style>
 </head>
 <body>
@@ -196,26 +152,23 @@
 <div class="app-container">
 
     <div id="screen-game" class="screen" style="display: flex;">
-        
-        <div class="game-header">
-            <div class="score-strip" id="score-board"></div>
-            
-            <div style="margin-top: 5px;">
-                <span id="game-status" class="status-badge">...</span>
-                <div id="black-card" class="fdp-card card-black">
-                    <span id="black-text" class="text-md">Carregando pergunta...</span>
-                    <i class="fa-solid fa-masks-theater" style="position: absolute; bottom: 15px; right: 15px; opacity: 0.2;"></i>
-                </div>
+        <div class="score-board" id="score-board"></div>
+
+        <div style="flex-shrink: 0;">
+            <div class="status-container"><span id="game-status" class="status-msg">...</span></div>
+            <div id="black-card" class="fdp-card card-black">
+                <span id="black-text" class="text-md">Carregando pergunta...</span>
+                <i class="fa-solid fa-masks-theater" style="align-self: flex-end; opacity: 0.5; margin-top: auto;"></i>
             </div>
         </div>
 
-        <div class="game-content">
-            <div id="table-area" class="table-grid" style="display: none;"></div>
+        <div id="table-area" class="table-area"></div>
 
-            <div id="hand-area" class="hand-container"></div>
+        <div id="hand-area" class="hand-scroll"></div>
+
+        <div style="position: absolute; bottom: 30px; left: 0; width: 100%; padding: 0 30px; z-index: 150; pointer-events: none;">
+            <button id="btn-action" class="btn" style="pointer-events: auto; display: none;">AÇÃO</button>
         </div>
-
-        <button id="btn-action" class="btn-fab" style="display: none;">JOGAR CARTA</button>
     </div>
 
     <div id="winner-modal" class="modal">
@@ -237,8 +190,8 @@
         <p style="margin-top: 30px; font-weight: bold; font-family: var(--font-data);">CHEGOU A 5 PONTOS!</p>
         
         <div id="host-end-actions" style="width: 100%; margin-top: 40px; display: none;">
-            <button class="btn-fab" style="position:static; transform:none; background: black; color: white; margin-bottom:10px;" onclick="hostResetMatch()">REVANCHE 🔄</button>
-            <button class="btn-fab" style="position:static; transform:none; background: transparent; border: 2px solid black; color: black; box-shadow:none;" onclick="hostReturnToMenu()">SAIR 🏠</button>
+            <button class="btn" style="background: black; color: white;" onclick="hostResetMatch()">REVANCHE 🔄</button>
+            <button class="btn btn-outline" style="border-color: black; color: black;" onclick="hostReturnToMenu()">VOLTAR AO MENU 🏠</button>
         </div>
         <p id="client-wait-msg" style="margin-top:40px; opacity:0.7; display:none;">Aguardando o Host decidir...</p>
     </div>
@@ -274,7 +227,16 @@
     let selectedCardIdx = -1;
     let gameOver = false;
 
-    // --- FUNÇÕES GLOBAIS HOST ---
+    // --- FUNÇÃO AUXILIAR VISUAL (TEXTO DINÂMICO) ---
+    // Isso mantém as cartas bonitas (letras grandes em textos curtos)
+    function getTextSizeClass(text) {
+        if (!text) return 'text-md';
+        if (text.length < 25) return 'text-lg';
+        if (text.length < 60) return 'text-md';
+        return 'text-sm';
+    }
+
+    // --- FUNÇÕES GLOBAIS HOST (EXPOSTAS) ---
     window.forceNextPhase = function() {
         if(!isHost) return;
         get(ref(db, `rooms/${roomCode}/fdp_match/state`)).then(s => {
@@ -296,6 +258,7 @@
 
     window.hostResetMatch = async function() {
         if(!isHost) return;
+        // Reiniciar Deck
         const updates = {};
         const bDeck = shuffleArray([...MASTER_BLACK]);
         const wDeck = shuffleArray([...MASTER_WHITE]);
@@ -307,11 +270,12 @@
             blackCard: firstBlack,
             roundCount: 0
         };
+        
         const pSnap = await get(ref(db, `rooms/${roomCode}/players`));
         if(pSnap.exists()) {
             Object.keys(pSnap.val()).forEach(pid => {
                 updates[`rooms/${roomCode}/players/${pid}/score_fdp`] = 0;
-                updates[`rooms/${roomCode}/players/${pid}/hand_fdp`] = null;
+                updates[`rooms/${roomCode}/players/${pid}/hand_fdp`] = null; // Força re-compra
             });
         }
         update(ref(db), updates);
@@ -322,7 +286,7 @@
         update(ref(db, `rooms/${roomCode}`), { status: 'lobby' });
     }
 
-    /* --- MEGA BASE DE DADOS (300+ CARTAS) --- */
+    /* --- MASSIVE DATABASE (300+ ITEMS) --- */
     const MASTER_BLACK = [
         "Para fazer amor gostoso, eu preciso de _____.", "O que o Bolsonaro esconde no cofre?", "Minha mãe chorou quando viu _____.",
         "Qual é o segredo para uma vida feliz?", "O que deu errado na minha vida sexual?", "Brasileiro gosta mesmo é de _____.",
@@ -489,15 +453,6 @@
         return array;
     }
 
-    // --- FUNÇÃO AUXILIAR VISUAL (TEXTO DINÂMICO) ---
-    function getTextSizeClass(text) {
-        if (!text) return 'text-md';
-        if (text.length < 20) return 'text-xl';
-        if (text.length < 50) return 'text-lg';
-        if (text.length < 100) return 'text-md';
-        return 'text-sm';
-    }
-
     /* --- GAME CONNECT --- */
     const roomRef = ref(db, `rooms/${roomCode}`);
     
@@ -525,6 +480,7 @@
         els.loading.style.display = 'none';
         if(!data) return;
 
+        // REDIRECT SE VOLTAR AO MENU
         if(data.status === 'lobby') {
             window.location.href = `index.html`;
             return;
@@ -550,6 +506,7 @@
                 updateInterface(data.fdp_match);
                 if(isHost) checkRoundProgress(data);
             } else if (isHost) {
+                // Se é host e não tem jogo, inicia (Cria baralhos se necessário)
                 hostStartNewRound();
             }
         }
@@ -576,12 +533,14 @@
         }
     }
 
+    // --- SINCRONIA DE DADOS ---
     onValue(ref(db, `rooms/${roomCode}/players/${myId}/hand_fdp`), (snap) => {
         if(snap.exists()) {
             hand = snap.val();
             const status = document.getElementById('game-status').innerText;
-            if(status.includes("VEZ")) renderHand(hand);
+            if(status.includes("ESCOLHA")) renderHand(hand);
         } else {
+            // Se mão vazia, pede carta
             drawCard(7);
         }
     });
@@ -597,11 +556,11 @@
         }
     });
 
-    /* --- INTERFACE E RENDERIZAÇÃO --- */
+    /* --- INTERFACE --- */
     function updateInterface(matchData) {
-        const blackTxt = matchData.blackCard;
-        els.blackText.className = getTextSizeClass(blackTxt);
-        els.blackText.innerText = blackTxt;
+        document.getElementById('black-text').innerText = matchData.blackCard;
+        // Aplica o tamanho de texto dinâmico também na carta preta
+        document.getElementById('black-text').className = getTextSizeClass(matchData.blackCard);
 
         const colors = ['#0aff60', '#b537f2', '#ff2a6d', '#f5e625'];
         const color = colors[(matchData.roundCount || 0) % colors.length];
@@ -613,7 +572,7 @@
             
             const myPlay = matchData.table ? matchData.table[myId] : null;
             if(myPlay) {
-                els.status.innerText = "AGUARDANDO OS OUTROS...";
+                els.status.innerText = "ESPERANDO OS OUTROS...";
                 els.hand.style.display = 'none';
                 els.btnAction.style.display = 'none';
                 if(matchData.table) {
@@ -621,7 +580,7 @@
                     els.status.innerText = `AGUARDANDO (${count} JOGARAM)...`;
                 }
             } else {
-                els.status.innerText = "SUA VEZ DE JOGAR";
+                els.status.innerText = "ESCOLHA SUA MELHOR CARTA";
                 els.hand.style.display = 'flex';
                 els.btnAction.style.display = 'none'; 
                 renderHand(hand);
@@ -634,7 +593,7 @@
             
             const myVote = matchData.votes ? matchData.votes[myId] : null;
             if(myVote) els.status.innerText = "VOTO COMPUTADO. AGUARDANDO...";
-            else els.status.innerText = "VOTE NA MELHOR RESPOSTA";
+            else els.status.innerText = "VOTE NA CARTA MAIS ENGRAÇADA!";
             renderVotingTable(matchData.table, matchData.votes, !!myVote);
         }
     }
@@ -643,19 +602,19 @@
         els.hand.innerHTML = '';
         if(!handData) return;
         handData.forEach((text, idx) => {
-            const sizeClass = getTextSizeClass(text);
             const card = document.createElement('div');
             card.className = 'fdp-card card-white hand-card';
+            // Usa o helper de tamanho de texto
+            const sizeClass = getTextSizeClass(text);
             card.innerHTML = `<span class="${sizeClass}">${text}</span>`;
+            
             card.onclick = () => {
                 document.querySelectorAll('.hand-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 selectedCardIdx = idx;
                 els.btnAction.style.display = 'block';
-                els.btnAction.innerText = "CONFIRMAR 🚀";
+                els.btnAction.innerText = "JOGAR CARTA";
                 els.btnAction.onclick = submitCard;
-                // Scroll suave para o botão se necessário
-                els.btnAction.scrollIntoView({behavior: "smooth", block: "end"});
             };
             els.hand.appendChild(card);
         });
@@ -664,34 +623,25 @@
     function renderVotingTable(tableData, votesData, iVoted) {
         els.table.innerHTML = '';
         if(!tableData) return;
-        
-        let delay = 0;
         Object.entries(tableData).forEach(([uid, item], idx) => {
-            const sizeClass = getTextSizeClass(item.text);
             const card = document.createElement('div');
             card.className = 'fdp-card card-white table-card';
-            card.style.animationDelay = `${delay}ms`;
-            delay += 50;
             
-            let html = `<span class="${sizeClass}">${item.text}</span>`;
+            const sizeClass = getTextSizeClass(item.text);
+            card.innerHTML = `<span class="${sizeClass}">${item.text}</span>`;
+            
             let voteCount = 0;
             if(votesData) {
                 Object.values(votesData).forEach(votedId => { if(votedId === uid) voteCount++; });
             }
-            if(voteCount > 0) html += `<div class="vote-badge" style="position:absolute; top:-10px; right:-10px; background:var(--neon-pink); width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-family:var(--font-data); box-shadow:0 5px 15px rgba(0,0,0,0.3); z-index:15;">${voteCount}</div>`;
-            
-            card.innerHTML = html;
-
+            if(voteCount > 0) card.innerHTML += `<div class="vote-badge">${voteCount}</div>`;
             if(!iVoted && uid !== myId) {
                 card.onclick = () => { if(confirm("Votar nesta carta?")) submitVote(uid); };
             } else if (iVoted) {
                 card.style.opacity = '0.5';
-                card.style.transform = 'scale(0.95)';
                 if(votesData && votesData[myId] === uid) {
-                     card.style.border = "4px solid var(--neon-green)";
+                     card.style.border = "4px solid var(--neon-pink)";
                      card.style.opacity = "1";
-                     card.style.transform = "scale(1.05)";
-                     card.style.zIndex = "10";
                 }
             }
             els.table.appendChild(card);
@@ -710,7 +660,7 @@
     function checkGameOver(players) {
         if(!players) return;
         let winner = null;
-        Object.values(players).forEach(p => { if((p.score_fdp || 0) >= 10) winner = p.name; }); // Mudei para 10 pontos pra durar mais com tantas cartas
+        Object.values(players).forEach(p => { if((p.score_fdp || 0) >= 5) winner = p.name; });
 
         if(winner) {
             if(gameOver) return;
@@ -730,13 +680,17 @@
         if(selectedCardIdx === -1) return;
         const text = hand[selectedCardIdx];
         
+        // Remove locally immediately for feedback
         const newHand = [...hand];
         newHand.splice(selectedCardIdx, 1);
         update(ref(db, `rooms/${roomCode}/players/${myId}`), { hand_fdp: newHand });
         
+        // Push card to table
         update(ref(db, `rooms/${roomCode}/fdp_match/table/${myId}`), { text: text, ownerName: myName });
         
+        // Request new card
         drawCard(1);
+
         els.hand.style.display = 'none';
         els.btnAction.style.display = 'none';
     }
@@ -769,12 +723,14 @@
         
         if(current.state === 'WINNER') return; 
         
+        // Draw black card from deck (Transaction)
         runTransaction(ref(db, `rooms/${roomCode}/decks/black`), (deck) => {
-            if(!deck || deck.length === 0) return MASTER_BLACK; 
+            if(!deck || deck.length === 0) return MASTER_BLACK; // Refill
             deck.pop(); 
             return deck;
         }).then(() => {
              const nextBlack = MASTER_BLACK[Math.floor(Math.random() * MASTER_BLACK.length)];
+             
              update(matchRef, { state: 'PICKING', blackCard: nextBlack, table: null, votes: null, winner: null, roundCount: (current.roundCount || 0) + 1 });
         });
     }
@@ -800,7 +756,7 @@
             get(ref(db, `rooms/${roomCode}/players/${winnerId}/score_fdp`)).then(s => {
                 const pts = (s.val() || 0) + 1;
                 update(ref(db, `rooms/${roomCode}/players/${winnerId}`), { score_fdp: pts });
-                if(pts < 10) setTimeout(() => hostStartNewRoundClean(), 6000); 
+                if(pts < 5) setTimeout(() => hostStartNewRoundClean(), 6000); 
             });
         }
     }
@@ -810,6 +766,7 @@
         update(ref(db, `rooms/${roomCode}/fdp_match`), { state: 'PICKING', blackCard: nextBlack, table: null, votes: null, winner: null, roundCount: (Math.floor(Math.random()*100)) });
     }
 
+    // EXPOSE TO WINDOW
     window.forceNextPhase = forceNextPhase;
     window.hostResetMatch = hostResetMatch;
     window.hostReturnToMenu = hostReturnToMenu;
