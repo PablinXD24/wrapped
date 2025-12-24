@@ -21,8 +21,8 @@
             --neon-gold: #f39c12;
             --neon-red: #e74c3c;
             
-            --bg-dark: #f0f2f5; /* Fundo Claro */
-            --text-main: #2c3e50; /* Texto Escuro */
+            --bg-dark: #f0f2f5;
+            --text-main: #2c3e50;
             
             --font-display: 'Space Grotesk', sans-serif;
             --font-data: 'Space Mono', monospace;
@@ -46,8 +46,6 @@
         }
 
         .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.03; pointer-events: none; z-index: 999; }
-        
-        /* Ambilight ajustado para fundo claro */
         .ambilight-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.15; filter: blur(90px); background: radial-gradient(circle at 50% 50%, #ddd, #fff); transition: background 0.8s ease; }
         
         .app-container { 
@@ -85,6 +83,10 @@
         .vote-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; padding-bottom: 80px; }
         .vote-card { background: white; border: 1px solid rgba(0,0,0,0.08); padding: 15px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; transition: 0.2s; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         .vote-card:active { background: var(--text-main); color: white; transform: scale(0.95); }
+        
+        /* ESTILO NOVO: Card Selecionado (para Match) */
+        .vote-card.selected { border: 3px solid var(--neon-blue); background: rgba(52, 152, 219, 0.1); transform: scale(0.95); }
+
         .avatar { width: 45px; height: 45px; background: rgba(0,0,0,0.08); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; color: var(--text-main); }
         .vote-card:active .avatar { background: white; color: black; }
 
@@ -261,6 +263,7 @@
         </div>
         <div style="height: 4px; background: rgba(0,0,0,0.1); border-radius: 2px;"><div id="vote-bar" style="height: 100%; background: var(--neon-green); width: 0%;"></div></div>
         <h1 id="q-text" style="font-size: clamp(1.5rem, 5vw, 2.5rem); margin-top: 20px;">...</h1>
+        <p id="q-sub" style="text-align:center; font-size:0.9rem; display:none; color: var(--neon-blue);">Selecione 2 pessoas para formar a dupla.</p>
         <div id="vote-grid" class="vote-grid"></div>
     </div>
 
@@ -475,6 +478,7 @@
     let protestCatSelected = "";
     let courtHistoryData = [];
     let courtSlideIdx = 0;
+    let matchBuffer = []; // Buffer para votos duplos
 
     // --- NOVA FUNÇÃO DE INÍCIO FDP ---
     function startFDP() {
@@ -489,8 +493,6 @@
             update(roomRef, { status: 'redirecting_to_nomercy' });
         }
     };
-    
-    // (startFamily removido aqui para evitar loop)
 
     function resetGameUI() {
         clearTimeout(timer);
@@ -551,22 +553,9 @@
             if(!data) return;
             fullRoomData = data; 
 
-            // REDIRECIONAMENTO FDP
-            if(data.status === 'redirecting_to_fdp') {
-                window.location.href = `fdp.html?room=${roomCode}`;
-                return;
-            }
-
-            // REDIRECIONAMENTO NO MERCY
-            if(data.status === 'redirecting_to_nomercy') {
-                window.location.href = `nomercy.html?room=${roomCode}`;
-                return;
-            }
-
-            // REDIRECIONAMENTO FAMÍLIA (Se já estiver aqui, ignora ou recarrega)
-            if(data.status === 'redirecting_to_family') {
-                // Já estamos aqui, não faz nada
-            }
+            if(data.status === 'redirecting_to_fdp') { window.location.href = `fdp.html?room=${roomCode}`; return; }
+            if(data.status === 'redirecting_to_nomercy') { window.location.href = `nomercy.html?room=${roomCode}`; return; }
+            if(data.status === 'redirecting_to_family') { } // Ignora
 
             currentPlayers = {};
             const list = document.getElementById('lobby-list');
@@ -597,7 +586,6 @@
                 msgWait.style.display='block'; 
             }
 
-            // GAME STATUS ROUTING (WRAPPED)
             if(data.status === 'voting') {
                 resetGameUI(); 
                 if(data.finishedPlayers && data.finishedPlayers[myId]) {
@@ -658,7 +646,20 @@
         const q = questions[localQIdx];
         const theme = themes[localQIdx % themes.length];
         
+        // Reset buffers
+        matchBuffer = [];
+
         document.getElementById('q-text').innerText = q.q;
+        
+        // Match specific UI
+        const subText = document.getElementById('q-sub');
+        if(q.type === 'match') {
+            subText.style.display = 'block';
+            subText.innerText = "Toque em 2 pessoas para formar a dupla.";
+        } else {
+            subText.style.display = 'none';
+        }
+
         document.getElementById('vote-count').innerText = `${localQIdx+1}/${questions.length}`;
         document.getElementById('vote-bar').style.width = `${((localQIdx+1)/questions.length)*100}%`;
         document.getElementById('ambilight').style.background = `radial-gradient(circle at 50% 50%, ${theme}, #fff)`;
@@ -670,9 +671,47 @@
             const div = document.createElement('div');
             div.className = 'vote-card';
             div.innerHTML = `<div class="avatar">${name[0]}</div><span>${name}</span>`;
-            div.onclick = () => castVote(name);
+            
+            // Alterado para usar nova função de clique
+            div.onclick = function() { handleVoteClick(name, this); };
+            
             grid.appendChild(div);
         });
+    }
+
+    // --- NOVA FUNÇÃO DE CLIQUE ---
+    function handleVoteClick(targetName, cardElement) {
+        const q = questions[localQIdx];
+
+        if (q.type === 'vote') {
+            // Voto simples: envia direto
+            castVote(targetName);
+        } else if (q.type === 'match') {
+            // Lógica de Match (Dupla)
+            if (matchBuffer.includes(targetName)) {
+                // Se já clicou, remove (desmarcar)
+                matchBuffer = matchBuffer.filter(n => n !== targetName);
+                cardElement.classList.remove('selected');
+            } else {
+                // Se não clicou, adiciona se tiver espaço
+                if (matchBuffer.length < 2) {
+                    matchBuffer.push(targetName);
+                    cardElement.classList.add('selected');
+                }
+            }
+
+            // Se selecionou 2, envia
+            if (matchBuffer.length === 2) {
+                // Ordena para garantir que "João + Maria" seja igual a "Maria + João"
+                matchBuffer.sort();
+                const pairString = matchBuffer.join(' + ');
+                
+                // Pequeno delay para feedback visual
+                setTimeout(() => {
+                    castVote(pairString);
+                }, 300);
+            }
+        }
     }
 
     function castVote(target) {
@@ -712,8 +751,11 @@
             calcRes[idx] = counts;
             const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
             if(sorted.length > 0) {
-                const w = sorted[0][0];
-                if(q.type==='vote') {
+                const w = sorted[0][0]; // Pode ser "Nome" ou "Nome1 + Nome2"
+                
+                // Só conta vitórias individuais para perguntas tipo 'vote'
+                // Perguntas match não somam no MVP individual (opcional, mas faz sentido)
+                if(q.type === 'vote') {
                     if(wins[w]!==undefined) wins[w]++;
                     Object.entries(counts).forEach(([p,c]) => { if(totalV[p]!==undefined) totalV[p]+=c; });
                 }
@@ -799,8 +841,13 @@
             
             if(q.type === 'match') {
                 document.getElementById('res-match-container').style.display='block';
-                document.getElementById('m-name-1').innerText = sorted[0] ? sorted[0][0] : "?";
-                document.getElementById('m-name-2').innerText = sorted[1] ? sorted[1][0] : "?";
+                
+                // Parse do resultado "NomeA + NomeB"
+                const winnerString = sorted[0] ? sorted[0][0] : "? + ?";
+                const names = winnerString.split(' + ');
+                
+                document.getElementById('m-name-1').innerText = names[0] ? names[0] : "?";
+                document.getElementById('m-name-2').innerText = names[1] ? names[1] : "?";
             } else {
                 document.getElementById('res-standard-container').style.display='flex';
                 document.getElementById('res-winner').innerText = sorted[0] ? sorted[0][0] : "Ninguém";
@@ -1162,10 +1209,13 @@
             if(q.type === 'match') {
                 document.getElementById('ex-match-ui').style.display = 'flex';
                 document.getElementById('ex-match-text').style.display = 'block';
-                const p1 = sorted[0] ? sorted[0][0] : "?";
-                const p2 = sorted[1] ? sorted[1][0] : "?";
-                document.getElementById('ex-m-p1').innerText = p1[0] || "?";
-                document.getElementById('ex-m-p2').innerText = p2[0] || "?";
+                
+                // Parse do match (NomeA + NomeB)
+                const winnerString = sorted[0] ? sorted[0][0] : "? + ?";
+                const names = winnerString.split(' + ');
+
+                document.getElementById('ex-m-p1').innerText = names[0] ? names[0][0] : "?";
+                document.getElementById('ex-m-p2').innerText = names[1] ? names[1][0] : "?";
             } else {
                 document.getElementById('ex-standard-ui').style.display = 'block';
                 document.getElementById('ex-winner').innerText = sorted[0] ? sorted[0][0] : "Ninguém";
@@ -1180,7 +1230,6 @@
                     row.style.marginBottom = '40px'; 
                     row.style.fontWeight = 'bold'; 
                 });
-                // Ajuste de cor para exportação no fundo branco
                 exData.querySelectorAll('.data-bar-fill').forEach(bar => { 
                     bar.style.backgroundColor = 'var(--text-main)'; 
                 });
@@ -1209,32 +1258,20 @@
     function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { slideIdx++; loadSlide(); }, 2000); }
 
     // --- AUTO-JOIN LOGIC FOR FAMILY MODE ---
-    // Verifica se a URL tem ?room=ABCD e se o usuário já existe na sala.
-    // Se existir, pula todas as telas iniciais e vai direto para o lobby.
     const urlParams = new URLSearchParams(window.location.search);
     const autoRoomCode = urlParams.get('room');
 
     if(autoRoomCode) {
-        // Tenta recuperar o nome do usuário nesta sala específica
         get(child(ref(db), `rooms/${autoRoomCode}/players/${myId}`)).then((snapshot) => {
             if (snapshot.exists()) {
-                // Usuário encontrado! Vamos logar automaticamente.
                 const playerData = snapshot.val();
                 myName = playerData.name;
                 roomCode = autoRoomCode;
                 roomRef = ref(db, 'rooms/' + roomCode);
-                
-                // Atualiza UI básica
                 document.getElementById('display-name').innerText = myName;
                 document.getElementById('lobby-code').innerText = roomCode;
-                
-                // Vai direto para o lobby
                 enterLobbyReal();
-            } else {
-                console.log("Usuário não encontrado na sala, fluxo normal.");
             }
-        }).catch((error) => {
-            console.error(error);
         });
     }
 
@@ -1246,7 +1283,6 @@
     window.startGameReal = startGameReal;
     window.startFDP = startFDP;
     window.startNoMercy = startNoMercy;
-    // window.startFamily removido para evitar loop
     window.handleStoryClick = handleStoryClick;
     window.shareSlide = shareSlide;
     window.processShare = processShare;
