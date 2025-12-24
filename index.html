@@ -143,6 +143,101 @@
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); color: white; }
         .btn-opt { padding: 15px; margin-top: 10px; width: 100%; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
+        /* --- ESTÉTICA LIQUID GLASS GRID --- */
+        .mode-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .liquid-btn {
+            /* Base do Vidro iOS */
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            
+            /* Bordas sutis */
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-left: 1px solid rgba(255, 255, 255, 0.15);
+            
+            /* Sombra e Profundidade */
+            box-shadow: 
+                0 4px 30px rgba(0, 0, 0, 0.1),
+                inset 0 0 20px rgba(255, 255, 255, 0.02);
+
+            /* Layout */
+            color: rgba(255, 255, 255, 0.9);
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 24px 12px;
+            height: 140px; /* Quadrado */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .liquid-btn i {
+            display: block;
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 0 12px currentColor); /* Brilho do ícone */
+            transition: transform 0.3s ease;
+        }
+
+        .liquid-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* --- VARIAÇÕES DE CORES NEON --- */
+        
+        /* Verde (Wrapped) */
+        .liquid-btn.neon-green { color: var(--neon-green); border-bottom: 2px solid rgba(30, 215, 96, 0.1); }
+        .liquid-btn.neon-green:hover {
+            background: rgba(30, 215, 96, 0.1);
+            box-shadow: 0 0 40px rgba(30, 215, 96, 0.2), inset 0 0 20px rgba(30, 215, 96, 0.1);
+            border-color: rgba(30, 215, 96, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Azul (Família) */
+        .liquid-btn.neon-blue { color: #4a90e2; border-bottom: 2px solid rgba(74, 144, 226, 0.1); }
+        .liquid-btn.neon-blue:hover {
+            background: rgba(74, 144, 226, 0.1);
+            box-shadow: 0 0 40px rgba(74, 144, 226, 0.2), inset 0 0 20px rgba(74, 144, 226, 0.1);
+            border-color: rgba(74, 144, 226, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Roxo (FDP) */
+        .liquid-btn.neon-purple { color: var(--neon-purple); border-bottom: 2px solid rgba(140, 66, 179, 0.1); }
+        .liquid-btn.neon-purple:hover {
+            background: rgba(140, 66, 179, 0.1);
+            box-shadow: 0 0 40px rgba(140, 66, 179, 0.2), inset 0 0 20px rgba(140, 66, 179, 0.1);
+            border-color: rgba(140, 66, 179, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Vermelho (No Mercy) */
+        .liquid-btn.neon-red { color: var(--neon-red); border-bottom: 2px solid rgba(255, 70, 70, 0.1); }
+        .liquid-btn.neon-red:hover {
+            background: rgba(255, 70, 70, 0.1);
+            box-shadow: 0 0 40px rgba(255, 70, 70, 0.2), inset 0 0 20px rgba(255, 70, 70, 0.1);
+            border-color: rgba(255, 70, 70, 0.3);
+            transform: translateY(-2px);
+        }
+
         /* --- EXPORT CANVAS (ESTÉTICA CORRIGIDA) --- */
         #export-canvas { 
             position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; 
@@ -233,19 +328,24 @@
         <div class="room-code" id="lobby-code">ABCD</div>
         <p>Aguardando amigos...</p>
         <div id="lobby-list"></div>
-        <div style="margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 10px;">
-            <p id="simulation-status" style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 10px;">...</p>
-            
-            <button id="btn-start-game" class="btn" style="background: var(--neon-green); display:none;" onclick="startGameReal()">INICIAR WRAPPED</button>
-            
-            <button id="btn-start-family" class="btn" style="background: var(--neon-blue); display:none; color: white;" onclick="startFamily()">👨‍👩‍👧‍👦 MODO FAMÍLIA</button>
-
-            <button id="btn-start-fdp" class="btn" style="background: var(--neon-purple); display:none; color: white;" onclick="startFDP()">JOGAR FDP 🔞</button>
-            
-            <button id="btn-start-nomercy" class="btn" style="background: var(--neon-red); display:none; color: white; border: 1px solid white;" onclick="startNoMercy()">💀 NO MERCY (Eliminação)</button>
-
-            <div id="msg-waiting-host" style="display:none; color: #666;">Aguardando dono da sala...</div>
+        <p id="simulation-status" style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 10px;">...</p>
+        
+        <div class="mode-grid">
+            <button id="btn-start-game" class="liquid-btn neon-green" style="display:none;" onclick="startGameReal()">
+                <i class="fa-solid fa-play"></i> WRAPPED
+            </button>
+            <button id="btn-start-family" class="liquid-btn neon-blue" style="display:none;" onclick="startFamily()">
+                <i class="fa-solid fa-users"></i> FAMÍLIA
+            </button>
+            <button id="btn-start-fdp" class="liquid-btn neon-purple" style="display:none;" onclick="startFDP()">
+                <i class="fa-solid fa-masks-theater"></i> MODE FDP
+            </button>
+            <button id="btn-start-nomercy" class="liquid-btn neon-red" style="display:none;" onclick="startNoMercy()">
+                <i class="fa-solid fa-skull"></i> NO MERCY
+            </button>
         </div>
+
+        <div id="msg-waiting-host" style="display:none; color: #666; margin-top: 20px;">Aguardando dono da sala...</div>
     </div>
 
     <div id="screen-voting" class="screen">
@@ -586,10 +686,10 @@
             
             if(data.host === myId) { 
                 amIHost = true; 
-                btnStart.style.display = 'block'; 
-                btnStartFDP.style.display = 'block'; 
-                btnStartNM.style.display = 'block';
-                btnStartFamily.style.display = 'block';
+                btnStart.style.display = 'flex'; // Mudado para Flex por conta do novo CSS
+                btnStartFDP.style.display = 'flex'; 
+                btnStartNM.style.display = 'flex'; 
+                btnStartFamily.style.display = 'flex';
                 msgWait.style.display='none'; 
             }
             else { 
