@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NO MERCY - Elimination</title>
+    <title>NO MERCY - Alvo Marcado</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -58,19 +58,12 @@
             background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 30px;
             width: 100%; margin-bottom: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            position: relative; z-index: 2;
         }
 
-        .strikes-container { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; }
+        .strikes-container { display: flex; gap: 15px; justify-content: center; margin-bottom: 20px; }
         .strike-dot { width: 25px; height: 25px; border-radius: 50%; background: #222; border: 2px solid #444; transition: 0.3s; }
         .strike-dot.active { background: var(--neon-red); box-shadow: 0 0 20px var(--neon-red); border-color: white; transform: scale(1.2); }
-
-        .banned-stamp { 
-            border: 8px solid var(--neon-red); color: var(--neon-red); 
-            padding: 10px 40px; font-size: 4rem; font-weight: 900; 
-            transform: rotate(-15deg); opacity: 0.9; margin-bottom: 30px;
-            text-transform: uppercase; animation: stampIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes stampIn { from { transform: scale(2) rotate(-15deg); opacity: 0; } to { transform: scale(1) rotate(-15deg); opacity: 0.9; } }
 
         .vote-row { display: flex; gap: 15px; width: 100%; margin-top: 20px; }
         .btn-fail { background: rgba(255, 50, 50, 0.15); border: 2px solid var(--neon-red); color: var(--neon-red); transition: 0.2s; }
@@ -96,6 +89,26 @@
             width: 100%;
         }
 
+        /* --- NOVO ESTILO: ALVO MARCADO --- */
+        .target-badge {
+            background: var(--neon-red); color: white;
+            font-family: var(--font-display); font-weight: 900;
+            padding: 5px 15px; border-radius: 4px;
+            text-transform: uppercase; font-size: 0.9rem;
+            letter-spacing: 2px; margin-bottom: 10px;
+            display: none; animation: pulse 0.8s infinite;
+            box-shadow: 0 0 15px var(--neon-red);
+        }
+
+        .target-pulse {
+            animation: targetBg 2s infinite !important;
+        }
+        @keyframes targetBg {
+            0% { box-shadow: inset 0 0 0 black; }
+            50% { box-shadow: inset 0 0 100px rgba(255, 50, 50, 0.4); border: 2px solid var(--neon-red); }
+            100% { box-shadow: inset 0 0 0 black; }
+        }
+
     </style>
 </head>
 <body>
@@ -110,6 +123,8 @@
 </div>
 
 <div id="screen-game" class="screen">
+    <div id="target-badge" class="target-badge">⚠️ ALVO MARCADO ⚠️</div>
+    
     <div style="opacity: 0.6; font-family: var(--font-data); letter-spacing: 2px;">VEZ DE</div>
     <div id="current-player-name" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; color: white;">...</div>
     
@@ -141,7 +156,6 @@
 <div id="screen-banned" class="screen" style="background: #1a0000;">
     <div class="banned-stamp">BANIDO</div>
     <h2 id="elim-name" style="margin-bottom: 10px; color: white;">VOCÊ</h2>
-    <p>Atingiu 3 Strikes e foi removido.</p>
 </div>
 
 <div id="screen-winner" class="screen" style="background: var(--neon-green); color: black;">
@@ -178,7 +192,7 @@
         "A PESSOA MAIS VELHA BEBE", "A PESSOA MAIS NOVA BEBE", "TROQUE DE LUGAR COM A FRENTE"
     ];
 
-   const challenges = [
+    const challenges = [
         // --- CLÁSSICOS & LEVES ---
         "Beba um shot sem usar as mãos.", "Faça um brinde constrangedor.", "Vire o copo de quem está à direita.",
         "Ligue para a ex e pergunte se ela está feliz.", "Mande 'Oi sumido(a)' para a 3ª pessoa do direct.", 
@@ -231,7 +245,7 @@
         "Beba se tem tatuagem.", "Beba se está descalço.", "Palavra proibida: Não.", "Fale marcas de carro.",
         "Fale nomes de frutas.", "Fale posições sexuais.", "Fale países.", "Cara ou Coroa: Você bebe ou Grupo bebe.",
 
-        // --- HARDCORE / +18 (NOVOS) ---
+        // --- HARDCORE / +18 ---
         "Dê um beijo de língua na pessoa à sua direita.",
         "Tire uma peça de roupa (se já tirou, tire outra).",
         "Faça um body shot na barriga de alguém.",
@@ -298,19 +312,17 @@
             setTimeout(() => target.classList.add('active'), 10);
         }
         document.body.className = '';
+        document.body.classList.remove('target-pulse'); // Remove pulso ao trocar tela (limpeza)
         document.getElementById('flash-layer').style.background = 'transparent';
         if(rouletteInterval) clearInterval(rouletteInterval);
     }
 
     // --- SETUP INICIAL ---
-    // 1. Inicia o loop imediatamente para não travar
     initGameLoop();
 
-    // 2. Atualiza dados do jogador em paralelo
     get(ref(db, `rooms/${roomCode}/players/${myId}`)).then(snap => {
         if(snap.exists()) {
             myName = snap.val().name;
-            // Garante strikes iniciais
             update(ref(db, `rooms/${roomCode}/players/${myId}`), { 
                 strikes: snap.val().strikes || 0 
             });
@@ -322,20 +334,14 @@
         
         onValue(roomRef, (snap) => {
             const data = snap.val();
-            if(!data) return; // Sala não existe ou erro de leitura
+            if(!data) return; 
 
             document.getElementById('loading').style.display = 'none';
             if(data.host === myId) amIHost = true;
 
-            // STATUS: BANIDO
-            const myData = data.players ? data.players[myId] : null;
-            if(myData && myData.strikes >= 3) {
-                showScreen('screen-banned');
-                document.getElementById('elim-name').innerText = myName;
-                if(amIHost && data.nomercy_status === 'round') checkVotes(data); 
-                return; 
-            }
-
+            // --- LÓGICA DE BANIDO REMOVIDA ---
+            // Ninguém é banido. O jogo continua infinitamente.
+            
             // MÁQUINA DE ESTADOS
             if(data.nomercy_status === 'game_over') {
                 showScreen('screen-winner');
@@ -367,12 +373,16 @@
                 const strikes = pData ? pData.strikes : 0;
                 const extraPunishment = data.currentPunishment || "SORTE";
 
+                // Se strikes >= 3, mostra aviso extra
+                let titleText = "STRIKE!";
+                if(strikes >= 3) titleText = "ALVO MARCADO!";
+
                 document.getElementById('result-content').innerHTML = `
                     <i class="fa-solid fa-triangle-exclamation" style="font-size:5rem; margin-bottom:20px;"></i>
-                    <h1 style="font-size:4rem;">STRIKE!</h1>
+                    <h1 style="font-size:3.5rem;">${titleText}</h1>
                     <p style="font-size:1.5rem; font-weight:bold;">${isVictim ? "VOCÊ FALHOU" : data.roundPlayerName + " FALHOU"}</p>
                     <div style="background:black; padding:10px 20px; border-radius:20px; margin-top:10px; display:inline-block;">
-                        ${strikes}/3 STRIKES
+                        ${strikes} STRIKES
                     </div>
                     
                     <div class="punishment-box">
@@ -392,9 +402,7 @@
                 `;
             }
             else {
-                // Lobby
                 if(amIHost) {
-                    // Inicia se tiver jogadores e status for lobby/vazio
                     if(data.players && Object.keys(data.players).length > 0) {
                         startNewRound(data.players, null); 
                     }
@@ -413,9 +421,24 @@
         document.getElementById('current-player-name').innerText = data.roundPlayerName;
         document.getElementById('challenge-text').innerText = data.roundChallenge;
         
+        // --- VISUAL DE STRIKES ---
+        // Acende os dots. Se tiver mais de 3, todos ficam acesos.
         document.getElementById('s1').className = playerStrikes >= 1 ? 'strike-dot active' : 'strike-dot';
         document.getElementById('s2').className = playerStrikes >= 2 ? 'strike-dot active' : 'strike-dot';
         document.getElementById('s3').className = playerStrikes >= 3 ? 'strike-dot active' : 'strike-dot';
+
+        // --- LÓGICA VISUAL ALVO MARCADO ---
+        const targetBadge = document.getElementById('target-badge');
+        
+        // Se for minha vez E eu tiver 3+ strikes, tela pulsa.
+        // Se não for minha vez, mas o jogador atual tiver 3+, mostra o badge.
+        if (playerStrikes >= 3) {
+            targetBadge.style.display = 'inline-block';
+            document.body.classList.add('target-pulse');
+        } else {
+            targetBadge.style.display = 'none';
+            document.body.classList.remove('target-pulse');
+        }
 
         const controls = document.getElementById('controls-area');
         const waitMsg = document.getElementById('wait-msg');
@@ -456,20 +479,14 @@
     // --- LÓGICA DO HOST ---
 
     function startNewRound(players, lastPlayerId) {
-        // Filtrar jogadores ativos
-        const activeIds = Object.keys(players).filter(id => (players[id].strikes || 0) < 3);
+        // --- MODIFICAÇÃO ALVO MARCADO: NINGUÉM É FILTRADO ---
+        // activeIds agora são TODOS os jogadores, independente de strikes
+        const activeIds = Object.keys(players);
 
         if(activeIds.length === 0) return;
-        if(activeIds.length === 1) {
-            update(ref(db, `rooms/${roomCode}`), { 
-                nomercy_status: 'game_over', 
-                winnerName: players[activeIds[0]].name 
-            });
-            return;
-        }
-
-        // --- ORDEM SEQUENCIAL (CORREÇÃO) ---
-        activeIds.sort(); // Garante ordem consistente (por ID)
+        
+        // ORDEM SEQUENCIAL
+        activeIds.sort();
         
         let nextIndex = 0;
         if(lastPlayerId) {
@@ -481,7 +498,6 @@
         
         const nextId = activeIds[nextIndex];
         const nextName = players[nextId].name;
-        // -----------------------------------
 
         const rndChall = challenges[Math.floor(Math.random() * challenges.length)];
 
@@ -499,8 +515,9 @@
         if(data.votesProcessed) return;
 
         const votes = data.roundVotes || {};
-        const activePlayers = Object.values(data.players).filter(p => (p.strikes||0) < 3);
-        const totalVoters = activePlayers.length - 1; 
+        // MODIFICAÇÃO: Contar votos de TODOS, não apenas quem tem < 3 strikes
+        const allPlayers = Object.values(data.players);
+        const totalVoters = allPlayers.length - 1; 
         
         const votesCast = Object.keys(votes).length;
 
@@ -524,6 +541,7 @@
                 setTimeout(() => {
                     const pid = data.roundPlayer;
                     const pData = data.players[pid];
+                    // Strikes acumulam infinitamente
                     const currentStrikes = (pData ? (pData.strikes || 0) : 0) + 1;
 
                     update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: currentStrikes });
