@@ -89,7 +89,7 @@
             width: 100%;
         }
 
-        /* --- NOVO ESTILO: ALVO MARCADO --- */
+        /* --- ESTILO: ALVO MARCADO --- */
         .target-badge {
             background: var(--neon-red); color: white;
             font-family: var(--font-display); font-weight: 900;
@@ -98,6 +98,12 @@
             letter-spacing: 2px; margin-bottom: 10px;
             display: none; animation: pulse 0.8s infinite;
             box-shadow: 0 0 15px var(--neon-red);
+        }
+        
+        .streak-info {
+            font-size: 0.8rem; color: var(--neon-yellow);
+            font-family: var(--font-data); margin-bottom: 5px;
+            display: none;
         }
 
         .target-pulse {
@@ -124,6 +130,7 @@
 
 <div id="screen-game" class="screen">
     <div id="target-badge" class="target-badge">⚠️ ALVO MARCADO ⚠️</div>
+    <div id="streak-info" class="streak-info">SOBREVIVEU 1/2 RODADAS</div>
     
     <div style="opacity: 0.6; font-family: var(--font-data); letter-spacing: 2px;">VEZ DE</div>
     <div id="current-player-name" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; color: white;">...</div>
@@ -151,11 +158,6 @@
 
 <div id="screen-result" class="screen">
     <div id="result-content" style="width: 100%;"></div>
-</div>
-
-<div id="screen-banned" class="screen" style="background: #1a0000;">
-    <div class="banned-stamp">BANIDO</div>
-    <h2 id="elim-name" style="margin-bottom: 10px; color: white;">VOCÊ</h2>
 </div>
 
 <div id="screen-winner" class="screen" style="background: var(--neon-green); color: black;">
@@ -193,7 +195,6 @@
     ];
 
     const challenges = [
-        // --- CLÁSSICOS & LEVES ---
         "Beba um shot sem usar as mãos.", "Faça um brinde constrangedor.", "Vire o copo de quem está à direita.",
         "Ligue para a ex e pergunte se ela está feliz.", "Mande 'Oi sumido(a)' para a 3ª pessoa do direct.", 
         "Deixe o grupo ler sua última conversa no WhatsApp.", "Poste uma foto zoada no story e apague em 10 min.",
@@ -244,8 +245,6 @@
         "Comece frases com Senhor.", "Beba se usa óculos.", "Beba se tem barba.", "Beba se tem cabelo curto.",
         "Beba se tem tatuagem.", "Beba se está descalço.", "Palavra proibida: Não.", "Fale marcas de carro.",
         "Fale nomes de frutas.", "Fale posições sexuais.", "Fale países.", "Cara ou Coroa: Você bebe ou Grupo bebe.",
-
-        // --- HARDCORE / +18 ---
         "Dê um beijo de língua na pessoa à sua direita.",
         "Tire uma peça de roupa (se já tirou, tire outra).",
         "Faça um body shot na barriga de alguém.",
@@ -312,7 +311,7 @@
             setTimeout(() => target.classList.add('active'), 10);
         }
         document.body.className = '';
-        document.body.classList.remove('target-pulse'); // Remove pulso ao trocar tela (limpeza)
+        document.body.classList.remove('target-pulse');
         document.getElementById('flash-layer').style.background = 'transparent';
         if(rouletteInterval) clearInterval(rouletteInterval);
     }
@@ -338,9 +337,6 @@
 
             document.getElementById('loading').style.display = 'none';
             if(data.host === myId) amIHost = true;
-
-            // --- LÓGICA DE BANIDO REMOVIDA ---
-            // Ninguém é banido. O jogo continua infinitamente.
             
             // MÁQUINA DE ESTADOS
             if(data.nomercy_status === 'game_over') {
@@ -373,7 +369,6 @@
                 const strikes = pData ? pData.strikes : 0;
                 const extraPunishment = data.currentPunishment || "SORTE";
 
-                // Se strikes >= 3, mostra aviso extra
                 let titleText = "STRIKE!";
                 if(strikes >= 3) titleText = "ALVO MARCADO!";
 
@@ -395,16 +390,26 @@
                 showScreen('screen-result');
                 document.body.classList.add('safe-bg');
                 
+                const pid = data.roundPlayer;
+                const pData = data.players[pid];
+                const streak = pData ? (pData.safeStreak || 0) : 0;
+                let subtext = "O DESAFIO FOI CUMPRIDO";
+                
+                // Mensagem especial se estiver recuperando a honra
+                if ((pData.strikes || 0) >= 3 && streak > 0) {
+                    subtext = `SOBREVIVEU ${streak}/2 RODADAS NA ZONA DE PERIGO`;
+                }
+
                 document.getElementById('result-content').innerHTML = `
                     <i class="fa-solid fa-check-circle" style="font-size:5rem; margin-bottom:20px;"></i>
                     <h1 style="font-size:4rem; color:black;">SAFE</h1>
-                    <p style="color:black; font-weight:bold;">O DESAFIO FOI CUMPRIDO</p>
+                    <p style="color:black; font-weight:bold;">${subtext}</p>
                 `;
             }
             else {
                 if(amIHost) {
                     if(data.players && Object.keys(data.players).length > 0) {
-                        startNewRound(data.players, null); 
+                        startNewRound(data); 
                     }
                 } 
                 else document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
@@ -417,26 +422,34 @@
         const isMyTurn = (currentPlayerId === myId);
         const pData = data.players[currentPlayerId];
         const playerStrikes = pData ? (pData.strikes || 0) : 0;
+        const playerStreak = pData ? (pData.safeStreak || 0) : 0;
 
         document.getElementById('current-player-name').innerText = data.roundPlayerName;
         document.getElementById('challenge-text').innerText = data.roundChallenge;
         
         // --- VISUAL DE STRIKES ---
-        // Acende os dots. Se tiver mais de 3, todos ficam acesos.
         document.getElementById('s1').className = playerStrikes >= 1 ? 'strike-dot active' : 'strike-dot';
         document.getElementById('s2').className = playerStrikes >= 2 ? 'strike-dot active' : 'strike-dot';
         document.getElementById('s3').className = playerStrikes >= 3 ? 'strike-dot active' : 'strike-dot';
 
         // --- LÓGICA VISUAL ALVO MARCADO ---
         const targetBadge = document.getElementById('target-badge');
+        const streakInfo = document.getElementById('streak-info');
         
-        // Se for minha vez E eu tiver 3+ strikes, tela pulsa.
-        // Se não for minha vez, mas o jogador atual tiver 3+, mostra o badge.
+        // Exibe para TODOS se o jogador da rodada é um alvo
         if (playerStrikes >= 3) {
             targetBadge.style.display = 'inline-block';
             document.body.classList.add('target-pulse');
+            
+            if (playerStreak > 0) {
+                streakInfo.innerText = `SOBREVIVEU ${playerStreak}/2 RODADAS`;
+                streakInfo.style.display = 'block';
+            } else {
+                streakInfo.style.display = 'none';
+            }
         } else {
             targetBadge.style.display = 'none';
+            streakInfo.style.display = 'none';
             document.body.classList.remove('target-pulse');
         }
 
@@ -478,14 +491,13 @@
 
     // --- LÓGICA DO HOST ---
 
-    function startNewRound(players, lastPlayerId) {
-        // --- MODIFICAÇÃO ALVO MARCADO: NINGUÉM É FILTRADO ---
-        // activeIds agora são TODOS os jogadores, independente de strikes
+    function startNewRound(roomData) {
+        const players = roomData.players;
+        const lastPlayerId = roomData.roundPlayer;
         const activeIds = Object.keys(players);
 
         if(activeIds.length === 0) return;
         
-        // ORDEM SEQUENCIAL
         activeIds.sort();
         
         let nextIndex = 0;
@@ -499,13 +511,35 @@
         const nextId = activeIds[nextIndex];
         const nextName = players[nextId].name;
 
-        const rndChall = challenges[Math.floor(Math.random() * challenges.length)];
+        // --- LÓGICA DE NÃO REPETIÇÃO ---
+        let usedIndices = roomData.usedChallenges || []; // Array de índices já usados
+        
+        // Filtra índices disponíveis (0 a challenges.length-1)
+        let availableIndices = [];
+        for(let i=0; i<challenges.length; i++) {
+            if(!usedIndices.includes(i)) availableIndices.push(i);
+        }
+
+        // Se acabaram os desafios, reseta a lista (ou poderia dar game over)
+        if(availableIndices.length === 0) {
+            availableIndices = challenges.map((_, i) => i);
+            usedIndices = []; // Reset
+        }
+
+        // Sorteia apenas dos disponíveis
+        const randomRefIndex = Math.floor(Math.random() * availableIndices.length);
+        const selectedChallengeIndex = availableIndices[randomRefIndex];
+        const rndChall = challenges[selectedChallengeIndex];
+
+        // Atualiza lista de usados
+        usedIndices.push(selectedChallengeIndex);
 
         update(ref(db, `rooms/${roomCode}`), {
             nomercy_status: 'round',
             roundPlayer: nextId,
             roundPlayerName: nextName,
             roundChallenge: rndChall,
+            usedChallenges: usedIndices, // Salva no banco
             roundVotes: null,
             votesProcessed: null
         });
@@ -515,7 +549,6 @@
         if(data.votesProcessed) return;
 
         const votes = data.roundVotes || {};
-        // MODIFICAÇÃO: Contar votos de TODOS, não apenas quem tem < 3 strikes
         const allPlayers = Object.values(data.players);
         const totalVoters = allPlayers.length - 1; 
         
@@ -529,8 +562,11 @@
             Object.values(votes).forEach(v => { if(v==='fail') fails++; });
             const passes = votesCast - fails;
 
+            const pid = data.roundPlayer;
+            const pData = data.players[pid];
+            
             if(fails > passes) {
-                // STRIKE -> PUNIÇÃO EXTRA -> ROLETA
+                // FALHOU
                 const rndPunish = punishments[Math.floor(Math.random() * punishments.length)];
                 
                 update(ref(db, `rooms/${roomCode}`), { 
@@ -539,21 +575,41 @@
                 });
 
                 setTimeout(() => {
-                    const pid = data.roundPlayer;
-                    const pData = data.players[pid];
-                    // Strikes acumulam infinitamente
                     const currentStrikes = (pData ? (pData.strikes || 0) : 0) + 1;
-
-                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: currentStrikes });
+                    
+                    // Se falhou, reseta o streak de recuperação
+                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
+                        strikes: currentStrikes,
+                        safeStreak: 0 
+                    });
+                    
                     update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
-
-                    setTimeout(() => startNewRound(data.players, pid), 6000);
+                    setTimeout(() => startNewRound(data), 6000);
                 }, 4000);
                 
             } else {
-                // SAFE
+                // PASSOU (SAFE)
+                
+                // Lógica de Redenção: Se for alvo (strikes >= 3) e passar 2 vezes, limpa
+                if ((pData.strikes || 0) >= 3) {
+                    const currentStreak = (pData.safeStreak || 0) + 1;
+                    
+                    if (currentStreak >= 2) {
+                        // REDENÇÃO COMPLETA: Reseta Strikes e Streak
+                        update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
+                            strikes: 0, 
+                            safeStreak: 0 
+                        });
+                    } else {
+                        // Aumenta Streak
+                        update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
+                            safeStreak: currentStreak 
+                        });
+                    }
+                }
+
                 update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
-                setTimeout(() => startNewRound(data.players, data.roundPlayer), 2000);
+                setTimeout(() => startNewRound(data), 2000);
             }
         }
     }
