@@ -53,6 +53,14 @@
         }
         .btn:active { transform: scale(0.96); }
 
+        .btn-immunity {
+            background: var(--neon-yellow);
+            color: black;
+            border: none;
+            margin-bottom: 10px;
+            animation: pulse 1s infinite;
+        }
+
         .card {
             background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 30px;
@@ -274,7 +282,7 @@
         "Coloque sua mão na virilha de alguém por 15 segundos.",
         "Tire a calça e fique de roupa íntima por 2 rodadas.",
         "Beije a palma da mão de todos da roda de forma sensual.",
-        "Deixe alguém morder seu lábio superior até ficar marcado.",
+        "Deixe alguém morder seu lábio inferior até ficar marcado.",
         "Mande uma mensagem para o seu ex pedindo 'só mais uma vez'.",
         "Fale quem você acha que transa melhor na roda.",
         "Deixe alguém lamber um pouco de bebida do seu pescoço.",
@@ -497,6 +505,7 @@
         const pData = data.players[currentPlayerId];
         const playerStrikes = pData ? (pData.strikes || 0) : 0;
         const playerStreak = pData ? (pData.safeStreak || 0) : 0;
+        const hasImmunity = pData ? (pData.immunity || false) : false;
 
         document.getElementById('current-player-name').innerText = data.roundPlayerName;
         document.getElementById('challenge-text').innerText = data.roundChallenge;
@@ -529,8 +538,10 @@
         waitMsg.style.display = 'none';
 
         if(isMyTurn) {
+            let immunityBtn = hasImmunity ? `<button class="btn btn-immunity" onclick="useImmunity()">✨ USAR IMUNIDADE</button>` : "";
             controls.innerHTML = `
                 <div style="width:100%;">
+                    ${immunityBtn}
                     <p class="pulse-text" style="color: var(--neon-green);">Cumpra o desafio!</p>
                     <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 10px;">O grupo está votando...</p>
                 </div>
@@ -555,6 +566,14 @@
             }
         }
     }
+
+    window.useImmunity = function() {
+        update(ref(db, `rooms/${roomCode}/players/${myId}`), { immunity: false });
+        update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
+        setTimeout(() => {
+            get(ref(db, `rooms/${roomCode}`)).then(snap => startNewRound(snap.val()));
+        }, 2000);
+    };
 
     window.castVote = function(vote) {
         set(ref(db, `rooms/${roomCode}/roundVotes/${myId}`), vote);
@@ -634,6 +653,7 @@
 
             const pid = data.roundPlayer;
             const pData = data.players[pid];
+            const isExtreme = data.roundChallenge.includes("ALVO MARCADO");
             
             if(fails > passes) {
                 const rndPunish = punishments[Math.floor(Math.random() * punishments.length)];
@@ -656,6 +676,11 @@
                 }, 4000);
                 
             } else {
+                // SE O JOGADOR PASSOU NO DESAFIO EXTREMO, ELE GANHA IMUNIDADE
+                if (isExtreme) {
+                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { immunity: true });
+                }
+
                 if ((pData.strikes || 0) >= 3) {
                     const currentStreak = (pData.safeStreak || 0) + 1;
                     
