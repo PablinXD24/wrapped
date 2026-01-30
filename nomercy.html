@@ -32,7 +32,6 @@
 
         .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.06; pointer-events: none; z-index: 0; }
         
-        /* Telas */
         .screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; padding: 30px;
@@ -54,6 +53,14 @@
         }
         .btn:active { transform: scale(0.96); }
 
+        .btn-immunity {
+            background: rgba(242, 226, 5, 0.1);
+            border: 2px solid var(--neon-yellow);
+            color: var(--neon-yellow);
+            margin-bottom: 20px;
+            animation: pulse 1s infinite;
+        }
+
         .card {
             background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 30px;
@@ -68,53 +75,31 @@
         .vote-row { display: flex; gap: 15px; width: 100%; margin-top: 20px; }
         .btn-fail { background: rgba(255, 50, 50, 0.15); border: 2px solid var(--neon-red); color: var(--neon-red); transition: 0.2s; }
         .btn-pass { background: rgba(30, 215, 96, 0.15); border: 2px solid var(--neon-green); color: var(--neon-green); transition: 0.2s; }
-        .btn-fail:active, .btn-pass:active { transform: scale(0.95); opacity: 0.8; }
 
         .pulse-text { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        .roulette-mode { background-color: black !important; }
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99; transition: background 0.1s; }
         
         .strike-bg { background-color: var(--neon-red) !important; animation: shake 0.5s; }
         .safe-bg { background-color: var(--neon-green) !important; color: black; }
-        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 100% { transform: translate(0, 0) rotate(0); } }
-
-        .punishment-box {
-            background: rgba(0,0,0,0.4);
-            border: 2px dashed white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-top: 30px;
-            width: 100%;
-        }
-
-        /* --- ESTILO: ALVO MARCADO --- */
-        .target-badge {
-            background: var(--neon-red); color: white;
-            font-family: var(--font-display); font-weight: 900;
-            padding: 5px 15px; border-radius: 4px;
-            text-transform: uppercase; font-size: 0.9rem;
-            letter-spacing: 2px; margin-bottom: 10px;
-            display: none; animation: pulse 0.8s infinite;
-            box-shadow: 0 0 15px var(--neon-red);
-        }
         
-        .streak-info {
-            font-size: 0.8rem; color: var(--neon-yellow);
-            font-family: var(--font-data); margin-bottom: 5px;
-            display: none;
+        .punishment-box {
+            background: rgba(0,0,0,0.4); border: 2px dashed white; padding: 20px; border-radius: 15px; margin-top: 30px; width: 100%;
         }
 
-        .target-pulse {
-            animation: targetBg 2s infinite !important;
+        .target-badge {
+            background: var(--neon-red); color: white; font-family: var(--font-display); font-weight: 900;
+            padding: 5px 15px; border-radius: 4px; text-transform: uppercase; font-size: 0.9rem;
+            letter-spacing: 2px; margin-bottom: 10px; display: none; animation: pulse 0.8s infinite;
         }
+
+        .target-pulse { animation: targetBg 2s infinite !important; }
         @keyframes targetBg {
             0% { box-shadow: inset 0 0 0 black; }
             50% { box-shadow: inset 0 0 100px rgba(255, 50, 50, 0.4); border: 2px solid var(--neon-red); }
             100% { box-shadow: inset 0 0 0 black; }
         }
-
     </style>
 </head>
 <body>
@@ -130,7 +115,7 @@
 
 <div id="screen-game" class="screen">
     <div id="target-badge" class="target-badge">⚠️ ALVO MARCADO ⚠️</div>
-    <div id="streak-info" class="streak-info">SOBREVIVEU 1/2 RODADAS</div>
+    <div id="streak-info" class="streak-info" style="font-size: 0.8rem; color: var(--neon-yellow); font-family: var(--font-data); margin-bottom: 5px; display: none;"></div>
     
     <div style="opacity: 0.6; font-family: var(--font-data); letter-spacing: 2px;">VEZ DE</div>
     <div id="current-player-name" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; color: white;">...</div>
@@ -147,7 +132,6 @@
     </div>
 
     <div id="controls-area" style="width: 100%; margin-top: 20px;"></div>
-    
     <p id="wait-msg" class="pulse-text" style="margin-top:20px; display:none; font-family: var(--font-data); font-size: 0.8rem;"></p>
 </div>
 
@@ -166,7 +150,6 @@
     <h2 id="winner-name" style="font-size: 3rem;">NOME</h2>
     <button class="btn" style="background: black; color: white; margin-top: 30px;" onclick="window.location.href='index.html'">VOLTAR AO INÍCIO</button>
 </div>
-
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -190,432 +173,145 @@
         "O JOGADOR À ESQUERDA BEBE", "ESCOLHA ALGUÉM PARA BEBER", "ESCOLHA 2 PESSOAS PARA BEBER",
         "TODOS OS HOMENS BEBEM", "TODAS AS MULHERES BEBEM", "QUEM ESTIVER DE PRETO BEBE",
         "QUEM TIVER MENOS STRIKES BEBE", "O HOST BEBE", "NINGUÉM BEBE (DESSA VEZ)",
-        "TODOS BEBEM MENOS O ACUSADO", "O ACUSADO BEBE DOBRADO", "QUEM ESTIVER EM PÉ BEBE",
-        "A PESSOA MAIS VELHA BEBE", "A PESSOA MAIS NOVA BEBE", "TROQUE DE LUGAR COM A FRENTE"
+        "TODOS BEBEM MENOS O ACUSADO", "O ACUSADO BEBE DOBRADO", "QUEM ESTIVER EM PÉ BEBE"
     ];
 
     const challenges = [
-        "Beba um shot sem usar as mãos.", "Faça um brinde constrangedor.", "Vire o copo de quem está à direita.",
-        "Ligue para a ex e pergunte se ela está feliz.", "Mande 'Oi sumido(a)' para a 3ª pessoa do direct.", 
-        "Deixe o grupo ler sua última conversa no WhatsApp.", "Poste uma foto zoada no story e apague em 10 min.",
-        "Mande um áudio gemendo para o seu pai.", "Curta as 10 primeiras fotos do ex.",
-        "Mostre seu histórico de pesquisa do Google.", "Mande 'Eu te amo' para o último contato do Zap.",
-        "Ligue para uma pizzaria e peça um hambúrguer.", 
-        "Troque de camisa com alguém da roda.", "Deixe alguém pentear seu cabelo.",
-        "Faça carinho na orelha de alguém.", "Morda (leve) o dedo de alguém.", "Dance uma valsa com uma cadeira.",
-        "Imite um cachorro cheirando alguém.", "Conte o seu segredo mais vergonhoso.",
-        "Qual a pior coisa que já fez bêbado?", "Quem da roda você acha mais chato?", "Qual foi sua pior experiência sexual?",
-        "Já traiu? Conte a história.", "Quem da roda se veste pior?", "Qual o maior crime que já cometeu?",
-        "Qual a mentira que conta com mais frequência?", "Quem da roda você eliminaria da sua vida?",
-        "Conte um fetiche estranho.", "Qual a coisa mais nojenta que já comeu?", "Você voltaria com algum ex? Quem?",
-        "Imite um animal escolhido pelo grupo.", "Fale com sotaque gringo por 3 rodadas.",
-        "Finja ser um comentarista de futebol.", "Imite a risada de alguém da roda.", "Cante o refrão de uma música brega.",
-        "Fale tudo cantando até a próxima vez.", "Ande de quatro pela sala.",
-        "Faça 10 flexões agora.", "Fique em um pé só até a próxima rodada.", 
-        "Coloque um cubo de gelo dentro da roupa.", "Beba um copo de água em 5 segundos.",
-        "Gire 10 vezes e tente andar em linha reta.", "Fique sem falar nada por 2 rodadas.", "Segure a respiração por 30s.",
-        "Mande 'Sdds' para a 5ª pessoa do WhatsApp.", "Mostre a 10ª foto da sua galeria.", "Elogie a pessoa à direita.",
-        "Xingue a pessoa à frente.", "Beba se já beijou hoje.", "Beba se já mandou nude.", 
-        "Faça uma declaração de amor para um objeto.", "Grite o nome do seu ex.", "Pergunte 'Tudo bem?' para o 1º story do Insta.", 
-        "Fale 3 pessoas que já pegou.", "Fale 3 pessoas que quer pegar.", 
-        "Imite o Silvio Santos.", "Imite o Faustão.", "Imite o Lula.", "Imite o Bolsonaro.",
-        "Cante 'Evidências' inteira.", "Dance 'Macarena' sem música.", "Faça pose de fisiculturista.",
-        "Conte uma piada ruim.", "Olhe fixamente para alguém por 30s.", "Deixe alguém fazer cócegas em você.",
-        "Beba se já foi corno.", "Beba se já traiu.", "Beba se já foi preso.", "Beba se já deu PT.",
-        "Simule um pedido de casamento.", "Finja estar chorando muito.", "Imite um bebê chorando.",
-        "Fale como um robô.", "Fale sussurrando.", "Grite tudo o que for falar.", "Revele o saldo bancário.",
-        "Mostre a última pesquisa do YouTube.", "Mostre quem bloqueou recentemente.", "Coloque sua música mais ouvida.",
-        "Mostre foto do RG.", "Conte um sonho bizarro.", "Qual maior vergonha na escola?", "Qual seu apelido de infância?",
-        "Quem foi seu primeiro beijo?", "Com quantos anos perdeu a virgindade?", "Já gostou de professor?",
-        "Já colou em prova?", "Já roubou algo?", "Já fez xixi na piscina?", "Já fez xixi na rua?",
-        "Já vomitou e continuou bebendo?", "Já esqueceu o nome de quem ficava?", "Já stalkeou ex de atual?",
-        "Já criou perfil fake?", "Já mentiu idade?", "Já saiu sem pagar?", "Já foi expulso?", "Já brigou na rua?",
-        "Dê uma cambalhota.", "Faça uma bananeira.", "Faça prancha por 30s.", "Pule em um pé só.",
-        "Imite uma galinha.", "Imite um macaco.", "Imite um peixe.", "Finja choque elétrico.",
-        "Use sapato como telefone.", "Beba água no prato.", "Coma sem as mãos.", "Lamba o nariz.", 
-        "Encoste o pé na cabeça.", "Faça vesguinho.", "Mande áudio miando.", "Mande áudio latindo.", 
-        "Ligue pedindo pizza na operadora.", "Grite na janela.", "Imite sirene.", "Arrote o alfabeto.", 
-        "Fale de boca cheia.", "Faça gargarejo com bebida.", "Beba de canudinho.", "Beba segurando com dentes.", 
-        "Faça rima com Pão.", "Conte história de terror.", "Invente apelidos para todos.", 
-        "Fale a cor da roupa íntima de todos.", "Quem é mais provável de ser preso?",
-        "Quem é mais provável de ficar rico?", "Quem é mais bonito?", "Quem é mais inteligente?",
-        "Duelo de pedra papel tesoura.", "Duelo de olhar.", "Todos tocam o chão.", "Todos levantam a mão.",
-        "O mestre mandou beber.", "Crie uma regra.", "Anule uma regra.", "Vire barman por uma rodada.",
-        "Não dobre os braços.", "Não mostre os dentes.", "Só fale perguntando.", "Termine frases com Miau.",
-        "Comece frases com Senhor.", "Beba se usa óculos.", "Beba se tem barba.", "Beba se tem cabelo curto.",
-        "Beba se tem tatuagem.", "Beba se está descalço.", "Palavra proibida: Não.", "Fale marcas de carro.",
-        "Fale nomes de frutas.", "Fale posições sexuais.", "Fale países.", "Cara ou Coroa: Você bebe ou Grupo bebe.",
-        "Dê um beijo de língua na pessoa à sua direita.",
-        "Tire uma peça de roupa (se já tirou, tire outra).",
-        "Faça um body shot na barriga de alguém.",
-        "Receba um tapa na bunda de quem você escolher.",
-        "Faça uma lap dance de 30s na pessoa à sua frente.",
-        "Deixe alguém chupar seu dedo sensualmente por 10s.",
-        "Simule sua posição sexual favorita com uma cadeira.",
-        "Passe gelo no pescoço de alguém usando a boca.",
-        "Deixe alguém morder seu lábio inferior.",
-        "Beije o pescoço da pessoa à sua esquerda.",
-        "Tire a roupa íntima sem tirar a calça/saia (ou beba 3 doses).",
-        "Deixe alguém escrever algo na sua coxa com caneta.",
-        "Simule sexo oral em uma garrafa de bebida.",
-        "Gemido alto: Olhe no olho de alguém e gema.",
-        "Permita que alguém apalpe sua bunda por 5 segundos.",
-        "Troque de roupa íntima com alguém (se tiver coragem).",
-        "Faça uma massagem na parte interna da coxa de alguém.",
-        "Beije os mamilos de alguém (por cima da roupa).",
-        "Sente no colo de alguém e rebole por 20 segundos.",
-        "Deixe alguém passar a mão por baixo da sua camisa.",
-        "Venda os olhos e adivinhe quem te beijou (selinho).",
-        "Faça um striptease removendo pelo menos 1 peça.",
-        "Deixe alguém te dar um chupão no pescoço (marca opcional).",
-        "Lamba a orelha da pessoa à direita.",
-        "Coloque a mão na virilha de alguém por 10 segundos.",
-        "Mande uma foto sensual (sem nudes explícitos) para o 3º contato.",
-        "Beije 3 pessoas da roda (selinho ou língua, grupo decide).",
-        "Deixe alguém lamber seu pescoço do ombro até a orelha.",
-        "Fale o lugar mais inusitado onde já transou.",
-        "Descreva seu orgasmo usando apenas sons.",
-        "Deixe alguém tirar uma peça sua usando os dentes.",
-        "Passe a língua nos lábios de alguém sem beijar.",
-        "Coloque a mão no bolso da calça de alguém (fundo).",
-        "Simule um orgasmo alto agora.",
-        "Faça 'motorzinho' na barriga ou peito de alguém.",
-        "Deixe alguém dar um tapa na sua cara (força média).",
-        "Beije o umbigo de alguém.",
-        "Fique de roupa íntima até a próxima rodada.",
-        "Sussurre a coisa mais suja que faria com a pessoa à esquerda.",
-        "Deixe o grupo escolher uma posição do Kama Sutra para você imitar."
+        "Dê um abraço na pessoa à sua direita por 10 segundos.", "Imite um animal escolhido pelo grupo por 30 segundos.",
+        "Faça uma rima com o nome de todos na roda.", "Conte uma piada e se ninguém rir, beba uma dose.",
+        "Troque de lugar com a pessoa à sua frente.", "Elogie três características da pessoa à sua esquerda.",
+        "Mande um emoji de coração para o terceiro contato do seu WhatsApp.", "Tente equilibrar uma colher no nariz por 10 segundos.",
+        "Imite o sotaque de outra região por duas rodadas.", "Faça um brinde criativo para o grupo.",
+        "Cante o refrão de uma música de ninar.", "Fale 'O rato roeu a roupa do rei de Roma' três vezes rápido.",
+        "Dance uma música sem som por 30 segundos.", "Elogie o estilo da pessoa que está à sua frente.",
+        "Gire 5 vezes e tente andar em linha reta.", "Tente assobiar uma música famosa.",
+        "Mostre o seu último print da tela do celular.", "Faça um elogio para a pessoa que organizou o jogo."
+    ];
+
+    const extremeChallenges = [
+        "ALVO MARCADO: Beba duas doses de uma vez.",
+        "ALVO MARCADO: Ligue para um contato aleatório e cante 'Parabéns pra Você'.",
+        "ALVO MARCADO: Deixe o grupo ver seu histórico de pesquisa do YouTube.",
+        "ALVO MARCADO: Fique em silêncio absoluto por 3 rodadas.",
+        "ALVO MARCADO: Deixe alguém do grupo enviar um emoji aleatório para seu último contato.",
+        "ALVO MARCADO: Faça 20 abdominais agora.",
+        "ALVO MARCADO: Conte um segredo de infância que você nunca contou.",
+        "ALVO MARCADO: Dance a 'Macarena' completa sem música.",
+        "ALVO MARCADO: Faça uma declaração de amor para um objeto da sala."
     ];
 
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get('room');
     const myId = localStorage.getItem('wrapped_uid');
     
-    let myName = "Player";
     let amIHost = false;
     let rouletteInterval = null;
 
-    if(!roomCode || !myId) {
-        alert("Erro: Entre pelo Wrapped.");
-        window.location.href = 'index.html';
-    }
-
     function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => {
-            s.classList.remove('active');
-            s.style.display = 'none';
-        });
+        document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
         const target = document.getElementById(id);
-        if(target) {
-            target.style.display = 'flex';
-            setTimeout(() => target.classList.add('active'), 10);
-        }
-        document.body.className = '';
-        document.body.classList.remove('target-pulse');
+        if(target) { target.style.display = 'flex'; setTimeout(() => target.classList.add('active'), 10); }
+        document.body.className = ''; document.body.classList.remove('target-pulse');
         document.getElementById('flash-layer').style.background = 'transparent';
         if(rouletteInterval) clearInterval(rouletteInterval);
     }
 
-    // --- SETUP INICIAL ---
     initGameLoop();
 
-    get(ref(db, `rooms/${roomCode}/players/${myId}`)).then(snap => {
-        if(snap.exists()) {
-            myName = snap.val().name;
-            update(ref(db, `rooms/${roomCode}/players/${myId}`), { 
-                strikes: snap.val().strikes || 0 
-            });
-        }
-    });
-
     function initGameLoop() {
-        const roomRef = ref(db, `rooms/${roomCode}`);
-        
-        onValue(roomRef, (snap) => {
-            const data = snap.val();
-            if(!data) return; 
-
+        onValue(ref(db, `rooms/${roomCode}`), (snap) => {
+            const data = snap.val(); if(!data) return;
             document.getElementById('loading').style.display = 'none';
             if(data.host === myId) amIHost = true;
             
-            // MÁQUINA DE ESTADOS
-            if(data.nomercy_status === 'game_over') {
-                showScreen('screen-winner');
-                document.getElementById('winner-name').innerText = data.winnerName;
-            }
-            else if(data.nomercy_status === 'round') {
-                showScreen('screen-game');
-                renderGameRound(data);
-                if(amIHost) checkVotes(data);
-            }
-            else if(data.nomercy_status === 'roulette_spin') {
-                showScreen('screen-roulette');
-                document.body.classList.add('roulette-mode');
-                
-                if(rouletteInterval) clearInterval(rouletteInterval);
-                rouletteInterval = setInterval(() => {
-                    const flash = document.getElementById('flash-layer');
-                    if(Math.random() > 0.7) flash.style.background = 'rgba(255, 0, 0, 0.4)';
-                    else flash.style.background = 'transparent';
-                }, 100);
-            }
-            else if(data.nomercy_status === 'round_result_fail') {
-                showScreen('screen-result');
-                document.body.classList.add('strike-bg');
-                
-                const pid = data.roundPlayer;
-                const pData = data.players[pid];
-                const isVictim = (pid === myId);
-                const strikes = pData ? pData.strikes : 0;
-                const extraPunishment = data.currentPunishment || "SORTE";
-
-                let titleText = "STRIKE!";
-                if(strikes >= 3) titleText = "ALVO MARCADO!";
-
-                document.getElementById('result-content').innerHTML = `
-                    <i class="fa-solid fa-triangle-exclamation" style="font-size:5rem; margin-bottom:20px;"></i>
-                    <h1 style="font-size:3.5rem;">${titleText}</h1>
-                    <p style="font-size:1.5rem; font-weight:bold;">${isVictim ? "VOCÊ FALHOU" : data.roundPlayerName + " FALHOU"}</p>
-                    <div style="background:black; padding:10px 20px; border-radius:20px; margin-top:10px; display:inline-block;">
-                        ${strikes} STRIKES
-                    </div>
-                    
-                    <div class="punishment-box">
-                        <h3 style="color:white; margin-bottom:10px;">PUNIÇÃO EXTRA</h3>
-                        <p style="font-size:1.2rem; font-weight:bold; color:var(--neon-yellow); text-transform:uppercase;">${extraPunishment}</p>
-                    </div>
-                `;
-            }
-            else if(data.nomercy_status === 'round_result_safe') {
-                showScreen('screen-result');
-                document.body.classList.add('safe-bg');
-                
-                const pid = data.roundPlayer;
-                const pData = data.players[pid];
-                const streak = pData ? (pData.safeStreak || 0) : 0;
-                let subtext = "O DESAFIO FOI CUMPRIDO";
-                
-                // Mensagem especial se estiver recuperando a honra
-                if ((pData.strikes || 0) >= 3 && streak > 0) {
-                    subtext = `SOBREVIVEU ${streak}/2 RODADAS NA ZONA DE PERIGO`;
-                }
-
-                document.getElementById('result-content').innerHTML = `
-                    <i class="fa-solid fa-check-circle" style="font-size:5rem; margin-bottom:20px;"></i>
-                    <h1 style="font-size:4rem; color:black;">SAFE</h1>
-                    <p style="color:black; font-weight:bold;">${subtext}</p>
-                `;
-            }
-            else {
-                if(amIHost) {
-                    if(data.players && Object.keys(data.players).length > 0) {
-                        startNewRound(data); 
-                    }
-                } 
-                else document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
-            }
+            if(data.nomercy_status === 'game_over') { showScreen('screen-winner'); document.getElementById('winner-name').innerText = data.winnerName; }
+            else if(data.nomercy_status === 'round') { showScreen('screen-game'); renderGameRound(data); if(amIHost) checkVotes(data); }
+            else if(data.nomercy_status === 'roulette_spin') { showScreen('screen-roulette'); document.body.classList.add('roulette-mode'); }
+            else if(data.nomercy_status === 'round_result_fail') { showScreen('screen-result'); document.body.classList.add('strike-bg'); renderResult(data, 'fail'); }
+            else if(data.nomercy_status === 'round_result_safe') { showScreen('screen-result'); document.body.classList.add('safe-bg'); renderResult(data, 'safe'); }
+            else { if(amIHost) startNewRound(data); }
         });
     }
 
     function renderGameRound(data) {
-        const currentPlayerId = data.roundPlayer;
-        const isMyTurn = (currentPlayerId === myId);
-        const pData = data.players[currentPlayerId];
-        const playerStrikes = pData ? (pData.strikes || 0) : 0;
-        const playerStreak = pData ? (pData.safeStreak || 0) : 0;
-
+        const pid = data.roundPlayer; const pData = data.players[pid]; const isMyTurn = (pid === myId);
         document.getElementById('current-player-name').innerText = data.roundPlayerName;
         document.getElementById('challenge-text').innerText = data.roundChallenge;
         
-        // --- VISUAL DE STRIKES ---
-        document.getElementById('s1').className = playerStrikes >= 1 ? 'strike-dot active' : 'strike-dot';
-        document.getElementById('s2').className = playerStrikes >= 2 ? 'strike-dot active' : 'strike-dot';
-        document.getElementById('s3').className = playerStrikes >= 3 ? 'strike-dot active' : 'strike-dot';
+        const strikes = pData.strikes || 0;
+        for(let i=1; i<=3; i++) document.getElementById('s'+i).className = strikes >= i ? 'strike-dot active' : 'strike-dot';
 
-        // --- LÓGICA VISUAL ALVO MARCADO ---
-        const targetBadge = document.getElementById('target-badge');
-        const streakInfo = document.getElementById('streak-info');
-        
-        // Exibe para TODOS se o jogador da rodada é um alvo
-        if (playerStrikes >= 3) {
-            targetBadge.style.display = 'inline-block';
-            document.body.classList.add('target-pulse');
-            
-            if (playerStreak > 0) {
-                streakInfo.innerText = `SOBREVIVEU ${playerStreak}/2 RODADAS`;
-                streakInfo.style.display = 'block';
-            } else {
-                streakInfo.style.display = 'none';
-            }
-        } else {
-            targetBadge.style.display = 'none';
-            streakInfo.style.display = 'none';
-            document.body.classList.remove('target-pulse');
-        }
+        document.getElementById('target-badge').style.display = strikes >= 3 ? 'inline-block' : 'none';
+        if(strikes >= 3) document.body.classList.add('target-pulse');
 
         const controls = document.getElementById('controls-area');
-        const waitMsg = document.getElementById('wait-msg');
-        waitMsg.style.display = 'none';
+        const isExtreme = data.roundChallenge.startsWith("ALVO MARCADO");
 
         if(isMyTurn) {
-            controls.innerHTML = `
-                <div style="width:100%;">
-                    <p class="pulse-text" style="color: var(--neon-green);">Cumpra o desafio!</p>
-                    <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 10px;">O grupo está votando...</p>
-                </div>
-            `;
+            let immunityHtml = (pData.hasImmunity && isExtreme) ? `<button class="btn btn-immunity" onclick="useImmunity()">✨ USAR IMUNIDADE</button>` : '';
+            controls.innerHTML = `${immunityHtml}<p class="pulse-text">Cumpra o desafio!</p>`;
         } else {
             const myVote = data.roundVotes ? data.roundVotes[myId] : null;
-            
-            if(myVote) {
-                controls.innerHTML = "";
-                waitMsg.innerText = `Voto registrado: ${myVote === 'pass' ? 'FEZ 👍' : 'NÃO FEZ 👎'}`;
-                waitMsg.style.display = 'block';
-            } else {
-                controls.innerHTML = `
-                    <div style="width:100%;">
-                        <p>O desafio foi cumprido?</p>
-                        <div class="vote-row">
-                            <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ 👎</button>
-                            <button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button>
-                        </div>
-                    </div>
-                `;
-            }
+            controls.innerHTML = myVote ? `<p>Voto: ${myVote === 'pass' ? 'FEZ' : 'NÃO'}</p>` : 
+            `<div class="vote-row"><button class="btn btn-fail" onclick="castVote('fail')">NÃO 👍</button><button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button></div>`;
         }
     }
 
-    window.castVote = function(vote) {
-        set(ref(db, `rooms/${roomCode}/roundVotes/${myId}`), vote);
+    function renderResult(data, type) {
+        const pid = data.roundPlayer; const pData = data.players[pid];
+        let content = type === 'fail' ? `<h1>STRIKE!</h1><p>${data.roundPlayerName} FALHOU</p><div class="punishment-box"><h3>PUNIÇÃO</h3><p>${data.currentPunishment}</p></div>` :
+        `<h1>SAFE</h1><p>DESAFIO CUMPRIDO</p>${data.gainedImmunity ? '<p style="color:var(--neon-yellow)">✨ GANHOU IMUNIDADE ✨</p>' : ''}`;
+        document.getElementById('result-content').innerHTML = content;
     }
 
-    // --- LÓGICA DO HOST ---
+    window.useImmunity = function() {
+        update(ref(db, `rooms/${roomCode}/players/${myId}`), { hasImmunity: false });
+        update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe', gainedImmunity: false });
+        setTimeout(() => startNewRound({}), 2000);
+    };
+
+    window.castVote = (v) => set(ref(db, `rooms/${roomCode}/roundVotes/${myId}`), v);
 
     function startNewRound(roomData) {
-        const players = roomData.players;
-        const lastPlayerId = roomData.roundPlayer;
-        const activeIds = Object.keys(players);
+        get(ref(db, `rooms/${roomCode}`)).then(snap => {
+            const data = snap.val(); const players = data.players; const ids = Object.keys(players);
+            let nextIdx = (ids.indexOf(data.roundPlayer) + 1) % ids.length;
+            const nextId = ids[nextIdx]; const pNext = players[nextId];
+            
+            let chall = (pNext.strikes >= 3) ? extremeChallenges[Math.floor(Math.random() * extremeChallenges.length)] : challenges[Math.floor(Math.random() * challenges.length)];
 
-        if(activeIds.length === 0) return;
-        
-        activeIds.sort();
-        
-        let nextIndex = 0;
-        if(lastPlayerId) {
-            const currIdx = activeIds.indexOf(lastPlayerId);
-            if(currIdx !== -1) {
-                nextIndex = (currIdx + 1) % activeIds.length;
-            }
-        }
-        
-        const nextId = activeIds[nextIndex];
-        const nextName = players[nextId].name;
-
-        // --- LÓGICA DE NÃO REPETIÇÃO ---
-        let usedIndices = roomData.usedChallenges || []; // Array de índices já usados
-        
-        // Filtra índices disponíveis (0 a challenges.length-1)
-        let availableIndices = [];
-        for(let i=0; i<challenges.length; i++) {
-            if(!usedIndices.includes(i)) availableIndices.push(i);
-        }
-
-        // Se acabaram os desafios, reseta a lista (ou poderia dar game over)
-        if(availableIndices.length === 0) {
-            availableIndices = challenges.map((_, i) => i);
-            usedIndices = []; // Reset
-        }
-
-        // Sorteia apenas dos disponíveis
-        const randomRefIndex = Math.floor(Math.random() * availableIndices.length);
-        const selectedChallengeIndex = availableIndices[randomRefIndex];
-        const rndChall = challenges[selectedChallengeIndex];
-
-        // Atualiza lista de usados
-        usedIndices.push(selectedChallengeIndex);
-
-        update(ref(db, `rooms/${roomCode}`), {
-            nomercy_status: 'round',
-            roundPlayer: nextId,
-            roundPlayerName: nextName,
-            roundChallenge: rndChall,
-            usedChallenges: usedIndices, // Salva no banco
-            roundVotes: null,
-            votesProcessed: null
+            update(ref(db, `rooms/${roomCode}`), {
+                nomercy_status: 'round', roundPlayer: nextId, roundPlayerName: pNext.name,
+                roundChallenge: chall, roundVotes: null, votesProcessed: null, gainedImmunity: false
+            });
         });
     }
 
     function checkVotes(data) {
         if(data.votesProcessed) return;
-
-        const votes = data.roundVotes || {};
-        const allPlayers = Object.values(data.players);
-        const totalVoters = allPlayers.length - 1; 
-        
-        const votesCast = Object.keys(votes).length;
-
-        if(votesCast >= totalVoters && totalVoters > 0) {
-            
+        const votes = data.roundVotes || {}; const total = Object.keys(data.players).length - 1;
+        if(Object.keys(votes).length >= total && total > 0) {
             update(ref(db, `rooms/${roomCode}`), { votesProcessed: true });
+            let fails = Object.values(votes).filter(v => v === 'fail').length;
+            const pid = data.roundPlayer; const pData = data.players[pid];
+            const isExtreme = data.roundChallenge.startsWith("ALVO MARCADO");
 
-            let fails = 0;
-            Object.values(votes).forEach(v => { if(v==='fail') fails++; });
-            const passes = votesCast - fails;
-
-            const pid = data.roundPlayer;
-            const pData = data.players[pid];
-            
-            if(fails > passes) {
-                // FALHOU
-                const rndPunish = punishments[Math.floor(Math.random() * punishments.length)];
-                
-                update(ref(db, `rooms/${roomCode}`), { 
-                    nomercy_status: 'roulette_spin',
-                    currentPunishment: rndPunish 
-                });
-
+            if(fails > (total/2)) {
+                const punish = punishments[Math.floor(Math.random() * punishments.length)];
+                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'roulette_spin', currentPunishment: punish });
                 setTimeout(() => {
-                    const currentStrikes = (pData ? (pData.strikes || 0) : 0) + 1;
-                    
-                    // Se falhou, reseta o streak de recuperação
-                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
-                        strikes: currentStrikes,
-                        safeStreak: 0 
-                    });
-                    
+                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: (pData.strikes || 0) + 1, hasImmunity: false });
                     update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
-                    setTimeout(() => startNewRound(data), 6000);
-                }, 4000);
-                
+                    setTimeout(() => startNewRound(data), 4000);
+                }, 3000);
             } else {
-                // PASSOU (SAFE)
-                
-                // Lógica de Redenção: Se for alvo (strikes >= 3) e passar 2 vezes, limpa
-                if ((pData.strikes || 0) >= 3) {
-                    const currentStreak = (pData.safeStreak || 0) + 1;
-                    
-                    if (currentStreak >= 2) {
-                        // REDENÇÃO COMPLETA: Reseta Strikes e Streak
-                        update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
-                            strikes: 0, 
-                            safeStreak: 0 
-                        });
-                    } else {
-                        // Aumenta Streak
-                        update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
-                            safeStreak: currentStreak 
-                        });
-                    }
-                }
-
-                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
-                setTimeout(() => startNewRound(data), 2000);
+                let immunityGained = isExtreme;
+                update(ref(db, `rooms/${roomCode}/players/${pid}`), { hasImmunity: immunityGained });
+                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe', gainedImmunity: immunityGained });
+                setTimeout(() => startNewRound(data), 3000);
             }
         }
     }
-    
-    window.castVote = castVote;
-
 </script>
 </body>
 </html>
