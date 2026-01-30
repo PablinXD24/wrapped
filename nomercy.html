@@ -57,8 +57,13 @@
             background: var(--neon-yellow);
             color: black;
             border: none;
-            margin-bottom: 10px;
-            animation: pulse 1s infinite;
+            margin-bottom: 15px;
+            animation: pulse-yellow 1s infinite;
+        }
+        @keyframes pulse-yellow {
+            0% { box-shadow: 0 0 0px var(--neon-yellow); }
+            50% { box-shadow: 0 0 20px var(--neon-yellow); }
+            100% { box-shadow: 0 0 0px var(--neon-yellow); }
         }
 
         .card {
@@ -201,184 +206,109 @@
     ];
 
     const challenges = [
-        "Beba 2 doses e deixe alguém morder seu pescoço.",
-        "Mande um áudio de 15s gemendo para o seu melhor amigo(a).",
-        "Tire a camisa e fique assim por 3 rodadas.",
-        "Deixe o grupo escolher um contato para você mandar: 'Tive um sonho quente com você'.",
-        "Dê um selinho na pessoa que você acha mais atraente na roda.",
-        "Sente no colo da pessoa à sua frente por uma rodada inteira.",
-        "Deixe alguém passar um cubo de gelo em qualquer parte do seu corpo (por dentro da roupa).",
-        "Sussurre algo erótico no ouvido da pessoa à sua direita.",
-        "Mostre a última foto da sua galeria (sem pular).",
-        "Tome um gole de bebida direto do umbigo de alguém.",
-        "Faça uma massagem de 1 minuto nos pés de alguém da roda.",
-        "Lamba o pescoço da pessoa à sua esquerda.",
-        "Deixe alguém da roda ver suas mensagens arquivadas do WhatsApp.",
-        "Beba uma dose sem usar as mãos (alguém deve te dar).",
-        "Ligue para um número aleatório e tente gemer por 5 segundos antes de desligar.",
-        "Deixe alguém morder seu lábio inferior.",
-        "Faça um agachamento com alguém nas costas (ou beba 2 doses).",
-        "Tire uma peça de roupa escolhida pelo grupo.",
-        "Conte qual a sua maior fantasia sexual que nunca realizou.",
-        "Deixe alguém escrever 'PROPRIEDADE DO GRUPO' na sua pele com caneta.",
-        "Beije a orelha da pessoa à sua frente.",
-        "Faça uma 'lap dance' de 20 segundos em quem o grupo escolher.",
-        "Mande um print da sua aba de 'seguindo' do Instagram para o grupo.",
-        "Fique de olhos vendados e adivinhe quem te deu um selinho.",
-        "Deixe alguém chupar seu dedo por 10 segundos.",
-        "Tire os sapatos e as meias e deixe alguém cheirar seus pés.",
-        "Conte quem da roda você pegaria agora.",
-        "Deixe alguém colocar a mão por dentro da sua calça por 10 segundos.",
-        "Faça um brinde descrevendo o que mais te excita em alguém da roda.",
-        "Beba se você já fez sexo em público.",
-        "Mostre o seu saldo bancário para todos.",
-        "Deixe o grupo postar um emoji de 'foguinho' na foto de um ex seu.",
-        "Lamba a bochecha de alguém de forma sensual.",
-        "Faça um strip-tease de 30 segundos com uma música escolhida pelo grupo.",
-        "Deixe alguém morder sua orelha.",
-        "Descreva sua posição favorita usando a pessoa à direita como base (sem encostar).",
-        "Mande 'Quero você agora' para a última pessoa que você curtiu o story.",
-        "Beba 3 doses se você já traiu ou foi traído.",
-        "Deixe alguém dar um tapa na sua bunda.",
-        "Gire a garrafa: quem ela apontar, você deve dar um beijo de língua.",
-        "Fale o nome da pessoa mais chata que você já ficou.",
-        "Deixe alguém lamber seu mamilo (por cima da roupa).",
-        "Conte um segredo que ninguém nesta sala sabe.",
-        "Troque de lugar com alguém e sente no chão até a próxima rodada.",
-        "Dê um beijo no pescoço de todos do sexo oposto.",
-        "Fique sem usar as mãos para nada por 2 rodadas.",
-        "Mostre sua última pesquisa no navegador (sem limpar).",
-        "Deixe alguém fazer cócegas em você por 30 segundos sem você rir.",
-        "Simule um orgasmo em voz alta por 10 segundos.",
-        "Deixe o grupo escolher uma peça de roupa sua para você dar para alguém usar.",
-        "Revele qual pessoa da roda tem o melhor corpo.",
-        "Tire a roupa íntima sem remover a calça (ou beba 5 doses).",
-        "Morda o mamilo de alguém por cima da camisa.",
-        "Deixe alguém lamber sua orelha por 10 segundos.",
-        "Sente no colo de alguém e rebole por 30 segundos.",
-        "Mostre sua conversa mais picante do WhatsApp.",
-        "Dê um tapa forte na bunda da pessoa à esquerda.",
-        "Faça um body shot no peito de alguém.",
-        "Simule sexo oral em uma fruta/garrafa.",
-        "Deixe alguém colocar gelo na sua cueca/calcinha.",
-        "Fique de quatro e deixe alguém te dar um tapa.",
-        "Tire 2 peças de roupa escolhidas pelo grupo.",
-        "Revele sua maior tara secreta.",
-        "Lamba o dedo de alguém da roda.",
-        "Beije o umbigo da pessoa à direita.",
-        "Faça uma massagem sensual nas coxas de alguém.",
-        "Deixe alguém morder seu ombro.",
-        "Fale algo que você faria com a pessoa à frente entre quatro paredes.",
-        "Mande um emoji sugestivo para o seu penúltimo contato.",
-        "Beba se você já teve um sonho erótico com alguém da roda.",
-        "Deixe alguém ver suas fotos ocultas da galeria.",
-        "Faça o som mais alto de prazer que conseguir.",
-        "Deixe alguém te vendar e te tocar onde quiser por 20s.",
-        "Tire a camisa e deixe alguém lamber seu abdômen.",
-        "Fale qual a parte do corpo que você mais gosta no sexo oposto.",
-        "Lamba o pescoço da pessoa que está à sua frente.",
-        "Deixe alguém morder sua coxa.",
-        "Faça 10 flexões e a cada uma gema o nome de alguém da roda.",
-        "Coloque sua mão na virilha de alguém por 15 segundos.",
-        "Tire a calça e fique de roupa íntima por 2 rodadas.",
-        "Beije a palma da mão de todos da roda de forma sensual.",
-        "Deixe alguém morder seu lábio inferior até ficar marcado.",
-        "Mande uma mensagem para o seu ex pedindo 'só mais uma vez'.",
-        "Fale quem você acha que transa melhor na roda.",
-        "Deixe alguém lamber um pouco de bebida do seu pescoço.",
-        "Revele se você já fez sexo hoje.",
-        "Fique sentado no colo da pessoa à direita até a próxima vez.",
-        "Deixe alguém enfiar a mão por baixo da sua camisa e te arranhar levemente.",
-        "Faça cara de quem está tendo um orgasmo e sustente por 20s.",
-        "Beba se você tem algum brinquedo erótico.",
-        "Conte qual o lugar mais estranho onde já transou.",
-        "Deixe alguém lamber sua barriga.",
-        "Morda o queixo de alguém.",
-        "Fale o que você mais gosta de ouvir na hora H.",
-        "Deixe alguém te dar um chupão no braço.",
-        "Tire uma foto sensual e mostre para a roda.",
-        "Deixe o grupo decidir quem você deve beijar por 5 segundos.",
-        "Faça uma lap dance em uma cadeira como se fosse uma pessoa.",
-        "Beba 2 doses se você já fez um trio.",
-        "Mostre sua marca de bronzeado ou cicatriz em lugar escondido.",
-        "Deixe alguém cheirar seu pescoço bem de perto.",
-        "Conte um fetiche que você tem vergonha de admitir.",
-        "Beije a parte interna da coxa de alguém.",
-        "Lamba a ponta do nariz da pessoa à esquerda.",
-        "Fale qual posição você quer testar hoje.",
-        "Deixe o grupo ver seu histórico de chamadas.",
-        "Fique de costas e deixe alguém te dar um 'atracão'.",
-        "Beba se você já transou com alguém dessa roda.",
-        "Revele a cor da sua roupa íntima agora.",
-        "Deixe alguém dar um beijo no seu peito (homens) ou pescoço (mulheres).",
-        "Fale para alguém da roda: 'Eu quero muito te pegar'.",
-        "Deixe alguém morder sua bochecha.",
-        "Faça 5 minutos de 'conchinha' com alguém no chão.",
-        "Deixe o grupo ver quem você bloqueou recentemente no Insta.",
-        "Beba uma dose de bebida entre os seios ou peitoral de alguém.",
-        "Conte qual o maior tempo que já ficou sem transar.",
-        "Deixe alguém puxar seu cabelo com força.",
-        "Fale qual a primeira coisa que você olha em alguém.",
-        "Morda levemente o nariz da pessoa à frente.",
-        "Dê um beijo de 10 segundos na nuca de alguém.",
-        "Deixe alguém te dar um tapa na cara (leve).",
-        "Revele se você prefere luz acesa ou apagada.",
-        "Faça uma massagem nas mãos de alguém usando a boca.",
-        "Deixe o grupo escolher um 'castigo físico' leve para você.",
-        "Beba se você já mandou nude para a pessoa errada.",
-        "Fique sem piscar enquanto alguém te provoca por 30s.",
-        "Lamba o lábio de alguém sem usar a língua.",
-        "Deixe alguém soprar ar quente no seu ouvido.",
-        "Conte uma história sexual que deu errado.",
-        "Beije a testa de todos, mas o último deve ser na boca.",
-        "Deixe o grupo ver suas conversas com o 'contatinho'.",
-        "Faça movimentos pélvicos na frente de alguém.",
-        "Deixe alguém lamber seu pulso.",
-        "Beba 3 doses se você já gravou um vídeo transando.",
-        "Mostre sua tatuagem ou marca mais escondida.",
-        "Deixe alguém morder sua mão.",
-        "Conte qual a pessoa mais velha que você já pegou.",
-        "Faça um brinde para a pessoa que você quer levar para a cama.",
-        "Lamba o pescoço de alguém e dê uma mordidinha no final.",
-        "Deixe o grupo te carregar no colo por 30 segundos.",
-        "Fale qual o perfume que mais te atrai.",
-        "Dê um selinho em quem está à sua esquerda e direita.",
-        "Deixe alguém lamber uma gota de bebida do seu umbigo.",
-        "Revele se você já fingiu um orgasmo.",
-        "Morda o lóbulo da orelha de alguém.",
-        "Fique de roupa íntima por 1 rodada inteira.",
-        "Mande um áudio para um amigo dizendo que está carente.",
-        "Deixe alguém morder seu dedo mindinho.",
-        "Conte com quantas pessoas você já transou.",
-        "Deixe o grupo escolher quem deve te dar um tapa na bunda.",
-        "Beije o pescoço da pessoa que você menos conhece na roda."
+        "Beba 2 doses e deixe alguém morder seu pescoço.", "Mande um áudio de 15s gemendo para o seu melhor amigo(a).",
+        "Tire a camisa e fique assim por 3 rodadas.", "Deixe o grupo escolher um contato para você mandar: 'Tive um sonho quente com você'.",
+        "Dê um selinho na pessoa que você acha mais atraente na roda.", "Sente no colo da pessoa à sua frente por uma rodada inteira.",
+        "Deixe alguém passar um cubo de gelo em qualquer parte do seu corpo.", "Sussurre algo erótico no ouvido da pessoa à sua direita.",
+        "Mostre a última foto da sua galeria.", "Tome um gole de bebida direto do umbigo de alguém.",
+        "Faça uma massagem de 1 minuto nos pés de alguém.", "Lamba o pescoço da pessoa à esquerda.",
+        "Deixe alguém ver suas mensagens arquivadas.", "Beba sem usar as mãos.",
+        "Ligue para alguém e gema por 5s.", "Deixe alguém morder seu lábio inferior.",
+        "Agachamento com alguém nas costas.", "Tire uma peça de roupa.",
+        "Conte sua maior fantasia sexual.", "Escreva na pele com caneta.",
+        "Beije a orelha da pessoa à frente.", "Lap dance de 20s.",
+        "Print do 'seguindo' no Insta.", "Adivinhe quem deu selinho vendado.",
+        "Deixe alguém chupar seu dedo.", "Alguém cheirar seus pés.",
+        "Quem da roda você pegaria agora.", "Mão na sua calça por 10s.",
+        "O que mais te excita em alguém da roda.", "Beba se já fez sexo em público.",
+        "Mostre saldo bancário.", "Emoji de fogo no ex.",
+        "Lamba a bochecha sensual.", "Strip-tease de 30s.",
+        "Deixe alguém morder sua orelha.", "Posição favorita sem encostar.",
+        "Mande 'Quero você agora' no Insta.", "Beba se já traiu.",
+        "Tapa na bunda.", "Gire a garrafa para beijo de língua.",
+        "Nome da pessoa mais chata que ficou.", "Lamber mamilo por cima da roupa.",
+        "Um segredo que ninguém sabe.", "Sente no chão até a próxima.",
+        "Beijo no pescoço do sexo oposto.", "Sem mãos por 2 rodadas.",
+        "Última pesquisa no navegador.", "Cócegas por 30s sem rir.",
+        "Simule orgasmo por 10s.", "Alguém usa uma peça de roupa sua.",
+        "Quem tem o melhor corpo da roda.", "Tire a peça íntima por baixo.",
+        "Morda mamilo por cima da camisa.", "Lamber orelha por 10s.",
+        "Rebole no colo de alguém por 30s.", "Conversa mais picante no Whats.",
+        "Tapa forte na bunda à esquerda.", "Body shot no peito de alguém.",
+        "Sexo oral em fruta/garrafa.", "Gelo na cueca/calcinha.",
+        "De quatro para levar tapa.", "Tire 2 peças de roupa.",
+        "Maior tara secreta.", "Lamba o dedo de alguém.",
+        "Beije umbigo à direita.", "Massagem sensual nas coxas.",
+        "Morda ombro de alguém.", "O que faria com a pessoa à frente.",
+        "Emoji sugestivo no Whats.", "Beba se sonhou erótico com a roda.",
+        "Fotos ocultas da galeria.", "Som mais alto de prazer.",
+        "Vendado e tocado por 20s.", "Lamber seu abdômen sem camisa.",
+        "O que te atrai no sexo oposto.", "Lamba pescoço à frente.",
+        "Morda a coxa de alguém.", "10 flexões gemendo nome.",
+        "Mão na virilha por 15s.", "De roupa íntima por 2 rodadas.",
+        "Beije palma da mão sensual.", "Morda lábio até marcar.",
+        "Mensagem pro ex pedindo 'mais uma'.", "Quem transa melhor na roda.",
+        "Lamber bebida do seu pescoço.", "Se fez sexo hoje.",
+        "Colo à direita até a próxima.", "Mão por baixo da camisa.",
+        "Cara de orgasmo por 20s.", "Beba se tem sex toy.",
+        "Lugar mais estranho que transou.", "Lamber sua barriga.",
+        "Morda queixo de alguém.", "O que gosta de ouvir na hora H.",
+        "Chupão no braço.", "Foto sensual para a roda.",
+        "Grupo decide quem você beija.", "Lap dance na cadeira.",
+        "Beba se já fez trio.", "Marca de bronzeado/cicatriz.",
+        "Cheirar seu pescoço perto.", "Fetiche com vergonha.",
+        "Beije parte interna da coxa.", "Lamba ponta do nariz.",
+        "Posição que quer testar hoje.", "Histórico de chamadas.",
+        "Atracão pelas costas.", "Beba se já pegou alguém da roda.",
+        "Cor da roupa íntima agora.", "Beijo no peito/pescoço.",
+        "Fale: 'Eu quero te pegar'.", "Morda bochecha.",
+        "Conchinha no chão por 5 min.", "Bloqueados no Insta.",
+        "Beba dose entre seios/peitoral.", "Maior tempo sem transar.",
+        "Puxão de cabelo forte.", "Primeira coisa que olha em alguém.",
+        "Morda nariz à frente.", "Beijo de 10s na nuca.",
+        "Tapa leve na cara.", "Luz acesa ou apagada.",
+        "Massagem nas mãos com a boca.", "Castigo físico leve.",
+        "Beba se mandou nude errado.", "Alguém te provoca por 30s.",
+        "Lamba lábio sem língua.", "Ar quente no ouvido.",
+        "História sexual que deu errado.", "Beijo na boca no último da roda.",
+        "Conversa com o contatinho.", "Movimentos pélvicos.",
+        "Lamber seu pulso.", "Beba se gravou transando.",
+        "Tatuagem escondida.", "Morda a mão de alguém.",
+        "Pessoa mais velha que pegou.", "Brinde para quem quer pegar.",
+        "Lamber pescoço com mordida.", "Carregar no colo 30s.",
+        "Perfume que te atrai.", "Selinho à esquerda e direita.",
+        "Lamber bebida do umbigo.", "Se já fingiu orgasmo.",
+        "Morda lóbulo da orelha.", "De roupa íntima por 1 rodada.",
+        "Áudio carente para amigo.", "Morda dedo mindinho.",
+        "Com quantos já transou.", "Alguém te dá tapa na bunda.",
+        "Beijo no pescoço do desconhecido."
     ];
 
     const extremeChallenges = [
-        "ALVO MARCADO: Tire 2 peças de roupa ou vire 4 doses de uma vez.",
-        "ALVO MARCADO: Deixe alguém da roda morder seu mamilo diretamente na pele.",
-        "ALVO MARCADO: Mande um nude (sem rosto) para o seu próprio histórico ou beba meia garrafa.",
-        "ALVO MARCADO: Beije a pessoa à sua esquerda e à sua direita com língua.",
-        "ALVO MARCADO: Fique apenas de roupa íntima até o final do jogo.",
-        "ALVO MARCADO: Deixe o grupo enviar qualquer mensagem do seu celular para seu chefe ou pai/mãe.",
-        "ALVO MARCADO: Faça sexo oral simulado em uma garrafa por 1 minuto enquanto o grupo grava.",
-        "ALVO MARCADO: Receba 3 tapas fortes na bunda de cada pessoa da roda.",
-        "ALVO MARCADO: Deixe alguém lamber qualquer parte do seu corpo que o grupo escolher.",
-        "ALVO MARCADO: Ligue para um ex e diga que ainda o ama no viva-voz.",
-        "ALVO MARCADO: Deixe o grupo ver seu histórico de fotos apagadas na galeria.",
-        "ALVO MARCADO: Tome um banho de roupa e permaneça assim o resto do jogo.",
-        "ALVO MARCADO: Deixe alguém escrever 'EU SOU UM ALVO' na sua testa com caneta permanente.",
-        "ALVO MARCADO: Sente no colo de alguém e faça movimentos de penetração por 30s.",
-        "ALVO MARCADO: Escolha alguém para te dar um chupão no pescoço que fique marcado agora."
+        "ALVO MARCADO: Tire 2 peças de roupa ou vire 4 doses.",
+        "ALVO MARCADO: Deixe alguém morder seu mamilo na pele.",
+        "ALVO MARCADO: Mande nude sem rosto pro histórico ou beba meia garrafa.",
+        "ALVO MARCADO: Beije esquerda e direita com língua.",
+        "ALVO MARCADO: Fique de roupa íntima até o final.",
+        "ALVO MARCADO: Mensagem do seu celular para chefe/pais.",
+        "ALVO MARCADO: Sexo oral simulado em garrafa por 1 min (gravado).",
+        "ALVO MARCADO: 3 tapas fortes na bunda de cada um da roda.",
+        "ALVO MARCADO: Lamber qualquer parte do corpo escolhida.",
+        "ALVO MARCADO: Ligue pro ex e diga que ama no viva-voz.",
+        "ALVO MARCADO: Fotos apagadas da galeria.",
+        "ALVO MARCADO: Banho de roupa e fique assim.",
+        "ALVO MARCADO: Escrever 'EU SOU UM ALVO' na testa.",
+        "ALVO MARCADO: Movimentos de penetração no colo por 30s.",
+        "ALVO MARCADO: Receba um chupão que marque agora."
     ];
 
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get('room');
     const myId = localStorage.getItem('wrapped_uid');
     
-    let myName = "Player";
     let amIHost = false;
     let rouletteInterval = null;
+    let isTransitioning = false; // TRAVA PARA EVITAR LOOP INFINITO
 
     if(!roomCode || !myId) {
         alert("Erro: Entre pelo Wrapped.");
@@ -399,18 +329,8 @@
         document.body.classList.remove('target-pulse');
         document.getElementById('flash-layer').style.background = 'transparent';
         if(rouletteInterval) clearInterval(rouletteInterval);
+        rouletteInterval = null;
     }
-
-    initGameLoop();
-
-    get(ref(db, `rooms/${roomCode}/players/${myId}`)).then(snap => {
-        if(snap.exists()) {
-            myName = snap.val().name;
-            update(ref(db, `rooms/${roomCode}/players/${myId}`), { 
-                strikes: snap.val().strikes || 0 
-            });
-        }
-    });
 
     function initGameLoop() {
         const roomRef = ref(db, `rooms/${roomCode}`);
@@ -420,7 +340,7 @@
             if(!data) return; 
 
             document.getElementById('loading').style.display = 'none';
-            if(data.host === myId) amIHost = true;
+            amIHost = (data.host === myId);
             
             if(data.nomercy_status === 'game_over') {
                 showScreen('screen-winner');
@@ -429,79 +349,63 @@
             else if(data.nomercy_status === 'round') {
                 showScreen('screen-game');
                 renderGameRound(data);
-                if(amIHost) checkVotes(data);
+                if(amIHost && !isTransitioning) checkVotes(data);
             }
             else if(data.nomercy_status === 'roulette_spin') {
                 showScreen('screen-roulette');
                 document.body.classList.add('roulette-mode');
-                
-                if(rouletteInterval) clearInterval(rouletteInterval);
-                rouletteInterval = setInterval(() => {
-                    const flash = document.getElementById('flash-layer');
-                    if(Math.random() > 0.7) flash.style.background = 'rgba(255, 0, 0, 0.4)';
-                    else flash.style.background = 'transparent';
-                }, 100);
-            }
-            else if(data.nomercy_status === 'round_result_fail') {
-                showScreen('screen-result');
-                document.body.classList.add('strike-bg');
-                
-                const pid = data.roundPlayer;
-                const pData = data.players[pid];
-                const isVictim = (pid === myId);
-                const strikes = pData ? pData.strikes : 0;
-                const extraPunishment = data.currentPunishment || "SORTE";
-
-                let titleText = "STRIKE!";
-                if(strikes >= 3) titleText = "ALVO MARCADO!";
-
-                document.getElementById('result-content').innerHTML = `
-                    <i class="fa-solid fa-triangle-exclamation" style="font-size:5rem; margin-bottom:20px;"></i>
-                    <h1 style="font-size:3.5rem;">${titleText}</h1>
-                    <p style="font-size:1.5rem; font-weight:bold;">${isVictim ? "VOCÊ FALHOU" : data.roundPlayerName + " FALHOU"}</p>
-                    <div style="background:black; padding:10px 20px; border-radius:20px; margin-top:10px; display:inline-block;">
-                        ${strikes} STRIKES
-                    </div>
-                    
-                    <div class="punishment-box">
-                        <h3 style="color:white; margin-bottom:10px;">PUNIÇÃO EXTRA</h3>
-                        <p style="font-size:1.2rem; font-weight:bold; color:var(--neon-yellow); text-transform:uppercase;">${extraPunishment}</p>
-                    </div>
-                `;
-            }
-            else if(data.nomercy_status === 'round_result_safe') {
-                showScreen('screen-result');
-                document.body.classList.add('safe-bg');
-                
-                const pid = data.roundPlayer;
-                const pData = data.players[pid];
-                const streak = pData ? (pData.safeStreak || 0) : 0;
-                let subtext = "O DESAFIO FOI CUMPRIDO";
-                
-                if ((pData.strikes || 0) >= 3 && streak > 0) {
-                    subtext = `SOBREVIVEU ${streak}/2 RODADAS NA ZONA DE PERIGO`;
+                if(!rouletteInterval) {
+                    rouletteInterval = setInterval(() => {
+                        const flash = document.getElementById('flash-layer');
+                        flash.style.background = Math.random() > 0.7 ? 'rgba(255, 0, 0, 0.4)' : 'transparent';
+                    }, 100);
                 }
-
-                document.getElementById('result-content').innerHTML = `
-                    <i class="fa-solid fa-check-circle" style="font-size:5rem; margin-bottom:20px;"></i>
-                    <h1 style="font-size:4rem; color:black;">SAFE</h1>
-                    <p style="color:black; font-weight:bold;">${subtext}</p>
-                `;
             }
-            else {
-                if(amIHost) {
-                    if(data.players && Object.keys(data.players).length > 0) {
-                        startNewRound(data); 
-                    }
-                } 
-                else document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
+            else if(data.nomercy_status === 'round_result_fail' || data.nomercy_status === 'round_result_safe') {
+                showResultScreen(data);
+            }
+            else if(amIHost && !isTransitioning) {
+                if(data.players && Object.keys(data.players).length > 0) {
+                    startNewRound(data); 
+                }
             }
         });
     }
 
+    function showResultScreen(data) {
+        showScreen('screen-result');
+        const pid = data.roundPlayer;
+        const pData = data.players[pid];
+        const isFail = (data.nomercy_status === 'round_result_fail');
+        
+        if(isFail) {
+            document.body.classList.add('strike-bg');
+            const strikes = pData ? (pData.strikes || 0) : 0;
+            const title = strikes >= 3 ? "ALVO MARCADO!" : "STRIKE!";
+            document.getElementById('result-content').innerHTML = `
+                <i class="fa-solid fa-triangle-exclamation" style="font-size:5rem; margin-bottom:20px;"></i>
+                <h1 style="font-size:3.5rem;">${title}</h1>
+                <p style="font-size:1.5rem; font-weight:bold;">${pid === myId ? "VOCÊ FALHOU" : data.roundPlayerName + " FALHOU"}</p>
+                <div style="background:black; padding:10px 20px; border-radius:20px; margin-top:10px; display:inline-block;">${strikes} STRIKES</div>
+                <div class="punishment-box">
+                    <h3 style="color:white; margin-bottom:10px;">PUNIÇÃO EXTRA</h3>
+                    <p style="font-size:1.2rem; font-weight:bold; color:var(--neon-yellow); text-transform:uppercase;">${data.currentPunishment || "SORTE"}</p>
+                </div>
+            `;
+        } else {
+            document.body.classList.add('safe-bg');
+            const streak = pData ? (pData.safeStreak || 0) : 0;
+            const sub = (pData.strikes >= 3 && streak > 0) ? `SOBREVIVEU ${streak}/2 RODADAS NA ZONA DE PERIGO` : "O DESAFIO FOI CUMPRIDO";
+            document.getElementById('result-content').innerHTML = `
+                <i class="fa-solid fa-check-circle" style="font-size:5rem; margin-bottom:20px;"></i>
+                <h1 style="font-size:4rem; color:black;">SAFE</h1>
+                <p style="color:black; font-weight:bold;">${sub}</p>
+            `;
+        }
+    }
+
     function renderGameRound(data) {
         const currentPlayerId = data.roundPlayer;
-        const isMyTurn = (currentPlayerId === myId);
         const pData = data.players[currentPlayerId];
         const playerStrikes = pData ? (pData.strikes || 0) : 0;
         const playerStreak = pData ? (pData.safeStreak || 0) : 0;
@@ -510,9 +414,9 @@
         document.getElementById('current-player-name').innerText = data.roundPlayerName;
         document.getElementById('challenge-text').innerText = data.roundChallenge;
         
-        document.getElementById('s1').className = playerStrikes >= 1 ? 'strike-dot active' : 'strike-dot';
-        document.getElementById('s2').className = playerStrikes >= 2 ? 'strike-dot active' : 'strike-dot';
-        document.getElementById('s3').className = playerStrikes >= 3 ? 'strike-dot active' : 'strike-dot';
+        ['s1','s2','s3'].forEach((id, i) => {
+            document.getElementById(id).className = playerStrikes > i ? 'strike-dot active' : 'strike-dot';
+        });
 
         const targetBadge = document.getElementById('target-badge');
         const streakInfo = document.getElementById('streak-info');
@@ -520,47 +424,32 @@
         if (playerStrikes >= 3) {
             targetBadge.style.display = 'inline-block';
             document.body.classList.add('target-pulse');
-            
-            if (playerStreak > 0) {
-                streakInfo.innerText = `SOBREVIVEU ${playerStreak}/2 RODADAS`;
-                streakInfo.style.display = 'block';
-            } else {
-                streakInfo.style.display = 'none';
-            }
+            streakInfo.style.display = playerStreak > 0 ? 'block' : 'none';
+            if(playerStreak > 0) streakInfo.innerText = `SOBREVIVEU ${playerStreak}/2 RODADAS`;
         } else {
             targetBadge.style.display = 'none';
             streakInfo.style.display = 'none';
-            document.body.classList.remove('target-pulse');
         }
 
         const controls = document.getElementById('controls-area');
         const waitMsg = document.getElementById('wait-msg');
         waitMsg.style.display = 'none';
 
-        if(isMyTurn) {
+        if(currentPlayerId === myId) {
             let immunityBtn = hasImmunity ? `<button class="btn btn-immunity" onclick="useImmunity()">✨ USAR IMUNIDADE</button>` : "";
-            controls.innerHTML = `
-                <div style="width:100%;">
-                    ${immunityBtn}
-                    <p class="pulse-text" style="color: var(--neon-green);">Cumpra o desafio!</p>
-                    <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 10px;">O grupo está votando...</p>
-                </div>
-            `;
+            controls.innerHTML = `<div style="width:100%;">${immunityBtn}<p class="pulse-text" style="color: var(--neon-green);">Cumpra o desafio!</p></div>`;
         } else {
             const myVote = data.roundVotes ? data.roundVotes[myId] : null;
-            
             if(myVote) {
                 controls.innerHTML = "";
                 waitMsg.innerText = `Voto registrado: ${myVote === 'pass' ? 'FEZ 👍' : 'NÃO FEZ 👎'}`;
                 waitMsg.style.display = 'block';
             } else {
                 controls.innerHTML = `
-                    <div style="width:100%;">
-                        <p>O desafio foi cumprido?</p>
-                        <div class="vote-row">
-                            <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ 👎</button>
-                            <button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button>
-                        </div>
+                    <p>O desafio foi cumprido?</p>
+                    <div class="vote-row">
+                        <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ 👎</button>
+                        <button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button>
                     </div>
                 `;
             }
@@ -568,11 +457,11 @@
     }
 
     window.useImmunity = function() {
+        if(isTransitioning) return;
+        isTransitioning = true;
         update(ref(db, `rooms/${roomCode}/players/${myId}`), { immunity: false });
-        update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
-        setTimeout(() => {
-            get(ref(db, `rooms/${roomCode}`)).then(snap => startNewRound(snap.val()));
-        }, 2000);
+        update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe', votesProcessed: true });
+        setTimeout(() => { isTransitioning = false; }, 3000);
     };
 
     window.castVote = function(vote) {
@@ -580,130 +469,85 @@
     }
 
     function startNewRound(roomData) {
-        const players = roomData.players;
-        const lastPlayerId = roomData.roundPlayer;
-        const activeIds = Object.keys(players);
+        if(isTransitioning) return;
+        isTransitioning = true;
 
-        if(activeIds.length === 0) return;
-        
-        activeIds.sort();
-        
-        let nextIndex = 0;
-        if(lastPlayerId) {
-            const currIdx = activeIds.indexOf(lastPlayerId);
-            if(currIdx !== -1) {
-                nextIndex = (currIdx + 1) % activeIds.length;
-            }
-        }
-        
-        const nextId = activeIds[nextIndex];
+        const players = roomData.players;
+        const activeIds = Object.keys(players).sort();
+        const currIdx = activeIds.indexOf(roomData.roundPlayer);
+        const nextId = activeIds[(currIdx + 1) % activeIds.length];
         const pData = players[nextId];
-        const nextName = pData.name;
 
         let rndChall = "";
-        
         if ((pData.strikes || 0) >= 3) {
             rndChall = extremeChallenges[Math.floor(Math.random() * extremeChallenges.length)];
         } else {
-            let usedIndices = roomData.usedChallenges || []; 
-            let availableIndices = [];
-            for(let i=0; i<challenges.length; i++) {
-                if(!usedIndices.includes(i)) availableIndices.push(i);
-            }
-
-            if(availableIndices.length === 0) {
-                availableIndices = challenges.map((_, i) => i);
-                usedIndices = [];
-            }
-
-            const randomRefIndex = Math.floor(Math.random() * availableIndices.length);
-            const selectedChallengeIndex = availableIndices[randomRefIndex];
-            rndChall = challenges[selectedChallengeIndex];
-            usedIndices.push(selectedChallengeIndex);
-            
-            update(ref(db, `rooms/${roomCode}`), { usedChallenges: usedIndices });
+            let used = roomData.usedChallenges || [];
+            let avail = challenges.map((_, i) => i).filter(i => !used.includes(i));
+            if(avail.length === 0) { avail = challenges.map((_, i) => i); used = []; }
+            const idx = avail[Math.floor(Math.random() * avail.length)];
+            rndChall = challenges[idx];
+            used.push(idx);
+            update(ref(db, `rooms/${roomCode}`), { usedChallenges: used });
         }
 
         update(ref(db, `rooms/${roomCode}`), {
             nomercy_status: 'round',
             roundPlayer: nextId,
-            roundPlayerName: nextName,
+            roundPlayerName: pData.name,
             roundChallenge: rndChall,
             roundVotes: null,
             votesProcessed: null
+        }).then(() => {
+            setTimeout(() => { isTransitioning = false; }, 1000);
         });
     }
 
     function checkVotes(data) {
-        if(data.votesProcessed) return;
+        if(data.votesProcessed || isTransitioning) return;
 
         const votes = data.roundVotes || {};
-        const allPlayers = Object.values(data.players);
-        const totalVoters = allPlayers.length - 1; 
+        const totalVoters = Object.keys(data.players).length - 1;
         
-        const votesCast = Object.keys(votes).length;
-
-        if(votesCast >= totalVoters && totalVoters > 0) {
-            
+        if(Object.keys(votes).length >= totalVoters && totalVoters > 0) {
+            isTransitioning = true;
             update(ref(db, `rooms/${roomCode}`), { votesProcessed: true });
 
-            let fails = 0;
-            Object.values(votes).forEach(v => { if(v==='fail') fails++; });
-            const passes = votesCast - fails;
-
+            let fails = Object.values(votes).filter(v => v === 'fail').length;
             const pid = data.roundPlayer;
             const pData = data.players[pid];
-            const isExtreme = data.roundChallenge.includes("ALVO MARCADO");
-            
-            if(fails > passes) {
+
+            if(fails > (Object.keys(votes).length / 2)) {
                 const rndPunish = punishments[Math.floor(Math.random() * punishments.length)];
-                
-                update(ref(db, `rooms/${roomCode}`), { 
-                    nomercy_status: 'roulette_spin',
-                    currentPunishment: rndPunish 
-                });
+                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'roulette_spin', currentPunishment: rndPunish });
 
                 setTimeout(() => {
-                    const currentStrikes = (pData ? (pData.strikes || 0) : 0) + 1;
-                    
-                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
-                        strikes: currentStrikes,
-                        safeStreak: 0 
-                    });
-                    
+                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: (pData.strikes || 0) + 1, safeStreak: 0 });
                     update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
-                    setTimeout(() => startNewRound(data), 6000);
+                    setTimeout(() => { isTransitioning = false; }, 6000);
                 }, 4000);
-                
             } else {
-                // SE O JOGADOR PASSOU NO DESAFIO EXTREMO, ELE GANHA IMUNIDADE
-                if (isExtreme) {
-                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { immunity: true });
-                }
-
-                if ((pData.strikes || 0) >= 3) {
-                    const currentStreak = (pData.safeStreak || 0) + 1;
-                    
-                    if (currentStreak >= 2) {
-                        update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
-                            strikes: 0, 
-                            safeStreak: 0 
-                        });
+                let updates = {};
+                if(data.roundChallenge.includes("ALVO MARCADO")) updates[`players/${pid}/immunity`] = true;
+                if((pData.strikes || 0) >= 3) {
+                    const newStreak = (pData.safeStreak || 0) + 1;
+                    if(newStreak >= 2) {
+                        updates[`players/${pid}/strikes`] = 0;
+                        updates[`players/${pid}/safeStreak`] = 0;
                     } else {
-                        update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
-                            safeStreak: currentStreak 
-                        });
+                        updates[`players/${pid}/safeStreak`] = newStreak;
                     }
                 }
-
-                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
-                setTimeout(() => startNewRound(data), 2000);
+                updates['nomercy_status'] = 'round_result_safe';
+                update(ref(db, `rooms/${roomCode}`), updates);
+                setTimeout(() => { isTransitioning = false; }, 3000);
             }
         }
     }
     
+    initGameLoop();
     window.castVote = castVote;
-
+    window.useImmunity = useImmunity;
 </script>
 </body>
 </html>
