@@ -53,16 +53,6 @@
         }
         .btn:active { transform: scale(0.96); }
 
-        .btn-immunity {
-            background: var(--neon-yellow);
-            color: black;
-            font-size: 0.9rem;
-            padding: 12px;
-            margin-bottom: 10px;
-            box-shadow: 0 0 15px var(--neon-yellow);
-            display: none; /* Controlado via JS */
-        }
-
         .card {
             background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 30px;
@@ -77,17 +67,52 @@
         .vote-row { display: flex; gap: 15px; width: 100%; margin-top: 20px; }
         .btn-fail { background: rgba(255, 50, 50, 0.15); border: 2px solid var(--neon-red); color: var(--neon-red); transition: 0.2s; }
         .btn-pass { background: rgba(30, 215, 96, 0.15); border: 2px solid var(--neon-green); color: var(--neon-green); transition: 0.2s; }
+        .btn-fail:active, .btn-pass:active { transform: scale(0.95); opacity: 0.8; }
+
+        .pulse-text { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        .roulette-mode { background-color: black !important; }
+        .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99; transition: background 0.1s; }
+        
+        .strike-bg { background-color: var(--neon-red) !important; animation: shake 0.5s; }
+        .safe-bg { background-color: var(--neon-green) !important; color: black; }
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 100% { transform: translate(0, 0) rotate(0); } }
+
+        .punishment-box {
+            background: rgba(0,0,0,0.4);
+            border: 2px dashed white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+            width: 100%;
+        }
 
         .target-badge {
             background: var(--neon-red); color: white;
             font-family: var(--font-display); font-weight: 900;
             padding: 5px 15px; border-radius: 4px;
             text-transform: uppercase; font-size: 0.9rem;
+            letter-spacing: 2px; margin-bottom: 10px;
             display: none; animation: pulse 0.8s infinite;
+            box-shadow: 0 0 15px var(--neon-red);
+        }
+        
+        .streak-info {
+            font-size: 0.8rem; color: var(--neon-yellow);
+            font-family: var(--font-data); margin-bottom: 5px;
+            display: none;
         }
 
-        .target-pulse { animation: targetBg 2s infinite !important; }
-        @keyframes targetBg { 50% { box-shadow: inset 0 0 100px rgba(255, 50, 50, 0.4); } }
+        .target-pulse {
+            animation: targetBg 2s infinite !important;
+        }
+        @keyframes targetBg {
+            0% { box-shadow: inset 0 0 0 black; }
+            50% { box-shadow: inset 0 0 100px rgba(255, 50, 50, 0.4); border: 2px solid var(--neon-red); }
+            100% { box-shadow: inset 0 0 0 black; }
+        }
+
     </style>
 </head>
 <body>
@@ -103,10 +128,10 @@
 
 <div id="screen-game" class="screen">
     <div id="target-badge" class="target-badge">⚠️ ALVO MARCADO ⚠️</div>
-    <div id="streak-info" class="streak-info" style="color: var(--neon-yellow); font-size: 0.8rem; margin-bottom: 5px;"></div>
+    <div id="streak-info" class="streak-info">SOBREVIVEU 1/2 RODADAS</div>
     
     <div style="opacity: 0.6; font-family: var(--font-data); letter-spacing: 2px;">VEZ DE</div>
-    <div id="current-player-name" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px;">...</div>
+    <div id="current-player-name" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; color: white;">...</div>
     
     <div class="strikes-container" id="game-strikes-display">
         <div class="strike-dot" id="s1"></div>
@@ -114,17 +139,14 @@
         <div class="strike-dot" id="s3"></div>
     </div>
     
-    <button id="btn-use-immunity" class="btn btn-immunity" onclick="useImmunity()">
-        <i class="fa-solid fa-shield-halved"></i> USAR IMUNIDADE
-    </button>
-
     <div class="card">
         <h3 style="opacity: 0.5; font-size: 0.9rem; margin-bottom: 15px; color: var(--neon-red);">O DESAFIO</h3>
-        <div id="challenge-text" style="font-size: 1.6rem; font-weight: 700;">...</div>
+        <div id="challenge-text" style="font-size: 1.6rem; font-weight: 700; line-height: 1.2;">...</div>
     </div>
 
-    <div id="controls-area" style="width: 100%;"></div>
-    <p id="wait-msg" style="margin-top:20px; display:none;"></p>
+    <div id="controls-area" style="width: 100%; margin-top: 20px;"></div>
+    
+    <p id="wait-msg" class="pulse-text" style="margin-top:20px; display:none; font-family: var(--font-data); font-size: 0.8rem;"></p>
 </div>
 
 <div id="screen-roulette" class="screen" style="background: black;">
@@ -143,6 +165,7 @@
     <button class="btn" style="background: black; color: white; margin-top: 30px;" onclick="window.location.href='index.html'">VOLTAR AO INÍCIO</button>
 </div>
 
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -160,167 +183,501 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    const punishments = [
+        "O GRUPO TODO BEBE 1 DOSE", "QUEM VOTOU 'NÃO FEZ' BEBE", "O JOGADOR À DIREITA BEBE",
+        "O JOGADOR À ESQUERDA BEBE", "ESCOLHA ALGUÉM PARA BEBER", "ESCOLHA 2 PESSOAS PARA BEBER",
+        "TODOS OS HOMENS BEBEM", "TODAS AS MULHERES BEBEM", "QUEM ESTIVER DE PRETO BEBE",
+        "QUEM TIVER MENOS STRIKES BEBE", "O HOST BEBE", "NINGUÉM BEBE (DESSA VEZ)",
+        "TODOS BEBEM MENOS O ACUSADO", "O ACUSADO BEBE DOBRADO", "QUEM ESTIVER EM PÉ BEBE",
+        "A PESSOA MAIS VELHA BEBE", "A PESSOA MAIS NOVA BEBE", "TROQUE DE LUGAR COM A FRENTE"
+    ];
+
     const challenges = [
-        "Dê um abraço na pessoa à sua direita por 10 segundos.",
-        "Imite um animal escolhido pelo grupo por 30 segundos.",
-        "Elogie três características da pessoa à sua esquerda.",
-        "Tente encostar a língua no nariz.",
-        "Mande um emoji de coração para o terceiro contato do seu WhatsApp.",
-        "Finja ser um comentarista de futebol por 20 segundos.",
-        "Conte qual foi seu primeiro desenho animado favorito.",
-        "Tente lamber o próprio cotovelo.",
-        "Equilibre uma colher no nariz por 10 segundos."
+        "Beba 2 doses e deixe alguém morder seu pescoço.",
+        "Mande um áudio de 15s gemendo para o seu melhor amigo(a).",
+        "Tire a camisa e fique assim por 3 rodadas.",
+        "Deixe o grupo escolher um contato para você mandar: 'Tive um sonho quente com você'.",
+        "Dê um selinho na pessoa que você acha mais atraente na roda.",
+        "Sente no colo da pessoa à sua frente por uma rodada inteira.",
+        "Deixe alguém passar um cubo de gelo em qualquer parte do seu corpo (por dentro da roupa).",
+        "Sussurre algo erótico no ouvido da pessoa à sua direita.",
+        "Mostre a última foto da sua galeria (sem pular).",
+        "Tome um gole de bebida direto do umbigo de alguém.",
+        "Faça uma massagem de 1 minuto nos pés de alguém da roda.",
+        "Lamba o pescoço da pessoa à sua esquerda.",
+        "Deixe alguém da roda ver suas mensagens arquivadas do WhatsApp.",
+        "Beba uma dose sem usar as mãos (alguém deve te dar).",
+        "Ligue para um número aleatório e tente gemer por 5 segundos antes de desligar.",
+        "Deixe alguém morder seu lábio inferior.",
+        "Faça um agachamento com alguém nas costas (ou beba 2 doses).",
+        "Tire uma peça de roupa escolhida pelo grupo.",
+        "Conte qual a sua maior fantasia sexual que nunca realizou.",
+        "Deixe alguém escrever 'PROPRIEDADE DO GRUPO' na sua pele com caneta.",
+        "Beije a orelha da pessoa à sua frente.",
+        "Faça uma 'lap dance' de 20 segundos em quem o grupo escolher.",
+        "Mande um print da sua aba de 'seguindo' do Instagram para o grupo.",
+        "Fique de olhos vendados e adivinhe quem te deu um selinho.",
+        "Deixe alguém chupar seu dedo por 10 segundos.",
+        "Tire os sapatos e as meias e deixe alguém cheirar seus pés.",
+        "Conte quem da roda você pegaria agora.",
+        "Deixe alguém colocar a mão por dentro da sua calça por 10 segundos.",
+        "Faça um brinde descrevendo o que mais te excita em alguém da roda.",
+        "Beba se você já fez sexo em público.",
+        "Mostre o seu saldo bancário para todos.",
+        "Deixe o grupo postar um emoji de 'foguinho' na foto de um ex seu.",
+        "Lamba a bochecha de alguém de forma sensual.",
+        "Faça um strip-tease de 30 segundos com uma música escolhida pelo grupo.",
+        "Deixe alguém morder sua orelha.",
+        "Descreva sua posição favorita usando a pessoa à direita como base (sem encostar).",
+        "Mande 'Quero você agora' para a última pessoa que você curtiu o story.",
+        "Beba 3 doses se você já traiu ou foi traído.",
+        "Deixe alguém dar um tapa na sua bunda.",
+        "Gire a garrafa: quem ela apontar, você deve dar um beijo de língua.",
+        "Fale o nome da pessoa mais chata que você já ficou.",
+        "Deixe alguém lamber seu mamilo (por cima da roupa).",
+        "Conte um segredo que ninguém nesta sala sabe.",
+        "Troque de lugar com alguém e sente no chão até a próxima rodada.",
+        "Dê um beijo no pescoço de todos do sexo oposto.",
+        "Fique sem usar as mãos para nada por 2 rodadas.",
+        "Mostre sua última pesquisa no navegador (sem limpar).",
+        "Deixe alguém fazer cócegas em você por 30 segundos sem você rir.",
+        "Simule um orgasmo em voz alta por 10 segundos.",
+        "Deixe o grupo escolher uma peça de roupa sua para você dar para alguém usar.",
+        "Revele qual pessoa da roda tem o melhor corpo.",
+        "Tire a roupa íntima sem remover a calça (ou beba 5 doses).",
+        "Morda o mamilo de alguém por cima da camisa.",
+        "Deixe alguém lamber sua orelha por 10 segundos.",
+        "Sente no colo de alguém e rebole por 30 segundos.",
+        "Mostre sua conversa mais picante do WhatsApp.",
+        "Dê um tapa forte na bunda da pessoa à esquerda.",
+        "Faça um body shot no peito de alguém.",
+        "Simule sexo oral em uma fruta/garrafa.",
+        "Deixe alguém colocar gelo na sua cueca/calcinha.",
+        "Fique de quatro e deixe alguém te dar um tapa.",
+        "Tire 2 peças de roupa escolhidas pelo grupo.",
+        "Revele sua maior tara secreta.",
+        "Lamba o dedo de alguém da roda.",
+        "Beije o umbigo da pessoa à direita.",
+        "Faça uma massagem sensual nas coxas de alguém.",
+        "Deixe alguém morder seu ombro.",
+        "Fale algo que você faria com a pessoa à frente entre quatro paredes.",
+        "Mande um emoji sugestivo para o seu penúltimo contato.",
+        "Beba se você já teve um sonho erótico com alguém da roda.",
+        "Deixe alguém ver suas fotos ocultas da galeria.",
+        "Faça o som mais alto de prazer que conseguir.",
+        "Deixe alguém te vendar e te tocar onde quiser por 20s.",
+        "Tire a camisa e deixe alguém lamber seu abdômen.",
+        "Fale qual a parte do corpo que você mais gosta no sexo oposto.",
+        "Lamba o pescoço da pessoa que está à sua frente.",
+        "Deixe alguém morder sua coxa.",
+        "Faça 10 flexões e a cada uma gema o nome de alguém da roda.",
+        "Coloque sua mão na virilha de alguém por 15 segundos.",
+        "Tire a calça e fique de roupa íntima por 2 rodadas.",
+        "Beije a palma da mão de todos da roda de forma sensual.",
+        "Deixe alguém morder seu lábio superior até ficar marcado.",
+        "Mande uma mensagem para o seu ex pedindo 'só mais uma vez'.",
+        "Fale quem você acha que transa melhor na roda.",
+        "Deixe alguém lamber um pouco de bebida do seu pescoço.",
+        "Revele se você já fez sexo hoje.",
+        "Fique sentado no colo da pessoa à direita até a próxima vez.",
+        "Deixe alguém enfiar a mão por baixo da sua camisa e te arranhar levemente.",
+        "Faça cara de quem está tendo um orgasmo e sustente por 20s.",
+        "Beba se você tem algum brinquedo erótico.",
+        "Conte qual o lugar mais estranho onde já transou.",
+        "Deixe alguém lamber sua barriga.",
+        "Morda o queixo de alguém.",
+        "Fale o que você mais gosta de ouvir na hora H.",
+        "Deixe alguém te dar um chupão no braço.",
+        "Tire uma foto sensual e mostre para a roda.",
+        "Deixe o grupo decidir quem você deve beijar por 5 segundos.",
+        "Faça uma lap dance em uma cadeira como se fosse uma pessoa.",
+        "Beba 2 doses se você já fez um trio.",
+        "Mostre sua marca de bronzeado ou cicatriz em lugar escondido.",
+        "Deixe alguém cheirar seu pescoço bem de perto.",
+        "Conte um fetiche que você tem vergonha de admitir.",
+        "Beije a parte interna da coxa de alguém.",
+        "Lamba a ponta do nariz da pessoa à esquerda.",
+        "Fale qual posição você quer testar hoje.",
+        "Deixe o grupo ver seu histórico de chamadas.",
+        "Fique de costas e deixe alguém te dar um 'atracão'.",
+        "Beba se você já transou com alguém dessa roda.",
+        "Revele a cor da sua roupa íntima agora.",
+        "Deixe alguém dar um beijo no seu peito (homens) ou pescoço (mulheres).",
+        "Fale para alguém da roda: 'Eu quero muito te pegar'.",
+        "Deixe alguém morder sua bochecha.",
+        "Faça 5 minutos de 'conchinha' com alguém no chão.",
+        "Deixe o grupo ver quem você bloqueou recentemente no Insta.",
+        "Beba uma dose de bebida entre os seios ou peitoral de alguém.",
+        "Conte qual o maior tempo que já ficou sem transar.",
+        "Deixe alguém puxar seu cabelo com força.",
+        "Fale qual a primeira coisa que você olha em alguém.",
+        "Morda levemente o nariz da pessoa à frente.",
+        "Dê um beijo de 10 segundos na nuca de alguém.",
+        "Deixe alguém te dar um tapa na cara (leve).",
+        "Revele se você prefere luz acesa ou apagada.",
+        "Faça uma massagem nas mãos de alguém usando a boca.",
+        "Deixe o grupo escolher um 'castigo físico' leve para você.",
+        "Beba se você já mandou nude para a pessoa errada.",
+        "Fique sem piscar enquanto alguém te provoca por 30s.",
+        "Lamba o lábio de alguém sem usar a língua.",
+        "Deixe alguém soprar ar quente no seu ouvido.",
+        "Conte uma história sexual que deu errado.",
+        "Beije a testa de todos, mas o último deve ser na boca.",
+        "Deixe o grupo ver suas conversas com o 'contatinho'.",
+        "Faça movimentos pélvicos na frente de alguém.",
+        "Deixe alguém lamber seu pulso.",
+        "Beba 3 doses se você já gravou um vídeo transando.",
+        "Mostre sua tatuagem ou marca mais escondida.",
+        "Deixe alguém morder sua mão.",
+        "Conte qual a pessoa mais velha que você já pegou.",
+        "Faça um brinde para a pessoa que você quer levar para a cama.",
+        "Lamba o pescoço de alguém e dê uma mordidinha no final.",
+        "Deixe o grupo te carregar no colo por 30 segundos.",
+        "Fale qual o perfume que mais te atrai.",
+        "Dê um selinho em quem está à sua esquerda e direita.",
+        "Deixe alguém lamber uma gota de bebida do seu umbigo.",
+        "Revele se você já fingiu um orgasmo.",
+        "Morda o lóbulo da orelha de alguém.",
+        "Fique de roupa íntima por 1 rodada inteira.",
+        "Mande um áudio para um amigo dizendo que está carente.",
+        "Deixe alguém morder seu dedo mindinho.",
+        "Conte com quantas pessoas você já transou.",
+        "Deixe o grupo escolher quem deve te dar um tapa na bunda.",
+        "Beije o pescoço da pessoa que você menos conhece na roda."
     ];
 
     const extremeChallenges = [
-        "ALVO MARCADO: Beba duas doses de uma vez.",
-        "ALVO MARCADO: Ligue para um contato aleatório e cante 'Parabéns pra Você'.",
-        "ALVO MARCADO: Deixe o grupo ver seu histórico de pesquisa do YouTube.",
-        "ALVO MARCADO: Dance a 'Macarena' completa sem música.",
-        "ALVO MARCADO: Faça uma declaração de amor para um objeto da sala."
+        "ALVO MARCADO: Tire 2 peças de roupa ou vire 4 doses de uma vez.",
+        "ALVO MARCADO: Deixe alguém da roda morder seu mamilo diretamente na pele.",
+        "ALVO MARCADO: Mande um nude (sem rosto) para o seu próprio histórico ou beba meia garrafa.",
+        "ALVO MARCADO: Beije a pessoa à sua esquerda e à sua direita com língua.",
+        "ALVO MARCADO: Fique apenas de roupa íntima até o final do jogo.",
+        "ALVO MARCADO: Deixe o grupo enviar qualquer mensagem do seu celular para seu chefe ou pai/mãe.",
+        "ALVO MARCADO: Faça sexo oral simulado em uma garrafa por 1 minuto enquanto o grupo grava.",
+        "ALVO MARCADO: Receba 3 tapas fortes na bunda de cada pessoa da roda.",
+        "ALVO MARCADO: Deixe alguém lamber qualquer parte do seu corpo que o grupo escolher.",
+        "ALVO MARCADO: Ligue para um ex e diga que ainda o ama no viva-voz.",
+        "ALVO MARCADO: Deixe o grupo ver seu histórico de fotos apagadas na galeria.",
+        "ALVO MARCADO: Tome um banho de roupa e permaneça assim o resto do jogo.",
+        "ALVO MARCADO: Deixe alguém escrever 'EU SOU UM ALVO' na sua testa com caneta permanente.",
+        "ALVO MARCADO: Sente no colo de alguém e faça movimentos de penetração por 30s.",
+        "ALVO MARCADO: Escolha alguém para te dar um chupão no pescoço que fique marcado agora."
     ];
 
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get('room');
     const myId = localStorage.getItem('wrapped_uid');
+    
+    let myName = "Player";
+    let amIHost = false;
+    let rouletteInterval = null;
+
+    if(!roomCode || !myId) {
+        alert("Erro: Entre pelo Wrapped.");
+        window.location.href = 'index.html';
+    }
 
     function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
+        document.querySelectorAll('.screen').forEach(s => {
+            s.classList.remove('active');
+            s.style.display = 'none';
+        });
         const target = document.getElementById(id);
-        if(target) { target.style.display = 'flex'; setTimeout(() => target.classList.add('active'), 10); }
+        if(target) {
+            target.style.display = 'flex';
+            setTimeout(() => target.classList.add('active'), 10);
+        }
+        document.body.className = '';
+        document.body.classList.remove('target-pulse');
+        document.getElementById('flash-layer').style.background = 'transparent';
+        if(rouletteInterval) clearInterval(rouletteInterval);
     }
 
-    // Lógica de Imunidade
-    window.useImmunity = function() {
-        update(ref(db, `rooms/${roomCode}/players/${myId}`), { hasImmunity: false });
-        update(ref(db, `rooms/${roomCode}`), { immunityUsed: true });
-    }
+    initGameLoop();
+
+    get(ref(db, `rooms/${roomCode}/players/${myId}`)).then(snap => {
+        if(snap.exists()) {
+            myName = snap.val().name;
+            update(ref(db, `rooms/${roomCode}/players/${myId}`), { 
+                strikes: snap.val().strikes || 0 
+            });
+        }
+    });
 
     function initGameLoop() {
         const roomRef = ref(db, `rooms/${roomCode}`);
+        
         onValue(roomRef, (snap) => {
             const data = snap.val();
-            if(!data) return;
+            if(!data) return; 
 
-            if(data.immunityUsed) {
-                if(amIHost) startNewRound(data);
-                return;
+            document.getElementById('loading').style.display = 'none';
+            if(data.host === myId) amIHost = true;
+            
+            if(data.nomercy_status === 'game_over') {
+                showScreen('screen-winner');
+                document.getElementById('winner-name').innerText = data.winnerName;
             }
-
-            if(data.nomercy_status === 'round') {
+            else if(data.nomercy_status === 'round') {
                 showScreen('screen-game');
                 renderGameRound(data);
                 if(amIHost) checkVotes(data);
-            } else if (data.nomercy_status === 'round_result_fail') {
+            }
+            else if(data.nomercy_status === 'roulette_spin') {
+                showScreen('screen-roulette');
+                document.body.classList.add('roulette-mode');
+                
+                if(rouletteInterval) clearInterval(rouletteInterval);
+                rouletteInterval = setInterval(() => {
+                    const flash = document.getElementById('flash-layer');
+                    if(Math.random() > 0.7) flash.style.background = 'rgba(255, 0, 0, 0.4)';
+                    else flash.style.background = 'transparent';
+                }, 100);
+            }
+            else if(data.nomercy_status === 'round_result_fail') {
                 showScreen('screen-result');
-                renderResult(data, false);
-                if(amIHost) setTimeout(() => startNewRound(data), 5000);
-            } else if (data.nomercy_status === 'round_result_safe') {
+                document.body.classList.add('strike-bg');
+                
+                const pid = data.roundPlayer;
+                const pData = data.players[pid];
+                const isVictim = (pid === myId);
+                const strikes = pData ? pData.strikes : 0;
+                const extraPunishment = data.currentPunishment || "SORTE";
+
+                let titleText = "STRIKE!";
+                if(strikes >= 3) titleText = "ALVO MARCADO!";
+
+                document.getElementById('result-content').innerHTML = `
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size:5rem; margin-bottom:20px;"></i>
+                    <h1 style="font-size:3.5rem;">${titleText}</h1>
+                    <p style="font-size:1.5rem; font-weight:bold;">${isVictim ? "VOCÊ FALHOU" : data.roundPlayerName + " FALHOU"}</p>
+                    <div style="background:black; padding:10px 20px; border-radius:20px; margin-top:10px; display:inline-block;">
+                        ${strikes} STRIKES
+                    </div>
+                    
+                    <div class="punishment-box">
+                        <h3 style="color:white; margin-bottom:10px;">PUNIÇÃO EXTRA</h3>
+                        <p style="font-size:1.2rem; font-weight:bold; color:var(--neon-yellow); text-transform:uppercase;">${extraPunishment}</p>
+                    </div>
+                `;
+            }
+            else if(data.nomercy_status === 'round_result_safe') {
                 showScreen('screen-result');
-                renderResult(data, true);
-                if(amIHost) setTimeout(() => startNewRound(data), 3000);
-            } else if (amIHost) {
-                startNewRound(data);
+                document.body.classList.add('safe-bg');
+                
+                const pid = data.roundPlayer;
+                const pData = data.players[pid];
+                const streak = pData ? (pData.safeStreak || 0) : 0;
+                let subtext = "O DESAFIO FOI CUMPRIDO";
+                
+                if ((pData.strikes || 0) >= 3 && streak > 0) {
+                    subtext = `SOBREVIVEU ${streak}/2 RODADAS NA ZONA DE PERIGO`;
+                }
+
+                document.getElementById('result-content').innerHTML = `
+                    <i class="fa-solid fa-check-circle" style="font-size:5rem; margin-bottom:20px;"></i>
+                    <h1 style="font-size:4rem; color:black;">SAFE</h1>
+                    <p style="color:black; font-weight:bold;">${subtext}</p>
+                `;
+            }
+            else {
+                if(amIHost) {
+                    if(data.players && Object.keys(data.players).length > 0) {
+                        startNewRound(data); 
+                    }
+                } 
+                else document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
             }
         });
     }
 
     function renderGameRound(data) {
-        const pid = data.roundPlayer;
-        const pData = data.players[pid];
-        const isMyTurn = (pid === myId);
-        
-        document.getElementById('current-player-name').innerText = pData.name;
+        const currentPlayerId = data.roundPlayer;
+        const isMyTurn = (currentPlayerId === myId);
+        const pData = data.players[currentPlayerId];
+        const playerStrikes = pData ? (pData.strikes || 0) : 0;
+        const playerStreak = pData ? (pData.safeStreak || 0) : 0;
+
+        document.getElementById('current-player-name').innerText = data.roundPlayerName;
         document.getElementById('challenge-text').innerText = data.roundChallenge;
         
-        // Exibe botão de imunidade apenas se for minha vez, eu tiver imunidade e for desafio pesado (Alvo)
-        const immunityBtn = document.getElementById('btn-use-immunity');
-        if(isMyTurn && pData.hasImmunity && data.isExtreme) {
-            immunityBtn.style.display = 'block';
+        document.getElementById('s1').className = playerStrikes >= 1 ? 'strike-dot active' : 'strike-dot';
+        document.getElementById('s2').className = playerStrikes >= 2 ? 'strike-dot active' : 'strike-dot';
+        document.getElementById('s3').className = playerStrikes >= 3 ? 'strike-dot active' : 'strike-dot';
+
+        const targetBadge = document.getElementById('target-badge');
+        const streakInfo = document.getElementById('streak-info');
+        
+        if (playerStrikes >= 3) {
+            targetBadge.style.display = 'inline-block';
+            document.body.classList.add('target-pulse');
+            
+            if (playerStreak > 0) {
+                streakInfo.innerText = `SOBREVIVEU ${playerStreak}/2 RODADAS`;
+                streakInfo.style.display = 'block';
+            } else {
+                streakInfo.style.display = 'none';
+            }
         } else {
-            immunityBtn.style.display = 'none';
+            targetBadge.style.display = 'none';
+            streakInfo.style.display = 'none';
+            document.body.classList.remove('target-pulse');
         }
 
         const controls = document.getElementById('controls-area');
+        const waitMsg = document.getElementById('wait-msg');
+        waitMsg.style.display = 'none';
+
         if(isMyTurn) {
-            controls.innerHTML = `<p class="pulse-text">O grupo está votando...</p>`;
+            controls.innerHTML = `
+                <div style="width:100%;">
+                    <p class="pulse-text" style="color: var(--neon-green);">Cumpra o desafio!</p>
+                    <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 10px;">O grupo está votando...</p>
+                </div>
+            `;
         } else {
-            const voted = data.roundVotes && data.roundVotes[myId];
-            if(voted) {
-                controls.innerHTML = `<p>Voto: ${voted === 'pass' ? 'FEZ' : 'NÃO FEZ'}</p>`;
+            const myVote = data.roundVotes ? data.roundVotes[myId] : null;
+            
+            if(myVote) {
+                controls.innerHTML = "";
+                waitMsg.innerText = `Voto registrado: ${myVote === 'pass' ? 'FEZ 👍' : 'NÃO FEZ 👎'}`;
+                waitMsg.style.display = 'block';
             } else {
                 controls.innerHTML = `
-                    <div class="vote-row">
-                        <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ 👎</button>
-                        <button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button>
+                    <div style="width:100%;">
+                        <p>O desafio foi cumprido?</p>
+                        <div class="vote-row">
+                            <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ 👎</button>
+                            <button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button>
+                        </div>
                     </div>
                 `;
             }
         }
     }
 
+    window.castVote = function(vote) {
+        set(ref(db, `rooms/${roomCode}/roundVotes/${myId}`), vote);
+    }
+
     function startNewRound(roomData) {
         const players = roomData.players;
-        const ids = Object.keys(players);
-        const lastIdx = ids.indexOf(roomData.roundPlayer);
-        const nextId = ids[(lastIdx + 1) % ids.length];
+        const lastPlayerId = roomData.roundPlayer;
+        const activeIds = Object.keys(players);
+
+        if(activeIds.length === 0) return;
+        
+        activeIds.sort();
+        
+        let nextIndex = 0;
+        if(lastPlayerId) {
+            const currIdx = activeIds.indexOf(lastPlayerId);
+            if(currIdx !== -1) {
+                nextIndex = (currIdx + 1) % activeIds.length;
+            }
+        }
+        
+        const nextId = activeIds[nextIndex];
         const pData = players[nextId];
+        const nextName = pData.name;
 
-        let challenge = "";
-        let isExtreme = false;
-
-        if((pData.strikes || 0) >= 3) {
-            challenge = extremeChallenges[Math.floor(Math.random() * extremeChallenges.length)];
-            isExtreme = true;
+        let rndChall = "";
+        
+        if ((pData.strikes || 0) >= 3) {
+            rndChall = extremeChallenges[Math.floor(Math.random() * extremeChallenges.length)];
         } else {
-            challenge = challenges[Math.floor(Math.random() * challenges.length)];
+            let usedIndices = roomData.usedChallenges || []; 
+            let availableIndices = [];
+            for(let i=0; i<challenges.length; i++) {
+                if(!usedIndices.includes(i)) availableIndices.push(i);
+            }
+
+            if(availableIndices.length === 0) {
+                availableIndices = challenges.map((_, i) => i);
+                usedIndices = [];
+            }
+
+            const randomRefIndex = Math.floor(Math.random() * availableIndices.length);
+            const selectedChallengeIndex = availableIndices[randomRefIndex];
+            rndChall = challenges[selectedChallengeIndex];
+            usedIndices.push(selectedChallengeIndex);
+            
+            update(ref(db, `rooms/${roomCode}`), { usedChallenges: usedIndices });
         }
 
         update(ref(db, `rooms/${roomCode}`), {
             nomercy_status: 'round',
             roundPlayer: nextId,
-            roundChallenge: challenge,
-            isExtreme: isExtreme,
+            roundPlayerName: nextName,
+            roundChallenge: rndChall,
             roundVotes: null,
-            votesProcessed: false,
-            immunityUsed: false
+            votesProcessed: null
         });
     }
 
     function checkVotes(data) {
         if(data.votesProcessed) return;
-        const votes = data.roundVotes || {};
-        const votersCount = Object.keys(data.players).length - 1;
 
-        if(Object.keys(votes).length >= votersCount && votersCount > 0) {
-            update(ref(db, `rooms/${roomCode}`), { votesProcessed: true });
+        const votes = data.roundVotes || {};
+        const allPlayers = Object.values(data.players);
+        const totalVoters = allPlayers.length - 1; 
+        
+        const votesCast = Object.keys(votes).length;
+
+        if(votesCast >= totalVoters && totalVoters > 0) {
             
-            let pass = 0; let fail = 0;
-            Object.values(votes).forEach(v => v === 'pass' ? pass++ : fail++);
+            update(ref(db, `rooms/${roomCode}`), { votesProcessed: true });
+
+            let fails = 0;
+            Object.values(votes).forEach(v => { if(v==='fail') fails++; });
+            const passes = votesCast - fails;
 
             const pid = data.roundPlayer;
             const pData = data.players[pid];
+            
+            if(fails > passes) {
+                const rndPunish = punishments[Math.floor(Math.random() * punishments.length)];
+                
+                update(ref(db, `rooms/${roomCode}`), { 
+                    nomercy_status: 'roulette_spin',
+                    currentPunishment: rndPunish 
+                });
 
-            if(pass > fail) {
-                // Se venceu um desafio extremo, ganha imunidade
-                const updates = { 
-                    nomercy_status: 'round_result_safe'
-                };
-                if(data.isExtreme) {
-                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { hasImmunity: true });
-                }
-                update(ref(db, `rooms/${roomCode}`), updates);
+                setTimeout(() => {
+                    const currentStrikes = (pData ? (pData.strikes || 0) : 0) + 1;
+                    
+                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
+                        strikes: currentStrikes,
+                        safeStreak: 0 
+                    });
+                    
+                    update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
+                    setTimeout(() => startNewRound(data), 6000);
+                }, 4000);
+                
             } else {
-                update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: (pData.strikes || 0) + 1 });
-                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
+                if ((pData.strikes || 0) >= 3) {
+                    const currentStreak = (pData.safeStreak || 0) + 1;
+                    
+                    if (currentStreak >= 2) {
+                        update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
+                            strikes: 0, 
+                            safeStreak: 0 
+                        });
+                    } else {
+                        update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
+                            safeStreak: currentStreak 
+                        });
+                    }
+                }
+
+                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
+                setTimeout(() => startNewRound(data), 2000);
             }
         }
     }
-
-    window.castVote = function(v) { set(ref(db, `rooms/${roomCode}/roundVotes/${myId}`), v); }
-
-    let amIHost = false;
-    get(ref(db, `rooms/${roomCode}/host`)).then(h => { if(h.val() === myId) amIHost = true; initGameLoop(); });
+    
+    window.castVote = castVote;
 
 </script>
 </body>
