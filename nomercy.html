@@ -54,11 +54,13 @@
         .btn:active { transform: scale(0.96); }
 
         .btn-immunity {
-            background: rgba(242, 226, 5, 0.1);
-            border: 2px solid var(--neon-yellow);
-            color: var(--neon-yellow);
-            margin-bottom: 20px;
-            animation: pulse 1s infinite;
+            background: var(--neon-yellow);
+            color: black;
+            font-size: 0.9rem;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 0 15px var(--neon-yellow);
+            display: none; /* Controlado via JS */
         }
 
         .card {
@@ -76,30 +78,16 @@
         .btn-fail { background: rgba(255, 50, 50, 0.15); border: 2px solid var(--neon-red); color: var(--neon-red); transition: 0.2s; }
         .btn-pass { background: rgba(30, 215, 96, 0.15); border: 2px solid var(--neon-green); color: var(--neon-green); transition: 0.2s; }
 
-        .pulse-text { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-
-        .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99; transition: background 0.1s; }
-        
-        .strike-bg { background-color: var(--neon-red) !important; animation: shake 0.5s; }
-        .safe-bg { background-color: var(--neon-green) !important; color: black; }
-        
-        .punishment-box {
-            background: rgba(0,0,0,0.4); border: 2px dashed white; padding: 20px; border-radius: 15px; margin-top: 30px; width: 100%;
-        }
-
         .target-badge {
-            background: var(--neon-red); color: white; font-family: var(--font-display); font-weight: 900;
-            padding: 5px 15px; border-radius: 4px; text-transform: uppercase; font-size: 0.9rem;
-            letter-spacing: 2px; margin-bottom: 10px; display: none; animation: pulse 0.8s infinite;
+            background: var(--neon-red); color: white;
+            font-family: var(--font-display); font-weight: 900;
+            padding: 5px 15px; border-radius: 4px;
+            text-transform: uppercase; font-size: 0.9rem;
+            display: none; animation: pulse 0.8s infinite;
         }
 
         .target-pulse { animation: targetBg 2s infinite !important; }
-        @keyframes targetBg {
-            0% { box-shadow: inset 0 0 0 black; }
-            50% { box-shadow: inset 0 0 100px rgba(255, 50, 50, 0.4); border: 2px solid var(--neon-red); }
-            100% { box-shadow: inset 0 0 0 black; }
-        }
+        @keyframes targetBg { 50% { box-shadow: inset 0 0 100px rgba(255, 50, 50, 0.4); } }
     </style>
 </head>
 <body>
@@ -115,10 +103,10 @@
 
 <div id="screen-game" class="screen">
     <div id="target-badge" class="target-badge">⚠️ ALVO MARCADO ⚠️</div>
-    <div id="streak-info" class="streak-info" style="font-size: 0.8rem; color: var(--neon-yellow); font-family: var(--font-data); margin-bottom: 5px; display: none;"></div>
+    <div id="streak-info" class="streak-info" style="color: var(--neon-yellow); font-size: 0.8rem; margin-bottom: 5px;"></div>
     
     <div style="opacity: 0.6; font-family: var(--font-data); letter-spacing: 2px;">VEZ DE</div>
-    <div id="current-player-name" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; color: white;">...</div>
+    <div id="current-player-name" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px;">...</div>
     
     <div class="strikes-container" id="game-strikes-display">
         <div class="strike-dot" id="s1"></div>
@@ -126,13 +114,17 @@
         <div class="strike-dot" id="s3"></div>
     </div>
     
+    <button id="btn-use-immunity" class="btn btn-immunity" onclick="useImmunity()">
+        <i class="fa-solid fa-shield-halved"></i> USAR IMUNIDADE
+    </button>
+
     <div class="card">
         <h3 style="opacity: 0.5; font-size: 0.9rem; margin-bottom: 15px; color: var(--neon-red);">O DESAFIO</h3>
-        <div id="challenge-text" style="font-size: 1.6rem; font-weight: 700; line-height: 1.2;">...</div>
+        <div id="challenge-text" style="font-size: 1.6rem; font-weight: 700;">...</div>
     </div>
 
-    <div id="controls-area" style="width: 100%; margin-top: 20px;"></div>
-    <p id="wait-msg" class="pulse-text" style="margin-top:20px; display:none; font-family: var(--font-data); font-size: 0.8rem;"></p>
+    <div id="controls-area" style="width: 100%;"></div>
+    <p id="wait-msg" style="margin-top:20px; display:none;"></p>
 </div>
 
 <div id="screen-roulette" class="screen" style="background: black;">
@@ -168,34 +160,22 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const punishments = [
-        "O GRUPO TODO BEBE 1 DOSE", "QUEM VOTOU 'NÃO FEZ' BEBE", "O JOGADOR À DIREITA BEBE",
-        "O JOGADOR À ESQUERDA BEBE", "ESCOLHA ALGUÉM PARA BEBER", "ESCOLHA 2 PESSOAS PARA BEBER",
-        "TODOS OS HOMENS BEBEM", "TODAS AS MULHERES BEBEM", "QUEM ESTIVER DE PRETO BEBE",
-        "QUEM TIVER MENOS STRIKES BEBE", "O HOST BEBE", "NINGUÉM BEBE (DESSA VEZ)",
-        "TODOS BEBEM MENOS O ACUSADO", "O ACUSADO BEBE DOBRADO", "QUEM ESTIVER EM PÉ BEBE"
-    ];
-
     const challenges = [
-        "Dê um abraço na pessoa à sua direita por 10 segundos.", "Imite um animal escolhido pelo grupo por 30 segundos.",
-        "Faça uma rima com o nome de todos na roda.", "Conte uma piada e se ninguém rir, beba uma dose.",
-        "Troque de lugar com a pessoa à sua frente.", "Elogie três características da pessoa à sua esquerda.",
-        "Mande um emoji de coração para o terceiro contato do seu WhatsApp.", "Tente equilibrar uma colher no nariz por 10 segundos.",
-        "Imite o sotaque de outra região por duas rodadas.", "Faça um brinde criativo para o grupo.",
-        "Cante o refrão de uma música de ninar.", "Fale 'O rato roeu a roupa do rei de Roma' três vezes rápido.",
-        "Dance uma música sem som por 30 segundos.", "Elogie o estilo da pessoa que está à sua frente.",
-        "Gire 5 vezes e tente andar em linha reta.", "Tente assobiar uma música famosa.",
-        "Mostre o seu último print da tela do celular.", "Faça um elogio para a pessoa que organizou o jogo."
+        "Dê um abraço na pessoa à sua direita por 10 segundos.",
+        "Imite um animal escolhido pelo grupo por 30 segundos.",
+        "Elogie três características da pessoa à sua esquerda.",
+        "Tente encostar a língua no nariz.",
+        "Mande um emoji de coração para o terceiro contato do seu WhatsApp.",
+        "Finja ser um comentarista de futebol por 20 segundos.",
+        "Conte qual foi seu primeiro desenho animado favorito.",
+        "Tente lamber o próprio cotovelo.",
+        "Equilibre uma colher no nariz por 10 segundos."
     ];
 
     const extremeChallenges = [
         "ALVO MARCADO: Beba duas doses de uma vez.",
         "ALVO MARCADO: Ligue para um contato aleatório e cante 'Parabéns pra Você'.",
         "ALVO MARCADO: Deixe o grupo ver seu histórico de pesquisa do YouTube.",
-        "ALVO MARCADO: Fique em silêncio absoluto por 3 rodadas.",
-        "ALVO MARCADO: Deixe alguém do grupo enviar um emoji aleatório para seu último contato.",
-        "ALVO MARCADO: Faça 20 abdominais agora.",
-        "ALVO MARCADO: Conte um segredo de infância que você nunca contou.",
         "ALVO MARCADO: Dance a 'Macarena' completa sem música.",
         "ALVO MARCADO: Faça uma declaração de amor para um objeto da sala."
     ];
@@ -203,115 +183,145 @@
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get('room');
     const myId = localStorage.getItem('wrapped_uid');
-    
-    let amIHost = false;
-    let rouletteInterval = null;
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
         const target = document.getElementById(id);
         if(target) { target.style.display = 'flex'; setTimeout(() => target.classList.add('active'), 10); }
-        document.body.className = ''; document.body.classList.remove('target-pulse');
-        document.getElementById('flash-layer').style.background = 'transparent';
-        if(rouletteInterval) clearInterval(rouletteInterval);
     }
 
-    initGameLoop();
+    // Lógica de Imunidade
+    window.useImmunity = function() {
+        update(ref(db, `rooms/${roomCode}/players/${myId}`), { hasImmunity: false });
+        update(ref(db, `rooms/${roomCode}`), { immunityUsed: true });
+    }
 
     function initGameLoop() {
-        onValue(ref(db, `rooms/${roomCode}`), (snap) => {
-            const data = snap.val(); if(!data) return;
-            document.getElementById('loading').style.display = 'none';
-            if(data.host === myId) amIHost = true;
-            
-            if(data.nomercy_status === 'game_over') { showScreen('screen-winner'); document.getElementById('winner-name').innerText = data.winnerName; }
-            else if(data.nomercy_status === 'round') { showScreen('screen-game'); renderGameRound(data); if(amIHost) checkVotes(data); }
-            else if(data.nomercy_status === 'roulette_spin') { showScreen('screen-roulette'); document.body.classList.add('roulette-mode'); }
-            else if(data.nomercy_status === 'round_result_fail') { showScreen('screen-result'); document.body.classList.add('strike-bg'); renderResult(data, 'fail'); }
-            else if(data.nomercy_status === 'round_result_safe') { showScreen('screen-result'); document.body.classList.add('safe-bg'); renderResult(data, 'safe'); }
-            else { if(amIHost) startNewRound(data); }
+        const roomRef = ref(db, `rooms/${roomCode}`);
+        onValue(roomRef, (snap) => {
+            const data = snap.val();
+            if(!data) return;
+
+            if(data.immunityUsed) {
+                if(amIHost) startNewRound(data);
+                return;
+            }
+
+            if(data.nomercy_status === 'round') {
+                showScreen('screen-game');
+                renderGameRound(data);
+                if(amIHost) checkVotes(data);
+            } else if (data.nomercy_status === 'round_result_fail') {
+                showScreen('screen-result');
+                renderResult(data, false);
+                if(amIHost) setTimeout(() => startNewRound(data), 5000);
+            } else if (data.nomercy_status === 'round_result_safe') {
+                showScreen('screen-result');
+                renderResult(data, true);
+                if(amIHost) setTimeout(() => startNewRound(data), 3000);
+            } else if (amIHost) {
+                startNewRound(data);
+            }
         });
     }
 
     function renderGameRound(data) {
-        const pid = data.roundPlayer; const pData = data.players[pid]; const isMyTurn = (pid === myId);
-        document.getElementById('current-player-name').innerText = data.roundPlayerName;
+        const pid = data.roundPlayer;
+        const pData = data.players[pid];
+        const isMyTurn = (pid === myId);
+        
+        document.getElementById('current-player-name').innerText = pData.name;
         document.getElementById('challenge-text').innerText = data.roundChallenge;
         
-        const strikes = pData.strikes || 0;
-        for(let i=1; i<=3; i++) document.getElementById('s'+i).className = strikes >= i ? 'strike-dot active' : 'strike-dot';
-
-        document.getElementById('target-badge').style.display = strikes >= 3 ? 'inline-block' : 'none';
-        if(strikes >= 3) document.body.classList.add('target-pulse');
+        // Exibe botão de imunidade apenas se for minha vez, eu tiver imunidade e for desafio pesado (Alvo)
+        const immunityBtn = document.getElementById('btn-use-immunity');
+        if(isMyTurn && pData.hasImmunity && data.isExtreme) {
+            immunityBtn.style.display = 'block';
+        } else {
+            immunityBtn.style.display = 'none';
+        }
 
         const controls = document.getElementById('controls-area');
-        const isExtreme = data.roundChallenge.startsWith("ALVO MARCADO");
-
         if(isMyTurn) {
-            let immunityHtml = (pData.hasImmunity && isExtreme) ? `<button class="btn btn-immunity" onclick="useImmunity()">✨ USAR IMUNIDADE</button>` : '';
-            controls.innerHTML = `${immunityHtml}<p class="pulse-text">Cumpra o desafio!</p>`;
+            controls.innerHTML = `<p class="pulse-text">O grupo está votando...</p>`;
         } else {
-            const myVote = data.roundVotes ? data.roundVotes[myId] : null;
-            controls.innerHTML = myVote ? `<p>Voto: ${myVote === 'pass' ? 'FEZ' : 'NÃO'}</p>` : 
-            `<div class="vote-row"><button class="btn btn-fail" onclick="castVote('fail')">NÃO 👍</button><button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button></div>`;
+            const voted = data.roundVotes && data.roundVotes[myId];
+            if(voted) {
+                controls.innerHTML = `<p>Voto: ${voted === 'pass' ? 'FEZ' : 'NÃO FEZ'}</p>`;
+            } else {
+                controls.innerHTML = `
+                    <div class="vote-row">
+                        <button class="btn btn-fail" onclick="castVote('fail')">NÃO FEZ 👎</button>
+                        <button class="btn btn-pass" onclick="castVote('pass')">FEZ 👍</button>
+                    </div>
+                `;
+            }
         }
     }
 
-    function renderResult(data, type) {
-        const pid = data.roundPlayer; const pData = data.players[pid];
-        let content = type === 'fail' ? `<h1>STRIKE!</h1><p>${data.roundPlayerName} FALHOU</p><div class="punishment-box"><h3>PUNIÇÃO</h3><p>${data.currentPunishment}</p></div>` :
-        `<h1>SAFE</h1><p>DESAFIO CUMPRIDO</p>${data.gainedImmunity ? '<p style="color:var(--neon-yellow)">✨ GANHOU IMUNIDADE ✨</p>' : ''}`;
-        document.getElementById('result-content').innerHTML = content;
-    }
-
-    window.useImmunity = function() {
-        update(ref(db, `rooms/${roomCode}/players/${myId}`), { hasImmunity: false });
-        update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe', gainedImmunity: false });
-        setTimeout(() => startNewRound({}), 2000);
-    };
-
-    window.castVote = (v) => set(ref(db, `rooms/${roomCode}/roundVotes/${myId}`), v);
-
     function startNewRound(roomData) {
-        get(ref(db, `rooms/${roomCode}`)).then(snap => {
-            const data = snap.val(); const players = data.players; const ids = Object.keys(players);
-            let nextIdx = (ids.indexOf(data.roundPlayer) + 1) % ids.length;
-            const nextId = ids[nextIdx]; const pNext = players[nextId];
-            
-            let chall = (pNext.strikes >= 3) ? extremeChallenges[Math.floor(Math.random() * extremeChallenges.length)] : challenges[Math.floor(Math.random() * challenges.length)];
+        const players = roomData.players;
+        const ids = Object.keys(players);
+        const lastIdx = ids.indexOf(roomData.roundPlayer);
+        const nextId = ids[(lastIdx + 1) % ids.length];
+        const pData = players[nextId];
 
-            update(ref(db, `rooms/${roomCode}`), {
-                nomercy_status: 'round', roundPlayer: nextId, roundPlayerName: pNext.name,
-                roundChallenge: chall, roundVotes: null, votesProcessed: null, gainedImmunity: false
-            });
+        let challenge = "";
+        let isExtreme = false;
+
+        if((pData.strikes || 0) >= 3) {
+            challenge = extremeChallenges[Math.floor(Math.random() * extremeChallenges.length)];
+            isExtreme = true;
+        } else {
+            challenge = challenges[Math.floor(Math.random() * challenges.length)];
+        }
+
+        update(ref(db, `rooms/${roomCode}`), {
+            nomercy_status: 'round',
+            roundPlayer: nextId,
+            roundChallenge: challenge,
+            isExtreme: isExtreme,
+            roundVotes: null,
+            votesProcessed: false,
+            immunityUsed: false
         });
     }
 
     function checkVotes(data) {
         if(data.votesProcessed) return;
-        const votes = data.roundVotes || {}; const total = Object.keys(data.players).length - 1;
-        if(Object.keys(votes).length >= total && total > 0) {
-            update(ref(db, `rooms/${roomCode}`), { votesProcessed: true });
-            let fails = Object.values(votes).filter(v => v === 'fail').length;
-            const pid = data.roundPlayer; const pData = data.players[pid];
-            const isExtreme = data.roundChallenge.startsWith("ALVO MARCADO");
+        const votes = data.roundVotes || {};
+        const votersCount = Object.keys(data.players).length - 1;
 
-            if(fails > (total/2)) {
-                const punish = punishments[Math.floor(Math.random() * punishments.length)];
-                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'roulette_spin', currentPunishment: punish });
-                setTimeout(() => {
-                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: (pData.strikes || 0) + 1, hasImmunity: false });
-                    update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
-                    setTimeout(() => startNewRound(data), 4000);
-                }, 3000);
+        if(Object.keys(votes).length >= votersCount && votersCount > 0) {
+            update(ref(db, `rooms/${roomCode}`), { votesProcessed: true });
+            
+            let pass = 0; let fail = 0;
+            Object.values(votes).forEach(v => v === 'pass' ? pass++ : fail++);
+
+            const pid = data.roundPlayer;
+            const pData = data.players[pid];
+
+            if(pass > fail) {
+                // Se venceu um desafio extremo, ganha imunidade
+                const updates = { 
+                    nomercy_status: 'round_result_safe'
+                };
+                if(data.isExtreme) {
+                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { hasImmunity: true });
+                }
+                update(ref(db, `rooms/${roomCode}`), updates);
             } else {
-                let immunityGained = isExtreme;
-                update(ref(db, `rooms/${roomCode}/players/${pid}`), { hasImmunity: immunityGained });
-                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe', gainedImmunity: immunityGained });
-                setTimeout(() => startNewRound(data), 3000);
+                update(ref(db, `rooms/${roomCode}/players/${pid}`), { strikes: (pData.strikes || 0) + 1 });
+                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
             }
         }
     }
+
+    window.castVote = function(v) { set(ref(db, `rooms/${roomCode}/roundVotes/${myId}`), v); }
+
+    let amIHost = false;
+    get(ref(db, `rooms/${roomCode}/host`)).then(h => { if(h.val() === myId) amIHost = true; initGameLoop(); });
+
 </script>
 </body>
 </html>
