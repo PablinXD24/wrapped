@@ -262,7 +262,7 @@
         "ALVO MARCADO: Deixe alguém do grupo ler sua última conversa no WhatsApp.",
         "ALVO MARCADO: Beba 3 doses seguidas sem parar.",
         "ALVO MARCADO: Fique de olhos vendados até sua próxima vez de jogar.",
-        "ALVO MARCADO: Deixe alguém desenhar um bigode em você com caneta.",
+        "ALVO MARCADO: Deixe alguém do grupo desenhar um bigode em você com caneta.",
         "ALVO MARCADO: Faça 20 flexões ou beba 4 doses.",
         "ALVO MARCADO: Deixe o grupo escolher uma música para você dançar por 1 minuto.",
         "ALVO MARCADO: Fale o nome de alguém que você já teve um 'crush' e está na sala.",
@@ -278,6 +278,7 @@
     let myName = "Player";
     let amIHost = false;
     let rouletteInterval = null;
+    let isUpdating = false; // Trava de segurança contra recursão
 
     if(!roomCode || !myId) {
         alert("Erro: Entre pelo Wrapped.");
@@ -297,7 +298,10 @@
         document.body.className = '';
         document.body.classList.remove('target-pulse');
         document.getElementById('flash-layer').style.background = 'transparent';
-        if(rouletteInterval) clearInterval(rouletteInterval);
+        if(rouletteInterval) {
+            clearInterval(rouletteInterval);
+            rouletteInterval = null;
+        }
     }
 
     initGameLoop();
@@ -334,19 +338,20 @@
                 showScreen('screen-roulette');
                 document.body.classList.add('roulette-mode');
                 
-                if(rouletteInterval) clearInterval(rouletteInterval);
-                rouletteInterval = setInterval(() => {
-                    const flash = document.getElementById('flash-layer');
-                    if(Math.random() > 0.7) flash.style.background = 'rgba(255, 0, 0, 0.4)';
-                    else flash.style.background = 'transparent';
-                }, 100);
+                if(!rouletteInterval) {
+                    rouletteInterval = setInterval(() => {
+                        const flash = document.getElementById('flash-layer');
+                        if(Math.random() > 0.7) flash.style.background = 'rgba(255, 0, 0, 0.4)';
+                        else flash.style.background = 'transparent';
+                    }, 100);
+                }
             }
             else if(data.nomercy_status === 'round_result_fail') {
                 showScreen('screen-result');
                 document.body.classList.add('strike-bg');
                 
                 const pid = data.roundPlayer;
-                const pData = data.players[pid];
+                const pData = data.players ? data.players[pid] : null;
                 const isVictim = (pid === myId);
                 const strikes = pData ? pData.strikes : 0;
                 const extraPunishment = data.currentPunishment || "SORTE";
@@ -373,11 +378,11 @@
                 document.body.classList.add('safe-bg');
                 
                 const pid = data.roundPlayer;
-                const pData = data.players[pid];
+                const pData = data.players ? data.players[pid] : null;
                 const streak = pData ? (pData.safeStreak || 0) : 0;
                 let subtext = "O DESAFIO FOI CUMPRIDO";
                 
-                if ((pData.strikes || 0) >= 3 && streak > 0) {
+                if (pData && (pData.strikes || 0) >= 3 && streak > 0) {
                     subtext = `SOBREVIVEU ${streak}/2 RODADAS NA ZONA DE PERIGO`;
                 }
 
@@ -388,12 +393,12 @@
                 `;
             }
             else {
-                if(amIHost) {
+                if(amIHost && !isUpdating) {
                     if(data.players && Object.keys(data.players).length > 0) {
                         startNewRound(data); 
                     }
                 } 
-                else document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
+                else if (!amIHost) document.getElementById('screen-lobby').innerHTML = "<h1>AGUARDE...</h1>";
             }
         });
     }
@@ -401,7 +406,7 @@
     function renderGameRound(data) {
         const currentPlayerId = data.roundPlayer;
         const isMyTurn = (currentPlayerId === myId);
-        const pData = data.players[currentPlayerId];
+        const pData = data.players ? data.players[currentPlayerId] : null;
         const playerStrikes = pData ? (pData.strikes || 0) : 0;
         const playerStreak = pData ? (pData.safeStreak || 0) : 0;
 
@@ -467,12 +472,18 @@
         set(ref(db, `rooms/${roomCode}/roundVotes/${myId}`), vote);
     }
 
-    function startNewRound(roomData) {
+    async function startNewRound(roomData) {
+        if (isUpdating) return;
+        isUpdating = true;
+
         const players = roomData.players;
         const lastPlayerId = roomData.roundPlayer;
         const activeIds = Object.keys(players);
 
-        if(activeIds.length === 0) return;
+        if(activeIds.length === 0) {
+            isUpdating = false;
+            return;
+        }
         
         activeIds.sort();
         
@@ -509,10 +520,10 @@
             rndChall = challenges[selectedChallengeIndex];
             usedIndices.push(selectedChallengeIndex);
             
-            update(ref(db, `rooms/${roomCode}`), { usedChallenges: usedIndices });
+            await update(ref(db, `rooms/${roomCode}`), { usedChallenges: usedIndices });
         }
 
-        update(ref(db, `rooms/${roomCode}`), {
+        await update(ref(db, `rooms/${roomCode}`), {
             nomercy_status: 'round',
             roundPlayer: nextId,
             roundPlayerName: nextName,
@@ -520,20 +531,21 @@
             roundVotes: null,
             votesProcessed: null
         });
+
+        isUpdating = false;
     }
 
-    function checkVotes(data) {
-        if(data.votesProcessed) return;
+    async function checkVotes(data) {
+        if(data.votesProcessed || isUpdating) return;
 
         const votes = data.roundVotes || {};
-        const allPlayers = Object.values(data.players);
+        const allPlayers = Object.values(data.players || {});
         const totalVoters = allPlayers.length - 1; 
-        
         const votesCast = Object.keys(votes).length;
 
         if(votesCast >= totalVoters && totalVoters > 0) {
-            
-            update(ref(db, `rooms/${roomCode}`), { votesProcessed: true });
+            isUpdating = true;
+            await update(ref(db, `rooms/${roomCode}`), { votesProcessed: true });
 
             let fails = 0;
             Object.values(votes).forEach(v => { if(v==='fail') fails++; });
@@ -545,41 +557,49 @@
             if(fails > passes) {
                 const rndPunish = punishments[Math.floor(Math.random() * punishments.length)];
                 
-                update(ref(db, `rooms/${roomCode}`), { 
+                await update(ref(db, `rooms/${roomCode}`), { 
                     nomercy_status: 'roulette_spin',
                     currentPunishment: rndPunish 
                 });
 
-                setTimeout(() => {
+                setTimeout(async () => {
                     const currentStrikes = (pData ? (pData.strikes || 0) : 0) + 1;
                     
-                    update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
+                    await update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
                         strikes: currentStrikes,
                         safeStreak: 0 
                     });
                     
-                    update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
-                    setTimeout(() => startNewRound(data), 6000);
+                    await update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_fail' });
+                    
+                    setTimeout(() => {
+                        isUpdating = false;
+                        startNewRound(data);
+                    }, 6000);
                 }, 4000);
                 
             } else {
-                if ((pData.strikes || 0) >= 3) {
+                if (pData && (pData.strikes || 0) >= 3) {
                     const currentStreak = (pData.safeStreak || 0) + 1;
                     
                     if (currentStreak >= 2) {
-                        update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
+                        await update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
                             strikes: 0, 
                             safeStreak: 0 
                         });
                     } else {
-                        update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
+                        await update(ref(db, `rooms/${roomCode}/players/${pid}`), { 
                             safeStreak: currentStreak 
                         });
                     }
                 }
 
-                update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
-                setTimeout(() => startNewRound(data), 2000);
+                await update(ref(db, `rooms/${roomCode}`), { nomercy_status: 'round_result_safe' });
+                
+                setTimeout(() => {
+                    isUpdating = false;
+                    startNewRound(data);
+                }, 2000);
             }
         }
     }
