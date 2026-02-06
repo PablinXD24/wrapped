@@ -109,27 +109,6 @@
 
 <div class="app-container">
 
-    <div id="screen-home" class="screen active">
-        <div style="width: 100%; text-align: center;">
-            <h1 style="color: var(--neon-green);">WRAPPED<br>2025</h1>
-            <p>Retrospectiva Realtime.</p>
-            <input type="text" id="my-name" placeholder="SEU NOME">
-            <button class="btn" onclick="goToMenu()">Continuar</button>
-        </div>
-    </div>
-
-    <div id="screen-menu" class="screen">
-        <div style="width: 100%; text-align: center;">
-            <h1>OLÁ, <span id="display-name" style="color: var(--neon-pink);"></span></h1>
-            <button class="btn" onclick="createRoomReal()">Criar Sala</button>
-            <button class="btn btn-outline" onclick="showJoinInput()">Entrar em Sala</button>
-            <div id="join-area" style="display: none; margin-top: 20px;">
-                <input type="text" id="room-code-input" placeholder="CÓDIGO" maxlength="4">
-                <button class="btn" style="background: var(--neon-blue); color: white;" onclick="joinRoomReal()">Entrar</button>
-            </div>
-        </div>
-    </div>
-
     <div id="screen-lobby" class="screen" style="text-align: center;">
         <h2 style="opacity: 0.7;">CÓDIGO:</h2>
         <div class="room-code" id="lobby-code">----</div>
@@ -217,11 +196,9 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let myId = localStorage.getItem('wrapped_uid') || Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('wrapped_uid', myId);
-    
+    let myId = localStorage.getItem('wrapped_uid');
     let myName = "";
-    let roomCode = "";
+    let roomCode = new URLSearchParams(window.location.search).get('room');
     let amIHost = false;
     let roomRef = null;
     let currentPlayers = {}; 
@@ -236,38 +213,32 @@
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
         const target = document.getElementById(id);
-        target.style.display = 'flex';
-        setTimeout(() => target.classList.add('active'), 10);
+        if(target) {
+            target.style.display = 'flex';
+            setTimeout(() => target.classList.add('active'), 10);
+        }
     }
 
-    window.goToMenu = function() {
-        const val = document.getElementById('my-name').value.trim();
-        if(!val) return alert("Nome obrigatório");
-        myName = val.toUpperCase();
-        document.getElementById('display-name').innerText = myName;
-        showScreen('screen-menu');
-    };
-
-    window.showJoinInput = function() { document.getElementById('join-area').style.display = 'block'; };
-
-    window.createRoomReal = function() {
-        roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-        amIHost = true;
+    // Inicialização automática
+    function initDirect() {
+        if(!roomCode || !myId) {
+            alert("Sessão não encontrada. Retornando...");
+            window.location.href = "index.html";
+            return;
+        }
         roomRef = ref(db, 'rooms/' + roomCode);
-        set(roomRef, { status: 'lobby', host: myId, players: { [myId]: { name: myName } } });
-        enterLobby();
-    };
-
-    window.joinRoomReal = function() {
-        roomCode = document.getElementById('room-code-input').value.toUpperCase();
-        roomRef = ref(db, 'rooms/' + roomCode);
+        
         get(roomRef).then(snap => {
-            if(snap.exists()) {
-                update(ref(db, `rooms/${roomCode}/players/${myId}`), { name: myName });
-                enterLobby();
-            } else alert("Sala não encontrada");
+            const data = snap.val();
+            if(!data || !data.players[myId]) {
+                alert("Você não faz parte desta sala.");
+                window.location.href = "index.html";
+                return;
+            }
+            myName = data.players[myId].name;
+            enterLobby();
         });
-    };
+    }
 
     function enterLobby() {
         document.getElementById('lobby-code').innerText = roomCode;
@@ -288,7 +259,7 @@
                 document.getElementById('msg-waiting-host').style.display = 'block';
             }
 
-            if(data.status === 'setup') {
+            if(data.status === 'setup' || data.status === 'redirecting_to_family') {
                 showScreen('screen-setup');
                 checkSetupProgress(data);
             } else if(data.status === 'voting') {
@@ -501,6 +472,9 @@
 
     window.closeShareModal = () => document.getElementById('share-modal').style.display = 'none';
     window.shareSlide = shareSlide;
+
+    // Executar inicialização
+    initDirect();
 
 </script>
 </body>
