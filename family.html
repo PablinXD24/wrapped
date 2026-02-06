@@ -28,10 +28,6 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
-
         body {
             background-color: var(--bg-dark);
             color: white;
@@ -48,13 +44,12 @@
         .app-container { 
             position: relative; width: 100%; height: 100%; max-width: 480px; z-index: 10; 
             display: flex; justify-content: center; align-items: center; 
-            @media(min-width:768px){ height: 95vh; border:1px solid rgba(255,255,255,0.1); border-radius:20px; overflow:hidden; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
         }
 
         .screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; padding: 30px 20px;
-            overflow-y: auto; scrollbar-width: thin;
+            overflow-y: auto;
         }
         .screen.active { display: flex; animation: fadeInScreen 0.5s ease-out; }
         @keyframes fadeInScreen { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
@@ -63,10 +58,8 @@
         p { font-size: clamp(0.9rem, 4vw, 1.1rem); opacity: 0.8; line-height: 1.5; margin-bottom: 30px; }
 
         input { width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 20px; border-radius: 12px; font-family: var(--font-data); font-size: 1.2rem; outline: none; margin-bottom: 20px; text-align: center; text-transform: uppercase; }
-        input:focus { border-color: var(--neon-green); background: rgba(255,255,255,0.15); }
-
-        .btn { background: white; color: black; border: none; padding: 18px; border-radius: 50px; font-family: var(--font-display); font-weight: 700; font-size: 1rem; width: 100%; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-        .btn:active { transform: scale(0.96); }
+        
+        .btn { background: white; color: black; border: none; padding: 18px; border-radius: 50px; font-family: var(--font-display); font-weight: 700; font-size: 1rem; width: 100%; cursor: pointer; transition: transform 0.1s; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; }
         
         .room-code { font-size: 3.5rem; font-weight: 900; letter-spacing: 8px; color: var(--neon-green); background: rgba(0,0,0,0.3); padding: 15px; border-radius: 20px; margin: 20px 0; border: 2px dashed rgba(255,255,255,0.2); }
@@ -75,7 +68,6 @@
 
         .vote-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; padding-bottom: 80px; }
         .vote-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; transition: 0.2s; cursor: pointer; }
-        .vote-card:active { transform: scale(0.95); background: var(--neon-green); color: black; }
         .avatar { width: 45px; height: 45px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; font-weight: bold; }
 
         .story-nav { display: flex; gap: 4px; margin: 10px 0 20px 0; width: 100%; z-index: 50; }
@@ -92,11 +84,9 @@
         .data-bar-bg { flex: 1; height: 12px; background: rgba(255,255,255,0.1); margin: 0 15px; border-radius: 6px; overflow: hidden; }
         .data-bar-fill { height: 100%; border-radius: 6px; transition: width 1.5s cubic-bezier(0.17, 0.67, 0.83, 0.67); width: 0%; }
 
-        #export-canvas { position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; background-color: #080808; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: 'Space Grotesk', sans-serif; }
-        
+        #export-canvas { position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; background-color: #080808; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center; }
         .modal-content { background: #111; padding: 30px; border-radius: 20px; width: 80%; max-width: 350px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .btn-opt { width: 100%; padding: 15px; margin: 5px 0; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -104,17 +94,15 @@
 <div class="noise"></div>
 <div class="ambilight-bg" id="ambilight"></div>
 
-<div id="export-canvas" style="display: none;">
-    <div id="ex-bg" class="ex-bg-layer" style="position: absolute; top:0; left:0; width:100%; height:100%;"></div>
-    <div class="ex-content-layer" style="position: relative; z-index: 10; width: 100%; display: flex; flex-direction: column; align-items: center;">
-        <div id="ex-cat" style="font-family: 'Space Mono', monospace; font-size: 3rem; letter-spacing: 10px; text-transform: uppercase; margin-bottom: 60px; opacity: 0.9;">CATEGORIA</div>
-        <div id="ex-roast" style="font-size: 4rem; font-weight: 700; margin-bottom: 100px; line-height: 1.3; opacity: 0.9;">...</div>
-        <div id="ex-winner" style="font-size: 10rem; font-weight: 900; line-height: 0.9; margin: 50px 0; text-transform: uppercase; word-break: break-word;">NOME</div>
-        <div id="ex-data" style="width: 100%; text-align: left; margin-top: 50px; background: rgba(0,0,0,0.3); padding: 40px; border-radius: 30px; border: 2px solid rgba(255,255,255,0.1);"></div>
-    </div>
-</div>
-
 <div class="app-container">
+
+    <div id="screen-recovery" class="screen" style="text-align: center; justify-content: center;">
+        <h1 style="color: var(--neon-pink);">SALA NÃO ENCONTRADA</h1>
+        <p>Não conseguimos recuperar sua sala automaticamente.</p>
+        <input type="text" id="manual-name" placeholder="SEU NOME">
+        <input type="text" id="manual-code" placeholder="CÓDIGO DA SALA" maxlength="4">
+        <button class="btn" onclick="manualJoin()">ENTRAR AGORA</button>
+    </div>
 
     <div id="screen-loading" class="screen active" style="text-align: center; justify-content: center;">
         <h1 style="color: var(--neon-green);">CONECTANDO...</h1>
@@ -124,7 +112,6 @@
     <div id="screen-lobby" class="screen" style="text-align: center;">
         <h2 style="opacity: 0.7;">CÓDIGO:</h2>
         <div class="room-code" id="lobby-code">----</div>
-        <p>Aguardando amigos...</p>
         <div id="lobby-list"></div>
         <div style="margin-top: auto; width: 100%;">
             <button id="btn-start-setup" class="btn" style="background: var(--neon-green); display:none;" onclick="startSetup()">INICIAR CRIAÇÃO</button>
@@ -134,7 +121,6 @@
 
     <div id="screen-setup" class="screen">
         <h1 style="color: var(--neon-pink);">CRIE O WRAPPED</h1>
-        <p>Escreva 2 perguntas para todos votarem.</p>
         <input type="text" id="q-input-1" placeholder="PERGUNTA 1">
         <input type="text" id="q-input-2" placeholder="PERGUNTA 2">
         <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="suggestQuestions()">✨ Sugerir Perguntas</button>
@@ -143,62 +129,46 @@
     </div>
 
     <div id="screen-voting" class="screen">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%;">
-            <span style="opacity: 0.7;">VOTANDO</span>
-            <span id="vote-count" style="font-weight: bold; color: var(--neon-green);">0/0</span>
-        </div>
-        <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;"><div id="vote-bar" style="height: 100%; background: var(--neon-green); width: 0%;"></div></div>
-        <h1 id="q-text" style="font-size: clamp(1.5rem, 5vw, 2.5rem); margin-top: 20px; text-align: center;">...</h1>
+        <div id="vote-count" style="text-align: right; color: var(--neon-green); font-weight: bold;">0/0</div>
+        <h1 id="q-text" style="font-size: 1.8rem; text-align: center; margin: 20px 0;">...</h1>
         <div id="vote-grid" class="vote-grid"></div>
     </div>
 
     <div id="screen-wait-others" class="screen" style="text-align: center; justify-content: center;">
         <h1>VOTOS ENVIADOS</h1>
-        <div style="font-size: 4rem; margin: 20px 0;">⏳</div>
-        <p id="wait-count-status">Aguardando todos terminarem...</p>
+        <p id="wait-count-status">Aguardando...</p>
     </div>
 
     <div id="screen-wrapped" class="screen">
         <div class="story-nav" id="story-nav"></div>
         <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; width: 100%;">
-            <p id="res-cat" class="res-cat">CATEGORIA</p>
+            <p id="res-cat" class="res-cat"></p>
             <div id="res-standard-container">
-                <div id="res-roast" class="roast-text">A galera decidiu...</div>
-                <div id="res-winner" class="winner-display">NOME</div>
+                <div id="res-roast" class="roast-text"></div>
+                <div id="res-winner" class="winner-display"></div>
                 <div id="res-data" class="data-box"></div>
             </div>
             <div id="res-intro-container" style="display:none; text-align:center;">
-                <i class="fa-solid fa-trophy" style="font-size: 6rem; color: var(--neon-gold); margin-bottom: 30px;"></i>
                 <h1 style="color:white;">OS VENCEDORES<br>DE 2025</h1>
             </div>
         </div>
         <div style="position: absolute; bottom: 30px; right: 30px; z-index: 90;">
-            <button id="btn-share" onclick="shareSlide()" style="width: 60px; height: 60px; border-radius: 50%; border: none; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; cursor: pointer; font-size: 1.5rem; border: 1px solid rgba(255,255,255,0.3);"><i class="fa-solid fa-share-nodes"></i></button>
+            <button id="btn-share" onclick="shareSlide()" style="width: 60px; height: 60px; border-radius: 50%; border: none; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white;"><i class="fa-solid fa-share-nodes"></i></button>
         </div>
         <div style="position: absolute; top:0; left:0; width: 100%; height: 100%; z-index: 5;" onclick="handleStoryClick(event)"></div>
     </div>
 
     <div id="screen-end" class="screen" style="background: black; justify-content: center; align-items: center; text-align: center;">
-        <h1 style="margin-bottom: 10px;">FIM DO WRAPPED</h1>
-        <p>Até a próxima!</p>
-        <div id="final-summary" style="margin: 20px 0; max-height: 200px; overflow-y: auto; width: 100%; font-size: 0.9rem;"></div>
-        <button class="btn btn-outline" style="margin-top: 30px;" onclick="location.reload()">JOGAR NOVAMENTE</button>
-    </div>
-
-    <div id="share-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <h2>Compartilhar</h2>
-            <button class="btn-opt" style="background: var(--neon-green); color: black;" onclick="processShare('native')">Enviar</button>
-            <button class="btn-opt" style="background: white; color: black;" onclick="processShare('download')">Baixar</button>
-            <button onclick="closeShareModal()" style="background:none;border:none;color:white;margin-top:10px;">Cancelar</button>
-        </div>
+        <h1>FIM DO WRAPPED</h1>
+        <div id="final-summary" style="margin: 20px 0;"></div>
+        <button class="btn btn-outline" onclick="location.reload()">JOGAR NOVAMENTE</button>
     </div>
 
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
@@ -210,13 +180,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Recuperação automática de dados
     let myId = localStorage.getItem('wrapped_uid') || Math.random().toString(36).substr(2, 9);
     localStorage.setItem('wrapped_uid', myId);
     
-    // Simula a entrada direta usando o que estiver no localStorage
-    let myName = localStorage.getItem('wrapped_name') || "JOGADOR";
-    let roomCode = localStorage.getItem('wrapped_room_code');
+    // Tenta encontrar as chaves do Index ou do Wrapped anterior
+    let myName = localStorage.getItem('wrapped_name') || localStorage.getItem('userName') || "JOGADOR";
+    let roomCode = localStorage.getItem('wrapped_room_code') || localStorage.getItem('roomCode');
     
     let amIHost = false;
     let roomRef = null;
@@ -225,58 +194,45 @@
     let slideIdx = 0;
     let timer;
     let localQIdx = 0;
-    let pendingBlob = null;
 
     const themes = ["#1ed760", "#ff4632", "#2d46b9", "#f2e205", "#f573a0"];
-    const suggestionBank = [
-        "Quem é o mais provável de ser preso?",
-        "Quem tem o pior gosto musical?",
-        "Quem sumiria primeiro num apocalipse?",
-        "Quem é o mais 'mão de vaca'?",
-        "Quem vai ficar rico primeiro?",
-        "Quem é o mais dramático do grupo?",
-        "Quem é o mais viciado em TikTok?",
-        "Quem sempre chega atrasado?"
-    ];
 
-    // Inicialização direta
     document.addEventListener('DOMContentLoaded', () => {
-        if(roomCode) {
+        if(roomCode && roomCode !== "null") {
             autoJoin();
         } else {
-            // Se não houver sala salva, ele avisa (apenas para debug se necessário)
-            document.getElementById('screen-loading').innerHTML = "<h1>NENHUMA SALA ATIVA ENCONTRADA</h1><p>Por favor, use o Index primeiro.</p>";
+            showScreen('screen-recovery');
         }
     });
+
+    window.manualJoin = function() {
+        const name = document.getElementById('manual-name').value.trim().toUpperCase();
+        const code = document.getElementById('manual-code').value.trim().toUpperCase();
+        if(!name || !code) return alert("Preencha nome e código!");
+        
+        myName = name;
+        roomCode = code;
+        localStorage.setItem('wrapped_name', name);
+        localStorage.setItem('wrapped_room_code', code);
+        autoJoin();
+    };
 
     function autoJoin() {
         roomRef = ref(db, 'rooms/' + roomCode);
         get(roomRef).then(snap => {
             if(snap.exists()) {
-                // Atualiza/Confirma presença
                 update(ref(db, `rooms/${roomCode}/players/${myId}`), { name: myName });
                 enterLobby();
             } else {
-                document.getElementById('screen-loading').innerHTML = "<h1>SALA EXPIRADA OU INVÁLIDA</h1>";
+                showScreen('screen-recovery');
             }
-        });
+        }).catch(() => showScreen('screen-recovery'));
     }
-
-    window.suggestQuestions = () => {
-        const rand1 = suggestionBank[Math.floor(Math.random()*suggestionBank.length)];
-        let rand2 = suggestionBank[Math.floor(Math.random()*suggestionBank.length)];
-        while(rand1 === rand2) rand2 = suggestionBank[Math.floor(Math.random()*suggestionBank.length)];
-        document.getElementById('q-input-1').value = rand1;
-        document.getElementById('q-input-2').value = rand2;
-    };
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
         const target = document.getElementById(id);
-        if(target) {
-            target.style.display = 'flex';
-            setTimeout(() => target.classList.add('active'), 10);
-        }
+        if(target) { target.style.display = 'flex'; setTimeout(() => target.classList.add('active'), 10); }
     }
 
     function enterLobby() {
@@ -286,37 +242,20 @@
         onValue(roomRef, (snap) => {
             const data = snap.val();
             if(!data) return;
-
             currentPlayers = data.players || {};
             const setups = data.setupData || {};
-            
-            document.getElementById('lobby-list').innerHTML = Object.entries(currentPlayers).map(([id, p]) => {
-                const isReady = setups[id] ? 'ready' : '';
-                return `<div class="chip ${isReady}">${p.name}</div>`;
-            }).join('');
+            document.getElementById('lobby-list').innerHTML = Object.entries(currentPlayers).map(([id, p]) => `<div class="chip ${setups[id] ? 'ready' : ''}">${p.name}</div>`).join('');
 
             if(data.host === myId) {
                 amIHost = true;
                 document.getElementById('btn-start-setup').style.display = 'block';
-                document.getElementById('msg-waiting-host').style.display = 'none';
-            } else {
-                document.getElementById('msg-waiting-host').style.display = 'block';
             }
 
-            if(data.status === 'setup') {
-                showScreen('screen-setup');
-                checkSetupProgress(data);
-            } else if(data.status === 'voting') {
+            if(data.status === 'setup') showScreen('screen-setup');
+            else if(data.status === 'voting') {
                 finalQuestions = data.questions || [];
-                if(data.finishedPlayers && data.finishedPlayers[myId]) {
-                    showScreen('screen-wait-others');
-                    const total = Object.keys(currentPlayers).length;
-                    const fin = data.finishedPlayers ? Object.keys(data.finishedPlayers).length : 0;
-                    document.getElementById('wait-count-status').innerText = `Aguardando... (${fin}/${total})`;
-                    if(amIHost && fin >= total) calculateResults(data);
-                } else {
-                    startVoting();
-                }
+                if(data.finishedPlayers && data.finishedPlayers[myId]) showScreen('screen-wait-others');
+                else startVoting();
             } else if(data.status === 'results') {
                 window.finalResults = data.finalResults;
                 window.awardSlides = data.awards;
@@ -325,32 +264,13 @@
         });
     }
 
-    window.startSetup = function() { update(roomRef, { status: 'setup' }); };
-
     window.submitMyQuestions = function() {
         const q1 = document.getElementById('q-input-1').value.trim();
         const q2 = document.getElementById('q-input-2').value.trim();
-        if(!q1 || !q2) return alert("Escreva as duas perguntas!");
+        if(!q1 || !q2) return alert("Preencha as perguntas!");
         update(ref(db, `rooms/${roomCode}/setupData/${myId}`), { q1, q2 });
-        document.getElementById('btn-submit-qs').disabled = true;
         document.getElementById('btn-submit-qs').innerText = "ENVIADO!";
     };
-
-    function checkSetupProgress(data) {
-        const setups = data.setupData || {};
-        const players = Object.keys(currentPlayers);
-        const submitted = Object.keys(setups);
-        document.getElementById('setup-status').innerText = `${submitted.length} de ${players.length} prontos`;
-
-        if(amIHost && submitted.length >= players.length && players.length > 0) {
-            const allQs = [];
-            Object.values(setups).forEach(s => {
-                allQs.push({ q: s.q1 });
-                allQs.push({ q: s.q2 });
-            });
-            update(roomRef, { status: 'voting', questions: allQs });
-        }
-    }
 
     function startVoting() {
         showScreen('screen-voting');
@@ -361,65 +281,23 @@
         const q = finalQuestions[localQIdx];
         document.getElementById('q-text').innerText = q.q;
         document.getElementById('vote-count').innerText = `${localQIdx+1}/${finalQuestions.length}`;
-        document.getElementById('vote-bar').style.width = `${((localQIdx+1)/finalQuestions.length)*100}%`;
-        
         const grid = document.getElementById('vote-grid');
         grid.innerHTML = '';
         Object.entries(currentPlayers).forEach(([id, p]) => {
             const div = document.createElement('div');
             div.className = 'vote-card';
             div.innerHTML = `<div class="avatar">${p.name[0]}</div><span>${p.name}</span>`;
-            div.onclick = () => castVote(p.name);
+            div.onclick = () => {
+                set(ref(db, `rooms/${roomCode}/votes/${localQIdx}/${myId}`), p.name);
+                if(localQIdx < finalQuestions.length - 1) { localQIdx++; loadQuestion(); }
+                else set(ref(db, `rooms/${roomCode}/finishedPlayers/${myId}`), true);
+            };
             grid.appendChild(div);
         });
     }
 
-    function castVote(name) {
-        set(ref(db, `rooms/${roomCode}/votes/${localQIdx}/${myId}`), name);
-        if(localQIdx < finalQuestions.length - 1) {
-            localQIdx++;
-            loadQuestion();
-        } else {
-            set(ref(db, `rooms/${roomCode}/finishedPlayers/${myId}`), true);
-        }
-    }
-
-    function calculateResults(data) {
-        const allVotes = data.votes || {};
-        let calcRes = {};
-        let totalWins = {};
-        Object.values(currentPlayers).forEach(p => totalWins[p.name] = 0);
-
-        finalQuestions.forEach((q, idx) => {
-            const vQ = allVotes[idx] || {};
-            const counts = {};
-            Object.values(vQ).forEach(name => counts[name] = (counts[name]||0)+1);
-            calcRes[idx] = counts;
-            const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-            if(sorted[0]) totalWins[sorted[0][0]]++;
-        });
-
-        const sortedMVP = Object.entries(totalWins).sort((a,b)=>b[1]-a[1]);
-        const mvp = sortedMVP[0] ? sortedMVP[0][0] : "---";
-        const awards = [
-            { type: 'cover' },
-            { type: 'award', cat: 'MVP DO ANO', name: mvp, desc: 'Quem mais dominou as votações!' }
-        ];
-        update(roomRef, { status: 'results', finalResults: calcRes, awards: awards });
-    }
-
     function startWrapped() {
         slideIdx = 0;
-        const total = finalQuestions.length + window.awardSlides.length;
-        document.getElementById('story-nav').innerHTML = Array(total).fill(0).map((_,i)=>`<div class="nav-dash"><div id="nav-${i}" class="nav-fill"></div></div>`).join('');
-        
-        const summary = document.getElementById('final-summary');
-        summary.innerHTML = finalQuestions.map((q, i) => {
-            const res = window.finalResults[i] || {};
-            const sorted = Object.entries(res).sort((a,b)=>b[1]-a[1]);
-            return `<div style="margin-bottom:5px;"><b>${q.q}:</b> ${sorted[0]?sorted[0][0]:'Empate'}</div>`;
-        }).join('');
-
         showScreen('screen-wrapped');
         loadSlide();
     }
@@ -427,115 +305,26 @@
     function loadSlide() {
         const total = finalQuestions.length + window.awardSlides.length;
         if(slideIdx >= total) return showScreen('screen-end');
-
-        for(let i=0; i<total; i++) {
-            const el = document.getElementById(`nav-${i}`);
-            el.className = i < slideIdx ? 'nav-fill done' : (i === slideIdx ? 'nav-fill active' : 'nav-fill');
-        }
-
+        
         const isAward = slideIdx >= finalQuestions.length;
-        document.getElementById('res-standard-container').style.display = isAward ? 'none' : 'block';
-        document.getElementById('res-intro-container').style.display = 'none';
-
         if(isAward) {
             const aw = window.awardSlides[slideIdx - finalQuestions.length];
-            if(aw.type === 'cover') {
-                document.getElementById('res-intro-container').style.display = 'block';
-                document.body.style.backgroundColor = "black";
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            } else {
-                document.getElementById('res-standard-container').style.display = 'block';
+            document.getElementById('res-intro-container').style.display = aw.type === 'cover' ? 'block' : 'none';
+            document.getElementById('res-standard-container').style.display = aw.type === 'cover' ? 'none' : 'block';
+            if(aw.type !== 'cover') {
                 document.getElementById('res-cat').innerText = aw.cat;
                 document.getElementById('res-winner').innerText = aw.name;
-                document.getElementById('res-roast').innerText = aw.desc;
-                document.getElementById('res-data').innerHTML = "";
-                document.body.style.backgroundColor = "white";
-                document.body.style.color = "black";
             }
         } else {
             const q = finalQuestions[slideIdx];
-            const theme = themes[slideIdx % themes.length];
-            document.body.style.backgroundColor = "var(--bg-dark)";
-            document.body.style.color = "white";
-            document.documentElement.style.setProperty('--dynamic-color', theme);
-            document.getElementById('ambilight').style.background = `radial-gradient(circle at 50% 50%, ${theme}, #000)`;
-            
             document.getElementById('res-cat').innerText = q.q;
             const res = window.finalResults[slideIdx] || {};
             const sorted = Object.entries(res).sort((a,b)=>b[1]-a[1]);
-            const totalV = Object.values(res).reduce((a,b)=>a+b, 0);
-
             document.getElementById('res-winner').innerText = sorted[0] ? sorted[0][0] : "EMPATE";
-            
-            const box = document.getElementById('res-data');
-            box.innerHTML = sorted.slice(0,3).map(([name, count]) => {
-                const pct = Math.round((count/totalV)*100);
-                return `<div class="data-row">
-                    <span style="width:80px; overflow:hidden; text-overflow:ellipsis;">${name}</span>
-                    <div class="data-bar-bg"><div class="data-bar-fill" id="bar-${slideIdx}-${name}" style="background:${theme};"></div></div>
-                    <span>${pct}%</span>
-                </div>`;
-            }).join('');
-
-            setTimeout(() => {
-                sorted.slice(0,3).forEach(([name, count]) => {
-                    const el = document.getElementById(`bar-${slideIdx}-${name}`);
-                    if(el) el.style.width = Math.round((count/totalV)*100) + '%';
-                });
-            }, 100);
         }
-
         clearTimeout(timer);
-        timer = setTimeout(() => { slideIdx++; loadSlide(); }, 5500);
+        timer = setTimeout(() => { slideIdx++; loadSlide(); }, 5000);
     }
-
-    window.handleStoryClick = function(e) {
-        if(e.clientX < window.innerWidth / 3) slideIdx = Math.max(0, slideIdx - 1);
-        else slideIdx++;
-        loadSlide();
-    };
-
-    async function shareSlide() {
-        const btn = document.getElementById('btn-share');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-        const canvasEl = document.getElementById('export-canvas');
-        canvasEl.style.display = 'flex';
-        
-        document.getElementById('ex-cat').innerText = document.getElementById('res-cat').innerText;
-        document.getElementById('ex-roast').innerText = document.getElementById('res-roast').innerText;
-        document.getElementById('ex-winner').innerText = document.getElementById('res-winner').innerText;
-        document.getElementById('ex-data').innerHTML = document.getElementById('res-data').innerHTML;
-        
-        setTimeout(async () => {
-            const canvas = await html2canvas(canvasEl, { scale: 1 });
-            canvas.toBlob(blob => {
-                pendingBlob = blob;
-                document.getElementById('share-modal').style.display = 'flex';
-                btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
-                canvasEl.style.display = 'none';
-            });
-        }, 100);
-    }
-
-    window.processShare = function(type) {
-        const f = new File([pendingBlob], "wrapped.png", {type:"image/png"});
-        if(type==='native' && navigator.share) {
-            navigator.share({
-                title: 'Meu Wrapped 2025',
-                files:[f]
-            }).catch(e => console.log(e));
-        } else {
-            const a = document.createElement('a');
-            a.download = "wrapped.png";
-            a.href = URL.createObjectURL(pendingBlob);
-            a.click();
-        }
-        document.getElementById('share-modal').style.display = 'none';
-    };
-
-    window.closeShareModal = () => document.getElementById('share-modal').style.display = 'none';
-    window.shareSlide = shareSlide;
-
 </script>
 </body>
 </html>
