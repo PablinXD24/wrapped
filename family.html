@@ -116,25 +116,9 @@
 
 <div class="app-container">
 
-    <div id="screen-home" class="screen active">
-        <div style="width: 100%; text-align: center;">
-            <h1 style="color: var(--neon-green);">WRAPPED<br>2025</h1>
-            <p>Retrospectiva Realtime.</p>
-            <input type="text" id="my-name" placeholder="SEU NOME">
-            <button class="btn" onclick="goToMenu()">Continuar</button>
-        </div>
-    </div>
-
-    <div id="screen-menu" class="screen">
-        <div style="width: 100%; text-align: center;">
-            <h1>OLÁ, <span id="display-name" style="color: var(--neon-pink);"></span></h1>
-            <button class="btn" onclick="createRoomReal()">Criar Sala</button>
-            <button class="btn btn-outline" onclick="showJoinInput()">Entrar em Sala</button>
-            <div id="join-area" style="display: none; margin-top: 20px;">
-                <input type="text" id="room-code-input" placeholder="CÓDIGO" maxlength="4">
-                <button class="btn" style="background: var(--neon-blue); color: white;" onclick="joinRoomReal()">Entrar</button>
-            </div>
-        </div>
+    <div id="screen-loading" class="screen active" style="text-align: center; justify-content: center;">
+        <h1 style="color: var(--neon-green);">CONECTANDO...</h1>
+        <div style="font-size: 3rem;"><i class="fa-solid fa-spinner fa-spin"></i></div>
     </div>
 
     <div id="screen-lobby" class="screen" style="text-align: center;">
@@ -226,11 +210,14 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // Recuperação automática de dados
     let myId = localStorage.getItem('wrapped_uid') || Math.random().toString(36).substr(2, 9);
     localStorage.setItem('wrapped_uid', myId);
     
-    let myName = "";
-    let roomCode = "";
+    // Simula a entrada direta usando o que estiver no localStorage
+    let myName = localStorage.getItem('wrapped_name') || "JOGADOR";
+    let roomCode = localStorage.getItem('wrapped_room_code');
+    
     let amIHost = false;
     let roomRef = null;
     let currentPlayers = {}; 
@@ -252,6 +239,29 @@
         "Quem sempre chega atrasado?"
     ];
 
+    // Inicialização direta
+    document.addEventListener('DOMContentLoaded', () => {
+        if(roomCode) {
+            autoJoin();
+        } else {
+            // Se não houver sala salva, ele avisa (apenas para debug se necessário)
+            document.getElementById('screen-loading').innerHTML = "<h1>NENHUMA SALA ATIVA ENCONTRADA</h1><p>Por favor, use o Index primeiro.</p>";
+        }
+    });
+
+    function autoJoin() {
+        roomRef = ref(db, 'rooms/' + roomCode);
+        get(roomRef).then(snap => {
+            if(snap.exists()) {
+                // Atualiza/Confirma presença
+                update(ref(db, `rooms/${roomCode}/players/${myId}`), { name: myName });
+                enterLobby();
+            } else {
+                document.getElementById('screen-loading').innerHTML = "<h1>SALA EXPIRADA OU INVÁLIDA</h1>";
+            }
+        });
+    }
+
     window.suggestQuestions = () => {
         const rand1 = suggestionBank[Math.floor(Math.random()*suggestionBank.length)];
         let rand2 = suggestionBank[Math.floor(Math.random()*suggestionBank.length)];
@@ -263,38 +273,11 @@
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
         const target = document.getElementById(id);
-        target.style.display = 'flex';
-        setTimeout(() => target.classList.add('active'), 10);
+        if(target) {
+            target.style.display = 'flex';
+            setTimeout(() => target.classList.add('active'), 10);
+        }
     }
-
-    window.goToMenu = function() {
-        const val = document.getElementById('my-name').value.trim();
-        if(!val) return alert("Nome obrigatório");
-        myName = val.toUpperCase();
-        document.getElementById('display-name').innerText = myName;
-        showScreen('screen-menu');
-    };
-
-    window.showJoinInput = function() { document.getElementById('join-area').style.display = 'block'; };
-
-    window.createRoomReal = function() {
-        roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-        amIHost = true;
-        roomRef = ref(db, 'rooms/' + roomCode);
-        set(roomRef, { status: 'lobby', host: myId, players: { [myId]: { name: myName } } });
-        enterLobby();
-    };
-
-    window.joinRoomReal = function() {
-        roomCode = document.getElementById('room-code-input').value.toUpperCase();
-        roomRef = ref(db, 'rooms/' + roomCode);
-        get(roomRef).then(snap => {
-            if(snap.exists()) {
-                update(ref(db, `rooms/${roomCode}/players/${myId}`), { name: myName });
-                enterLobby();
-            } else alert("Sala não encontrada");
-        });
-    };
 
     function enterLobby() {
         document.getElementById('lobby-code').innerText = roomCode;
@@ -430,7 +413,6 @@
         const total = finalQuestions.length + window.awardSlides.length;
         document.getElementById('story-nav').innerHTML = Array(total).fill(0).map((_,i)=>`<div class="nav-dash"><div id="nav-${i}" class="nav-fill"></div></div>`).join('');
         
-        // Resumo final
         const summary = document.getElementById('final-summary');
         summary.innerHTML = finalQuestions.map((q, i) => {
             const res = window.finalResults[i] || {};
@@ -495,7 +477,6 @@
                 </div>`;
             }).join('');
 
-            // Animando as barras após o render
             setTimeout(() => {
                 sorted.slice(0,3).forEach(([name, count]) => {
                     const el = document.getElementById(`bar-${slideIdx}-${name}`);
