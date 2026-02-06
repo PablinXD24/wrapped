@@ -6,6 +6,7 @@
     <title>Wrapped 2025 - Final Justice Custom</title>
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <style>
@@ -69,10 +70,12 @@
         .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; }
         
         .room-code { font-size: 3.5rem; font-weight: 900; letter-spacing: 8px; color: var(--neon-green); background: rgba(0,0,0,0.3); padding: 15px; border-radius: 20px; margin: 20px 0; border: 2px dashed rgba(255,255,255,0.2); }
-        .chip { background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 50px; margin: 5px; display: inline-block; font-weight: bold; }
+        .chip { background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 50px; margin: 5px; display: inline-block; font-weight: bold; position: relative; }
+        .chip.ready::after { content: '✓'; margin-left: 8px; color: var(--neon-green); }
 
         .vote-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; padding-bottom: 80px; }
         .vote-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; transition: 0.2s; cursor: pointer; }
+        .vote-card:active { transform: scale(0.95); background: var(--neon-green); color: black; }
         .avatar { width: 45px; height: 45px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; font-weight: bold; }
 
         .story-nav { display: flex; gap: 4px; margin: 10px 0 20px 0; width: 100%; z-index: 50; }
@@ -87,9 +90,13 @@
         .data-box { background: rgba(0,0,0,0.3); padding: 25px; border-radius: 16px; width: 100%; align-self: center; border: 1px solid rgba(255,255,255,0.05); }
         .data-row { display: flex; align-items: center; margin-bottom: 15px; font-weight: bold; }
         .data-bar-bg { flex: 1; height: 12px; background: rgba(255,255,255,0.1); margin: 0 15px; border-radius: 6px; overflow: hidden; }
-        .data-bar-fill { height: 100%; border-radius: 6px; transition: width 1s ease-out; }
+        .data-bar-fill { height: 100%; border-radius: 6px; transition: width 1.5s cubic-bezier(0.17, 0.67, 0.83, 0.67); width: 0%; }
 
         #export-canvas { position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; background-color: #080808; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: 'Space Grotesk', sans-serif; }
+        
+        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center; }
+        .modal-content { background: #111; padding: 30px; border-radius: 20px; width: 80%; max-width: 350px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-opt { width: 100%; padding: 15px; margin: 5px 0; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -109,6 +116,27 @@
 
 <div class="app-container">
 
+    <div id="screen-home" class="screen active">
+        <div style="width: 100%; text-align: center;">
+            <h1 style="color: var(--neon-green);">WRAPPED<br>2025</h1>
+            <p>Retrospectiva Realtime.</p>
+            <input type="text" id="my-name" placeholder="SEU NOME">
+            <button class="btn" onclick="goToMenu()">Continuar</button>
+        </div>
+    </div>
+
+    <div id="screen-menu" class="screen">
+        <div style="width: 100%; text-align: center;">
+            <h1>OLÁ, <span id="display-name" style="color: var(--neon-pink);"></span></h1>
+            <button class="btn" onclick="createRoomReal()">Criar Sala</button>
+            <button class="btn btn-outline" onclick="showJoinInput()">Entrar em Sala</button>
+            <div id="join-area" style="display: none; margin-top: 20px;">
+                <input type="text" id="room-code-input" placeholder="CÓDIGO" maxlength="4">
+                <button class="btn" style="background: var(--neon-blue); color: white;" onclick="joinRoomReal()">Entrar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="screen-lobby" class="screen" style="text-align: center;">
         <h2 style="opacity: 0.7;">CÓDIGO:</h2>
         <div class="room-code" id="lobby-code">----</div>
@@ -122,9 +150,10 @@
 
     <div id="screen-setup" class="screen">
         <h1 style="color: var(--neon-pink);">CRIE O WRAPPED</h1>
-        <p>Escreva 2 perguntas para todos votarem (ex: Quem é o mais chato?)</p>
+        <p>Escreva 2 perguntas para todos votarem.</p>
         <input type="text" id="q-input-1" placeholder="PERGUNTA 1">
         <input type="text" id="q-input-2" placeholder="PERGUNTA 2">
+        <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="suggestQuestions()">✨ Sugerir Perguntas</button>
         <button class="btn" id="btn-submit-qs" onclick="submitMyQuestions()">ENVIAR PERGUNTAS</button>
         <div id="setup-status" style="margin-top: 20px; text-align: center; font-weight: bold; color: var(--neon-green);"></div>
     </div>
@@ -168,6 +197,7 @@
     <div id="screen-end" class="screen" style="background: black; justify-content: center; align-items: center; text-align: center;">
         <h1 style="margin-bottom: 10px;">FIM DO WRAPPED</h1>
         <p>Até a próxima!</p>
+        <div id="final-summary" style="margin: 20px 0; max-height: 200px; overflow-y: auto; width: 100%; font-size: 0.9rem;"></div>
         <button class="btn btn-outline" style="margin-top: 30px;" onclick="location.reload()">JOGAR NOVAMENTE</button>
     </div>
 
@@ -196,9 +226,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let myId = localStorage.getItem('wrapped_uid');
+    let myId = localStorage.getItem('wrapped_uid') || Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('wrapped_uid', myId);
+    
     let myName = "";
-    let roomCode = new URLSearchParams(window.location.search).get('room');
+    let roomCode = "";
     let amIHost = false;
     let roomRef = null;
     let currentPlayers = {}; 
@@ -209,36 +241,60 @@
     let pendingBlob = null;
 
     const themes = ["#1ed760", "#ff4632", "#2d46b9", "#f2e205", "#f573a0"];
+    const suggestionBank = [
+        "Quem é o mais provável de ser preso?",
+        "Quem tem o pior gosto musical?",
+        "Quem sumiria primeiro num apocalipse?",
+        "Quem é o mais 'mão de vaca'?",
+        "Quem vai ficar rico primeiro?",
+        "Quem é o mais dramático do grupo?",
+        "Quem é o mais viciado em TikTok?",
+        "Quem sempre chega atrasado?"
+    ];
+
+    window.suggestQuestions = () => {
+        const rand1 = suggestionBank[Math.floor(Math.random()*suggestionBank.length)];
+        let rand2 = suggestionBank[Math.floor(Math.random()*suggestionBank.length)];
+        while(rand1 === rand2) rand2 = suggestionBank[Math.floor(Math.random()*suggestionBank.length)];
+        document.getElementById('q-input-1').value = rand1;
+        document.getElementById('q-input-2').value = rand2;
+    };
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
         const target = document.getElementById(id);
-        if(target) {
-            target.style.display = 'flex';
-            setTimeout(() => target.classList.add('active'), 10);
-        }
+        target.style.display = 'flex';
+        setTimeout(() => target.classList.add('active'), 10);
     }
 
-    // Inicialização automática
-    function initDirect() {
-        if(!roomCode || !myId) {
-            alert("Sessão não encontrada. Retornando...");
-            window.location.href = "index.html";
-            return;
-        }
+    window.goToMenu = function() {
+        const val = document.getElementById('my-name').value.trim();
+        if(!val) return alert("Nome obrigatório");
+        myName = val.toUpperCase();
+        document.getElementById('display-name').innerText = myName;
+        showScreen('screen-menu');
+    };
+
+    window.showJoinInput = function() { document.getElementById('join-area').style.display = 'block'; };
+
+    window.createRoomReal = function() {
+        roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+        amIHost = true;
         roomRef = ref(db, 'rooms/' + roomCode);
-        
+        set(roomRef, { status: 'lobby', host: myId, players: { [myId]: { name: myName } } });
+        enterLobby();
+    };
+
+    window.joinRoomReal = function() {
+        roomCode = document.getElementById('room-code-input').value.toUpperCase();
+        roomRef = ref(db, 'rooms/' + roomCode);
         get(roomRef).then(snap => {
-            const data = snap.val();
-            if(!data || !data.players[myId]) {
-                alert("Você não faz parte desta sala.");
-                window.location.href = "index.html";
-                return;
-            }
-            myName = data.players[myId].name;
-            enterLobby();
+            if(snap.exists()) {
+                update(ref(db, `rooms/${roomCode}/players/${myId}`), { name: myName });
+                enterLobby();
+            } else alert("Sala não encontrada");
         });
-    }
+    };
 
     function enterLobby() {
         document.getElementById('lobby-code').innerText = roomCode;
@@ -249,7 +305,12 @@
             if(!data) return;
 
             currentPlayers = data.players || {};
-            document.getElementById('lobby-list').innerHTML = Object.values(currentPlayers).map(p => `<div class="chip">${p.name}</div>`).join('');
+            const setups = data.setupData || {};
+            
+            document.getElementById('lobby-list').innerHTML = Object.entries(currentPlayers).map(([id, p]) => {
+                const isReady = setups[id] ? 'ready' : '';
+                return `<div class="chip ${isReady}">${p.name}</div>`;
+            }).join('');
 
             if(data.host === myId) {
                 amIHost = true;
@@ -259,7 +320,7 @@
                 document.getElementById('msg-waiting-host').style.display = 'block';
             }
 
-            if(data.status === 'setup' || data.status === 'redirecting_to_family') {
+            if(data.status === 'setup') {
                 showScreen('screen-setup');
                 checkSetupProgress(data);
             } else if(data.status === 'voting') {
@@ -322,7 +383,6 @@
         const grid = document.getElementById('vote-grid');
         grid.innerHTML = '';
         Object.entries(currentPlayers).forEach(([id, p]) => {
-            if(id === myId) return;
             const div = document.createElement('div');
             div.className = 'vote-card';
             div.innerHTML = `<div class="avatar">${p.name[0]}</div><span>${p.name}</span>`;
@@ -369,6 +429,15 @@
         slideIdx = 0;
         const total = finalQuestions.length + window.awardSlides.length;
         document.getElementById('story-nav').innerHTML = Array(total).fill(0).map((_,i)=>`<div class="nav-dash"><div id="nav-${i}" class="nav-fill"></div></div>`).join('');
+        
+        // Resumo final
+        const summary = document.getElementById('final-summary');
+        summary.innerHTML = finalQuestions.map((q, i) => {
+            const res = window.finalResults[i] || {};
+            const sorted = Object.entries(res).sort((a,b)=>b[1]-a[1]);
+            return `<div style="margin-bottom:5px;"><b>${q.q}:</b> ${sorted[0]?sorted[0][0]:'Empate'}</div>`;
+        }).join('');
+
         showScreen('screen-wrapped');
         loadSlide();
     }
@@ -391,6 +460,7 @@
             if(aw.type === 'cover') {
                 document.getElementById('res-intro-container').style.display = 'block';
                 document.body.style.backgroundColor = "black";
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             } else {
                 document.getElementById('res-standard-container').style.display = 'block';
                 document.getElementById('res-cat').innerText = aw.cat;
@@ -419,11 +489,19 @@
             box.innerHTML = sorted.slice(0,3).map(([name, count]) => {
                 const pct = Math.round((count/totalV)*100);
                 return `<div class="data-row">
-                    <span style="width:80px;">${name}</span>
-                    <div class="data-bar-bg"><div class="data-bar-fill" style="width:${pct}%; background:${theme};"></div></div>
+                    <span style="width:80px; overflow:hidden; text-overflow:ellipsis;">${name}</span>
+                    <div class="data-bar-bg"><div class="data-bar-fill" id="bar-${slideIdx}-${name}" style="background:${theme};"></div></div>
                     <span>${pct}%</span>
                 </div>`;
             }).join('');
+
+            // Animando as barras após o render
+            setTimeout(() => {
+                sorted.slice(0,3).forEach(([name, count]) => {
+                    const el = document.getElementById(`bar-${slideIdx}-${name}`);
+                    if(el) el.style.width = Math.round((count/totalV)*100) + '%';
+                });
+            }, 100);
         }
 
         clearTimeout(timer);
@@ -460,8 +538,12 @@
 
     window.processShare = function(type) {
         const f = new File([pendingBlob], "wrapped.png", {type:"image/png"});
-        if(type==='native' && navigator.share) navigator.share({files:[f]});
-        else {
+        if(type==='native' && navigator.share) {
+            navigator.share({
+                title: 'Meu Wrapped 2025',
+                files:[f]
+            }).catch(e => console.log(e));
+        } else {
             const a = document.createElement('a');
             a.download = "wrapped.png";
             a.href = URL.createObjectURL(pendingBlob);
@@ -472,9 +554,6 @@
 
     window.closeShareModal = () => document.getElementById('share-modal').style.display = 'none';
     window.shareSlide = shareSlide;
-
-    // Executar inicialização
-    initDirect();
 
 </script>
 </body>
