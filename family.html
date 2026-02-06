@@ -137,13 +137,13 @@
         <p>Aguardando amigos...</p>
         <div id="lobby-list"></div>
         <div style="margin-top: auto; width: 100%;">
-            <button id="btn-start-setup" class="btn" style="background: var(--neon-green); display:none;" onclick="startSetup()">INICIAR CRIAÇÃO</button>
+            <button id="btn-start-setup" class="btn" style="background: var(--neon-green); display:none;" onclick="startSetup()">INICIAR PERSONALIZADO</button>
             <p id="msg-waiting-host" style="display:none; color: #666;">Aguardando o host começar...</p>
         </div>
     </div>
 
     <div id="screen-setup" class="screen">
-        <h1 style="color: var(--neon-pink);">CRIE O WRAPPED</h1>
+        <h1 style="color: var(--neon-pink);">CRIE AS CATEGORIAS</h1>
         <p>Escreva 2 perguntas para todos votarem (ex: Quem é o mais chato?)</p>
         <input type="text" id="q-input-1" placeholder="PERGUNTA 1">
         <input type="text" id="q-input-2" placeholder="PERGUNTA 2">
@@ -466,14 +466,12 @@
         loadSlide();
     };
 
-    // COMPARTILHAMENTO
     async function shareSlide() {
         const btn = document.getElementById('btn-share');
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         const canvasEl = document.getElementById('export-canvas');
         canvasEl.style.display = 'flex';
         
-        // Setup canvas data
         document.getElementById('ex-cat').innerText = document.getElementById('res-cat').innerText;
         document.getElementById('ex-roast').innerText = document.getElementById('res-roast').innerText;
         document.getElementById('ex-winner').innerText = document.getElementById('res-winner').innerText;
@@ -503,8 +501,6 @@
     };
 
     window.closeShareModal = () => document.getElementById('share-modal').style.display = 'none';
-    window.shareSlide = shareSlide;
-
 </script>
 </body>
 </html>
