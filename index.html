@@ -238,6 +238,15 @@
             transform: translateY(-2px);
         }
 
+        /* Amarelo (Cidade) */
+        .liquid-btn.neon-yellow { color: var(--neon-yellow); border-bottom: 2px solid rgba(242, 226, 5, 0.1); }
+        .liquid-btn.neon-yellow:hover {
+            background: rgba(242, 226, 5, 0.1);
+            box-shadow: 0 0 40px rgba(242, 226, 5, 0.2), inset 0 0 20px rgba(242, 226, 5, 0.1);
+            border-color: rgba(242, 226, 5, 0.3);
+            transform: translateY(-2px);
+        }
+
         /* --- EXPORT CANVAS (ESTÉTICA CORRIGIDA) --- */
         #export-canvas { 
             position: fixed; top: 0; left: -9999px; width: 1080px; height: 1920px; padding: 80px; 
@@ -343,6 +352,9 @@
             <button id="btn-start-nomercy" class="liquid-btn neon-red" style="display:none;" onclick="startNoMercy()">
                 <i class="fa-solid fa-skull"></i> NO MERCY
             </button>
+            <button id="btn-start-cidade" class="liquid-btn neon-yellow" style="display:none;" onclick="startCidade()">
+                <i class="fa-solid fa-city"></i> CIDADE
+            </button>
         </div>
 
         <div id="msg-waiting-host" style="display:none; color: #666; margin-top: 20px;">Aguardando dono da sala...</div>
@@ -376,7 +388,7 @@
                 <div id="res-data" class="data-box"></div>
             </div>
 
-            <div id="res-match-container" style="display: none; text-align: center; width: 100%;">
+            <div id="res-match-container" style="text-align: center; width: 100%;">
                 <div class="match-display">
                     <div class="match-card"><div class="match-avatar" id="m-av-1">A</div><span id="m-name-1" class="match-name">P1</span></div>
                     <i class="fa-solid fa-heart match-icon"></i>
@@ -570,24 +582,28 @@
     let courtHistoryData = [];
     let courtSlideIdx = 0;
 
-    // --- NOVA FUNÇÃO DE INÍCIO FDP ---
+    // --- FUNÇÕES DE INÍCIO DE JOGOS ---
     function startFDP() {
         if(confirm("Iniciar modo FDP (Cartas)? Isso vai redirecionar todos.")) {
             update(roomRef, { status: 'redirecting_to_fdp' });
         }
     };
 
-    // --- NOVA FUNÇÃO DE INÍCIO NO MERCY ---
     function startNoMercy() {
         if(confirm("Iniciar NO MERCY? O jogo ficará pesado.")) {
             update(roomRef, { status: 'redirecting_to_nomercy' });
         }
     };
 
-    // --- NOVA FUNÇÃO DE INÍCIO FAMÍLIA ---
     function startFamily() {
         if(confirm("Iniciar Modo Família? Isso vai redirecionar todos.")) {
             update(roomRef, { status: 'redirecting_to_family' });
+        }
+    };
+
+    function startCidade() {
+        if(confirm("Iniciar Modo Cidade? Isso vai redirecionar todos.")) {
+            update(roomRef, { status: 'redirecting_to_cidade' });
         }
     };
 
@@ -650,23 +666,11 @@
             if(!data) return;
             fullRoomData = data; 
 
-            // REDIRECIONAMENTO FDP
-            if(data.status === 'redirecting_to_fdp') {
-                window.location.href = `fdp.html?room=${roomCode}`;
-                return;
-            }
-
-            // REDIRECIONAMENTO NO MERCY
-            if(data.status === 'redirecting_to_nomercy') {
-                window.location.href = `nomercy.html?room=${roomCode}`;
-                return;
-            }
-
-            // REDIRECIONAMENTO FAMÍLIA
-            if(data.status === 'redirecting_to_family') {
-                window.location.href = `family.html?room=${roomCode}`;
-                return;
-            }
+            // REDIRECIONAMENTOS
+            if(data.status === 'redirecting_to_fdp') { window.location.href = `fdp.html?room=${roomCode}`; return; }
+            if(data.status === 'redirecting_to_nomercy') { window.location.href = `nomercy.html?room=${roomCode}`; return; }
+            if(data.status === 'redirecting_to_family') { window.location.href = `family.html?room=${roomCode}`; return; }
+            if(data.status === 'redirecting_to_cidade') { window.location.href = `cidade.html?room=${roomCode}`; return; }
 
             currentPlayers = {};
             const list = document.getElementById('lobby-list');
@@ -682,14 +686,16 @@
             const btnStartFDP = document.getElementById('btn-start-fdp');
             const btnStartNM = document.getElementById('btn-start-nomercy');
             const btnStartFamily = document.getElementById('btn-start-family');
+            const btnStartCidade = document.getElementById('btn-start-cidade');
             const msgWait = document.getElementById('msg-waiting-host');
             
             if(data.host === myId) { 
                 amIHost = true; 
-                btnStart.style.display = 'flex'; // Mudado para Flex por conta do novo CSS
+                btnStart.style.display = 'flex';
                 btnStartFDP.style.display = 'flex'; 
                 btnStartNM.style.display = 'flex'; 
                 btnStartFamily.style.display = 'flex';
+                btnStartCidade.style.display = 'flex';
                 msgWait.style.display='none'; 
             }
             else { 
@@ -697,10 +703,11 @@
                 btnStartFDP.style.display='none';
                 btnStartNM.style.display='none';
                 btnStartFamily.style.display='none';
+                btnStartCidade.style.display='none';
                 msgWait.style.display='block'; 
             }
 
-            // GAME STATUS ROUTING (WRAPPED)
+            // GAME STATUS ROUTING
             if(data.status === 'voting') {
                 resetGameUI(); 
                 if(data.finishedPlayers && data.finishedPlayers[myId]) {
@@ -840,7 +847,7 @@
         update(roomRef, { finalResults: calcRes, awards: awards, status: 'results' });
     }
 
-    // --- WRAPPED (STANDARD) ---
+    // --- WRAPPED ---
     function startWrapped() {
         slideIdx = 0;
         const total = questions.length + awardSlides.length;
@@ -854,10 +861,7 @@
         if(document.getElementById('screen-wrapped').style.display === 'none') { clearTimeout(timer); return; }
 
         const total = questions.length + awardSlides.length;
-        if(slideIdx >= total) { 
-            showScreen('screen-end');
-            return; 
-        }
+        if(slideIdx >= total) { showScreen('screen-end'); return; }
         
         clearTimeout(timer);
         for(let i=0; i<total; i++) {
@@ -898,7 +902,7 @@
             document.getElementById('ambilight').style.background = `radial-gradient(circle at 50% 50%, ${theme}, #000)`;
             const res = finalResults[slideIdx] || {};
             const sorted = Object.entries(res).sort((a,b)=>b[1]-a[1]);
-            const total = Object.values(res).reduce((a,b)=>a+b, 0);
+            const totalVal = Object.values(res).reduce((a,b)=>a+b, 0);
             
             if(q.type === 'match') {
                 document.getElementById('res-match-container').style.display='block';
@@ -912,7 +916,7 @@
                 const box = document.getElementById('res-data');
                 box.innerHTML = '';
                 sorted.slice(0,3).forEach(([name, count]) => {
-                    const pct = total > 0 ? (count/total)*100 : 0;
+                    const pct = totalVal > 0 ? (count/totalVal)*100 : 0;
                     box.innerHTML += `
                         <div class="data-row">
                             <span style="width:80px;">${name}</span>
@@ -927,12 +931,9 @@
         timer = setTimeout(() => { slideIdx++; loadSlide(); }, 5000);
     }
 
-    // --- NEW: COURT RECAP LOGIC ---
+    // --- COURT RECAP LOGIC ---
     function startCourtRecap(historyObj) {
-        if(!historyObj) {
-            showScreen('screen-end');
-            return;
-        }
+        if(!historyObj) { showScreen('screen-end'); return; }
         courtHistoryData = Object.values(historyObj);
         courtSlideIdx = 0;
         showScreen('screen-wrapped');
@@ -944,10 +945,7 @@
         if(isPaused) return;
         if(document.getElementById('screen-wrapped').style.display === 'none') { clearTimeout(timer); return; }
 
-        if(courtSlideIdx >= courtHistoryData.length) {
-            showScreen('screen-end');
-            return;
-        }
+        if(courtSlideIdx >= courtHistoryData.length) { showScreen('screen-end'); return; }
 
         clearTimeout(timer);
         for(let i=0; i<courtHistoryData.length; i++) {
@@ -1022,9 +1020,7 @@
             }
         });
 
-        if(!found) {
-            list.innerHTML = "<p>Você não ganhou nada para protestar.</p>";
-        }
+        if(!found) { list.innerHTML = "<p>Você não ganhou nada para protestar.</p>"; }
         showScreen('screen-protest-menu');
     }
 
@@ -1042,9 +1038,7 @@
         const allVotes = fullRoomData.votes[qIdx] || {};
         const culprits = [];
         Object.entries(allVotes).forEach(([voterId, targetName]) => {
-            if(targetName === myName) {
-                culprits.push(voterId);
-            }
+            if(targetName === myName) { culprits.push(voterId); }
         });
 
         if(culprits.length === 0) { alert("Ninguém votou em você aqui."); return; }
@@ -1063,12 +1057,9 @@
     function queueProtest(defendantId, defendantName) {
         if(confirm(`Processar ${defendantName} por "${protestCatSelected}"?`)) {
             const queueData = {
-                accuser: myId,
-                accuserName: myName,
-                defendant: defendantId,
-                defendantName: defendantName,
-                category: protestCatSelected,
-                timestamp: Date.now()
+                accuser: myId, accuserName: myName,
+                defendant: defendantId, defendantName: defendantName,
+                category: protestCatSelected, timestamp: Date.now()
             };
             push(ref(db, `rooms/${roomCode}/protestQueue`), queueData);
             update(ref(db, `rooms/${roomCode}`), { status: 'court_lobby' });
@@ -1096,9 +1087,7 @@
             const div = document.createElement('div');
             div.className = 'queue-item';
             let actionBtn = "";
-            if(amIHost) {
-                actionBtn = `<button class="btn btn-sm" style="background:var(--neon-green); color:black;" onclick="startCourtCase('${key}')">INICIAR</button>`;
-            }
+            if(amIHost) { actionBtn = `<button class="btn btn-sm" style="background:var(--neon-green); color:black;" onclick="startCourtCase('${key}')">INICIAR</button>`; }
             div.innerHTML = `<div><div class="queue-names">${item.accuserName} vs ${item.defendantName}</div><div class="queue-reason">${item.category}</div></div>${actionBtn}`;
             list.appendChild(div);
         });
@@ -1176,11 +1165,8 @@
                 setTimeout(() => {
                     const newScores = pData.scores || { accuser: 0, defendant: 0 };
                     newScores[winner]++;
-                    if(pData.round < 4) {
-                        update(ref(db, `rooms/${roomCode}/currentCase`), { round: pData.round + 1, scores: newScores });
-                    } else {
-                        endTribunal(newScores, pData);
-                    }
+                    if(pData.round < 4) { update(ref(db, `rooms/${roomCode}/currentCase`), { round: pData.round + 1, scores: newScores }); }
+                    else { endTribunal(newScores, pData); }
                 }, 1500);
             }
         }
@@ -1208,7 +1194,7 @@
         alert(`JULGAMENTO ENCERRADO!`);
     }
 
-    // --- SHARE FUNCTION FIXED ---
+    // --- SHARE FUNCTION ---
     async function processShare(type) { if(!pendingBlob) return; const f = new File([pendingBlob], "wrapped.png", {type:"image/png"}); if(type==='native' && navigator.share) navigator.share({files:[f]}); else { const a=document.createElement('a'); a.download="wrapped.png"; a.href=URL.createObjectURL(pendingBlob); a.click(); } closeShareModal(); };
     
     async function shareSlide() {
@@ -1309,7 +1295,7 @@
 
     function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; isPaused = false; const activeNav = document.querySelector('.nav-fill.paused'); if(activeNav) activeNav.classList.remove('paused'); timer = setTimeout(() => { slideIdx++; loadSlide(); }, 2000); }
 
-    // --- EXPOSIÇÃO GLOBAL (FIX) ---
+    // --- EXPOSIÇÃO GLOBAL ---
     window.goToMenu = goToMenu;
     window.createRoomReal = createRoomReal;
     window.showJoinInput = showJoinInput;
@@ -1317,7 +1303,8 @@
     window.startGameReal = startGameReal;
     window.startFDP = startFDP;
     window.startNoMercy = startNoMercy;
-    window.startFamily = startFamily; // EXPOSTO
+    window.startFamily = startFamily;
+    window.startCidade = startCidade;
     window.handleStoryClick = handleStoryClick;
     window.shareSlide = shareSlide;
     window.processShare = processShare;
