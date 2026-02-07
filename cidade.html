@@ -40,57 +40,62 @@
 
         .glass-card {
             background: var(--glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 32px;
             padding: 30px;
             width: 100%; max-width: 400px;
             text-align: center;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            z-index: 10;
+            transition: all 0.5s ease;
         }
 
         .role-title { font-size: 2.5rem; font-weight: 900; margin: 15px 0; text-transform: uppercase; letter-spacing: -1px; }
-        .status-badge { font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 2px; }
-
+        
         .btn-main {
             background: white; color: black; border: none;
             padding: 18px 30px; border-radius: 100px;
-            font-family: var(--font-main); font-weight: 900;
-            font-size: 1rem; cursor: pointer; width: 100%;
-            margin-top: 20px; transition: all 0.3s ease;
+            font-weight: 900; cursor: pointer; width: 100%;
+            margin-top: 20px; transition: 0.3s;
         }
 
-        /* Overlay Corrigido */
+        .btn-main:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+
         #night-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
-            z-index: 1000;
-            display: none; /* Escondido por padrão */
-            flex-direction: column;
-            justify-content: center; align-items: center;
-            text-align: center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 1000; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            animation: fadeIn 0.8s ease;
         }
 
         .vote-grid {
             display: grid; grid-template-columns: 1fr 1fr;
-            gap: 10px; margin-top: 20px; width: 100%;
+            gap: 12px; margin-top: 20px; width: 100%;
         }
 
         .player-btn {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white; padding: 15px; border-radius: 15px;
-            font-size: 0.9rem; font-weight: 700;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white; padding: 20px 10px; border-radius: 20px;
+            font-weight: 700; transition: 0.3s;
+        }
+
+        /* Efeito de clique registrado */
+        .player-btn.selected {
+            background: var(--neon-green);
+            color: black;
+            transform: scale(0.9);
+            box-shadow: 0 0 30px var(--neon-green);
         }
 
         .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
-        .screen.active { display: flex; }
+        .screen.active { display: flex; animation: slideUp 0.5s ease; }
 
-        #player-list-lobby { margin: 20px 0; text-align: left; width: 100%; }
-        .player-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 700; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .bot-badge { font-size: 0.6rem; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
     </style>
 </head>
 <body>
@@ -98,37 +103,37 @@
     <div class="app-container">
         <div id="screen-lobby" class="screen active">
             <div class="glass-card">
-                <i class="fa-solid fa-users-viewfinder" style="font-size: 2rem; margin-bottom: 15px;"></i>
-                <h2>SALA: <span id="display-room-code" style="color: var(--neon-blue);">----</span></h2>
-                <div id="player-list-lobby"></div>
-                <button id="host-start-btn" class="btn-main" style="display: none;" onclick="startGame()">INICIAR JOGO</button>
-                <p id="wait-msg" style="margin-top: 20px; opacity: 0.5;">Aguardando líder...</p>
+                <h2 style="font-size: 0.8rem; letter-spacing: 3px; opacity: 0.6; margin-bottom: 10px;">LOBBY</h2>
+                <h1 id="display-room-code" style="color: var(--neon-blue); font-size: 3rem; margin-bottom: 20px;">----</h1>
+                <div id="player-list-lobby" style="text-align: left; margin-bottom: 20px;"></div>
+                <button id="host-start-btn" class="btn-main" style="display: none;" onclick="startGame()">INICIAR COM BOT</button>
+                <p id="wait-msg" style="opacity: 0.4; font-size: 0.9rem;">Aguardando o mestre da sala...</p>
             </div>
         </div>
 
         <div id="screen-reveal" class="screen">
-            <p class="status-badge">TEU PAPEL É</p>
             <div class="glass-card" id="role-card-display">
+                <p class="status-badge">VOCÊ É O</p>
                 <h1 id="my-role-name" class="role-title">...</h1>
-                <p id="my-role-desc" style="opacity: 0.8;"></p>
-                <div style="margin-top: 30px; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <p id="phase-instruction">Aguardando o pôr do sol...</p>
-                </div>
+                <p id="my-role-desc" style="opacity: 0.7; font-size: 1.1rem;"></p>
             </div>
         </div>
     </div>
 
     <div id="night-overlay">
-        <i class="fa-solid fa-moon" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 20px;"></i>
-        <h1 class="role-title">A CIDADE DORME</h1>
-        <p id="night-instruction" style="max-width: 80%; opacity: 0.8; margin-bottom: 20px;"></p>
-        <div id="night-action-grid" class="vote-grid" style="padding: 20px; max-width: 400px;"></div>
+        <div id="night-content" style="width: 100%; max-width: 400px; padding: 30px;">
+            <i class="fa-solid fa-moon" style="font-size: 3.5rem; color: var(--neon-blue); margin-bottom: 20px;"></i>
+            <h1 class="role-title">A CIDADE DORME</h1>
+            <p id="night-instruction" style="opacity: 0.8; line-height: 1.4;"></p>
+            <div id="night-action-grid" class="vote-grid"></div>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+        // Credenciais oficiais fornecidas
         const firebaseConfig = {
             apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
             authDomain: "wrapped-fad94.firebaseapp.com",
@@ -153,12 +158,18 @@
         window.startGame = async function() {
             const playersRef = ref(db, `rooms/${roomCode}/players`);
             const snap = await get(playersRef);
-            const players = snap.val();
-            if (!players) return;
-            const ids = Object.keys(players);
+            let players = snap.val() || {};
+            let ids = Object.keys(players);
+
+            // Adiciona um BOT se houver apenas 2 jogadores humanos
+            if (ids.length === 2) {
+                const botId = "bot_narrador";
+                await update(ref(db, `rooms/${roomCode}/players/${botId}`), { name: "BOT NARRADOR", isBot: true });
+                ids.push(botId);
+            }
 
             let roles = ['Assassino', 'Detetive', 'Médico'];
-            while (roles.length < ids.length) roles.push('Cidadão');
+            if (ids.length > 3) while (roles.length < ids.length) roles.push('Cidadão');
             roles = roles.sort(() => Math.random() - 0.5);
 
             let updates = {};
@@ -175,22 +186,16 @@
             const data = snapshot.val();
             if (!data) return;
 
-            // 1. Gerenciar Lobby
+            // Gerenciar UI do Lobby
             if (!data.gameState || data.gameState === 'lobby') {
-                showUIScreen('screen-lobby');
                 const list = document.getElementById('player-list-lobby');
                 list.innerHTML = "";
                 Object.values(data.players || {}).forEach(p => {
-                    list.innerHTML += `<div class="player-item">• ${p.name}</div>`;
+                    list.innerHTML += `<div style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); font-weight:700;">• ${p.name} ${p.isBot ? '<span class="bot-badge">BOT</span>' : ''}</div>`;
                 });
-                
-                if (data.host === myId) {
-                    document.getElementById('host-start-btn').style.display = 'block';
-                    document.getElementById('wait-msg').style.display = 'none';
-                }
+                if (data.host === myId) document.getElementById('host-start-btn').style.display = 'block';
             }
 
-            // 2. Gerenciar Papéis
             const me = data.players ? data.players[myId] : null;
             if (me && me.role) {
                 myRole = me.role;
@@ -199,38 +204,34 @@
                 setRoleUI(myRole);
             }
 
-            // 3. Gerenciar Fluxo de Telas (CORREÇÃO DA SOBREPOSIÇÃO)
+            // Gerenciar Transições de Fase
             if (data.gameState === 'reveal') {
-                // Se a fase for noite, mostra o overlay, senão mostra a tela de reveal
                 if (data.currentPhase === 'night') {
                     document.getElementById('night-overlay').style.display = 'flex';
-                    showUIScreen('none'); // Esconde telas de fundo
+                    switchScreen('none');
                     setupNightAction(data);
                 } else {
                     document.getElementById('night-overlay').style.display = 'none';
-                    showUIScreen('screen-reveal');
+                    switchScreen('screen-reveal');
                 }
             }
         });
 
-        function showUIScreen(id) {
+        function switchScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            if (id !== 'none') {
-                const target = document.getElementById(id);
-                if (target) target.classList.add('active');
-            }
+            if (id !== 'none') document.getElementById(id).classList.add('active');
         }
 
         function setRoleUI(role) {
             const card = document.getElementById('role-card-display');
             const desc = document.getElementById('my-role-desc');
-            const colors = { 'Assassino': '#ff4646', 'Médico': '#1ed760', 'Detetive': '#2d46b9', 'Cidadão': '#ffffff' };
-            card.style.borderColor = colors[role] || '#fff';
+            const colors = { 'Assassino': '#ff4646', 'Médico': '#1ed760', 'Detetive': '#2d46b9' };
+            card.style.borderTop = `8px solid ${colors[role] || '#fff'}`;
             
-            if (role === 'Assassino') desc.innerText = "Elimine um jogador a cada noite.";
-            else if (role === 'Médico') desc.innerText = "Salve alguém de ser eliminado.";
-            else if (role === 'Detetive') desc.innerText = "Investigue a identidade de alguém.";
-            else desc.innerText = "Tente sobreviver e descobrir quem é o assassino.";
+            if (role === 'Assassino') desc.innerText = "Sua missão é eliminar os outros sem ser descoberto.";
+            else if (role === 'Médico') desc.innerText = "Sua missão é proteger as vítimas do assassino.";
+            else if (role === 'Detetive') desc.innerText = "Sua missão é descobrir quem é o assassino.";
+            else desc.innerText = "Sobreviva e ajude a encontrar o culpado.";
         }
 
         function setupNightAction(data) {
@@ -238,36 +239,44 @@
             const inst = document.getElementById('night-instruction');
             grid.innerHTML = "";
 
-            if (!isAlive) { inst.innerText = "Você morreu. Aguarde o fim da rodada."; return; }
+            if (!isAlive) { inst.innerText = "Você foi eliminado. Aguarde a próxima rodada."; return; }
 
-            if (myRole === 'Assassino') {
-                inst.innerText = "Escolha sua vítima:";
-                renderButtons(data, 'kill');
-            } else if (myRole === 'Médico') {
-                inst.innerText = "Escolha quem proteger:";
-                renderButtons(data, 'save');
-            } else if (myRole === 'Detetive') {
-                inst.innerText = "Escolha quem investigar:";
-                renderButtons(data, 'investigate');
-            } else {
-                inst.innerText = "Shhh... A cidade está dormindo. Aguarde o dia.";
+            const instructions = {
+                'Assassino': 'Toque no jogador que você deseja eliminar esta noite.',
+                'Médico': 'Toque no jogador que você deseja proteger esta noite.',
+                'Detetive': 'Toque no jogador que você deseja investigar.',
+                'Cidadão': 'Aguarde em silêncio... a noite está perigosa.'
+            };
+            inst.innerText = instructions[myRole] || "...";
+
+            if (myRole !== 'Cidadão') {
+                Object.keys(data.players).forEach(id => {
+                    if (id !== myId && data.players[id].isAlive) {
+                        const b = document.createElement('button');
+                        b.className = "player-btn";
+                        b.innerText = data.players[id].name;
+                        b.onclick = (e) => handleAction(e, id, myRole);
+                        grid.appendChild(b);
+                    }
+                });
             }
         }
 
-        function renderButtons(data, type) {
+        // Feedback visual ao registrar ação
+        function handleAction(event, targetId, role) {
+            const btn = event.target;
             const grid = document.getElementById('night-action-grid');
-            Object.keys(data.players).forEach(id => {
-                if (id !== myId && data.players[id].isAlive) {
-                    const b = document.createElement('button');
-                    b.className = "player-btn";
-                    b.innerText = data.players[id].name;
-                    b.onclick = () => {
-                        update(ref(db, `rooms/${roomCode}/nightActions`), { [type]: id });
-                        alert("Ação registrada!");
-                    };
-                    grid.appendChild(b);
-                }
+            
+            // Desabilita outros botões e destaca o selecionado
+            Array.from(grid.children).forEach(child => {
+                child.style.opacity = "0.2";
+                child.style.pointerEvents = "none";
             });
+            btn.classList.add('selected');
+            btn.style.opacity = "1";
+
+            const actionType = role === 'Assassino' ? 'kill' : (role === 'Médico' ? 'save' : 'investigate');
+            update(ref(db, `rooms/${roomCode}/nightActions`), { [actionType]: targetId });
         }
     </script>
 </body>
