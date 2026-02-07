@@ -3,258 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Cidade Dorme - Pro Edition</title>
-    
+    <title>Cidade Dorme - Tribunal Edition</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&display=swap');
-
-        :root {
-            --neon-red: #ff4646; --neon-blue: #2d46b9; --neon-green: #1ed760;
-            --neon-gold: #f2e205; --bg-dark: #050505; --glass: rgba(255, 255, 255, 0.05);
-            --font-main: 'Space Grotesk', sans-serif;
-        }
-
+        :root { --neon-red: #ff4646; --neon-blue: #2d46b9; --neon-green: #1ed760; --neon-gold: #f2e205; --bg-dark: #050505; --glass: rgba(255, 255, 255, 0.08); --font-main: 'Space Grotesk', sans-serif; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-dark); color: white; font-family: var(--font-main); overflow: hidden; height: 100vh; }
-
         .app-container { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: radial-gradient(circle at top right, rgba(45, 70, 185, 0.15), transparent), radial-gradient(circle at bottom left, rgba(255, 70, 70, 0.1), transparent); }
-
-        .glass-card { background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 32px; padding: 30px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-
-        .role-title { font-size: 2.8rem; font-weight: 900; margin: 15px 0; text-transform: uppercase; letter-spacing: -1px; }
-        .btn-main { background: white; color: black; border: none; padding: 18px 30px; border-radius: 100px; font-weight: 900; cursor: pointer; width: 100%; margin-top: 20px; }
-
-        #night-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-
-        .vote-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; width: 100%; }
-        .player-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 20px 10px; border-radius: 20px; font-weight: 700; transition: 0.3s; }
-        .player-btn.selected { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); }
-
+        .glass-card { background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 32px; padding: 25px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .role-title { font-size: 2.2rem; font-weight: 900; margin: 10px 0; text-transform: uppercase; letter-spacing: -1px; }
+        .btn-main { background: white; color: black; border: none; padding: 16px; border-radius: 100px; font-weight: 900; cursor: pointer; width: 100%; margin-top: 15px; text-transform: uppercase; }
+        .btn-opt { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 15px; border-radius: 15px; width: 100%; margin-bottom: 10px; font-weight: 700; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; }
+        .btn-opt.active { border-color: var(--neon-green); background: rgba(30, 215, 96, 0.1); }
+        .vote-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; width: 100%; }
+        .player-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 15px 10px; border-radius: 15px; font-weight: 700; transition: 0.3s; cursor: pointer; }
         .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
-        .screen.active { display: flex; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .screen.active { display: flex; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #night-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <div id="screen-lobby" class="screen active">
-            <div class="glass-card">
-                <h1 id="display-room-code" style="color: var(--neon-blue); font-size: 3rem; margin-bottom: 20px;">----</h1>
-                <div id="player-list-lobby" style="text-align: left; margin-bottom: 20px; max-height: 200px; overflow-y: auto;"></div>
-                <button id="host-start-btn" class="btn-main" style="display: none;" onclick="startGame()">INICIAR PARTIDA</button>
+<div class="app-container">
+    <div id="screen-election" class="screen active">
+        <div class="glass-card">
+            <h2 style="font-size: 0.8rem; letter-spacing: 2px; opacity: 0.6;">QUEM SERÁ O NARRADOR?</h2>
+            <div id="narrator-options" style="margin-top: 20px; width: 100%;">
+                <button class="btn-opt" onclick="voteNarrator('system')"><span>SISTEMA (IA)</span><i class="fa-solid fa-robot"></i></button>
+                <div id="players-narrator-list"></div>
             </div>
-        </div>
-
-        <div id="screen-reveal" class="screen">
-            <div class="glass-card" id="role-card-display">
-                <p style="opacity: 0.6; letter-spacing: 2px;">SEU PAPEL</p>
-                <h1 id="my-role-name" class="role-title">...</h1>
-                <p id="my-role-desc" style="opacity: 0.7; font-size: 1.1rem;"></p>
-                <p id="wait-night-msg" style="margin-top: 20px; font-weight: bold; color: var(--neon-blue);">Aguardando mestre...</p>
-            </div>
-        </div>
-
-        <div id="screen-day" class="screen">
-            <div class="glass-card">
-                <h2 id="day-result-text" style="margin-bottom: 20px;">...</h2>
-                <hr style="opacity: 0.1; margin-bottom: 20px;">
-                <p style="font-size: 0.9rem; margin-bottom: 10px;">JULGAMENTO DA CIDADE</p>
-                <div id="day-vote-grid" class="vote-grid"></div>
-            </div>
+            <p id="election-status" style="font-size: 0.8rem; margin-top: 15px; opacity: 0.5;">Aguardando votos...</p>
         </div>
     </div>
 
-    <div id="night-overlay">
-        <div style="padding: 30px; max-width: 400px;">
-            <i class="fa-solid fa-moon" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 20px;"></i>
-            <h1 class="role-title">A NOITE CAIU</h1>
-            <p id="night-instruction" style="opacity: 0.8; margin-bottom: 20px;"></p>
-            <div id="night-action-grid" class="vote-grid"></div>
+    <div id="screen-narrator-panel" class="screen">
+        <div class="glass-card">
+            <h2 style="color: var(--neon-gold);">PAINEL DO MESTRE</h2>
+            <p style="font-size: 0.8rem; margin: 10px 0;">Escolha os papéis para os jogadores:</p>
+            <div id="manual-role-assignment" style="text-align: left;">
+                </div>
+            <button class="btn-main" id="btn-start-night-manual" style="display:none;" onclick="startNightManual()">INICIAR NOITE</button>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <div id="screen-player-role" class="screen">
+        <div class="glass-card">
+            <p style="opacity: 0.6;">SEU PAPEL É</p>
+            <h1 id="display-my-role" class="role-title">...</h1>
+            <p id="role-instruction" style="opacity: 0.8;"></p>
+        </div>
+    </div>
+</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
-            authDomain: "wrapped-fad94.firebaseapp.com",
-            databaseURL: "https://wrapped-fad94-default-rtdb.firebaseio.com",
-            projectId: "wrapped-fad94",
-            storageBucket: "wrapped-fad94.firebasestorage.app",
-            messagingSenderId: "360236097664",
-            appId: "1:360236097664:web:76777f529c18623bf1c665"
-        };
+<div id="night-overlay">
+    <i class="fa-solid fa-moon" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 20px;"></i>
+    <h1 class="role-title">A NOITE CAIU</h1>
+    <div id="night-action-grid" class="vote-grid" style="padding: 20px; max-width: 400px;"></div>
+</div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const roomCode = urlParams.get('room') || "SALA1";
-        document.getElementById('display-room-code').innerText = roomCode;
+    const firebaseConfig = {
+        apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
+        authDomain: "wrapped-fad94.firebaseapp.com",
+        databaseURL: "https://wrapped-fad94-default-rtdb.firebaseio.com",
+        projectId: "wrapped-fad94",
+        storageBucket: "wrapped-fad94.firebasestorage.app",
+        messagingSenderId: "360236097664",
+        appId: "1:360236097664:web:76777f529c18623bf1c665"
+    };
 
-        let myId = localStorage.getItem('wrapped_uid');
-        let myRole = "";
-        let isAlive = true;
-        let amIHost = false;
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get('room') || "SALA1";
+    const myId = localStorage.getItem('wrapped_uid');
 
-        // --- LÓGICA DE INÍCIO (PAPÉIS DINÂMICOS) ---
-        window.startGame = async function() {
-            const snap = await get(ref(db, `rooms/${roomCode}/players`));
-            let players = snap.val() || {};
-            let ids = Object.keys(players);
+    let currentNarrator = "";
+    let selectedRoles = { assassin: "", detective: "", doctor: "" };
 
-            // Adiciona Bot se necessário para fechar 3 jogadores
-            if (ids.length === 2) {
-                const botId = "bot_system";
-                await update(ref(db, `rooms/${roomCode}/players/${botId}`), { name: "BOT NARRADOR", isBot: true });
-                ids.push(botId);
-            }
+    // --- VOTAÇÃO NARRADOR ---
+    window.voteNarrator = (val) => {
+        update(ref(db, `rooms/${roomCode}/narratorVotes`), { [myId]: val });
+    };
 
-            // Define os papéis principais e os demais como Cidadãos
-            let roles = ['Assassino', 'Detetive', 'Médico'];
-            while (roles.length < ids.length) roles.push('Cidadão');
-            roles = roles.sort(() => Math.random() - 0.5);
+    onValue(ref(db, `rooms/${roomCode}`), (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
 
-            let updates = {};
-            ids.forEach((id, idx) => {
-                updates[`players/${id}/role`] = roles[idx];
-                updates[`players/${id}/isAlive`] = true;
-            });
-            updates['gameState'] = 'play';
-            updates['currentPhase'] = 'night';
-            updates['nightActions'] = { kill: "", save: "", investigate: "" };
-            update(ref(db, `rooms/${roomCode}`), updates);
-        };
-
-        // --- MONITORAMENTO REALTIME ---
-        onValue(ref(db, `rooms/${roomCode}`), (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-
-            amIHost = data.host === myId;
-            const me = data.players?.[myId];
-            if (me) { myRole = me.role; isAlive = me.isAlive; }
-
-            updateScreens(data);
-
-            // Lógica do Host (IA e Avanço)
-            if (amIHost && data.currentPhase === 'night') processNightLogic(data);
+        // 1. Atualizar lista de candidatos no lobby
+        const playersList = document.getElementById('players-narrator-list');
+        playersList.innerHTML = "";
+        Object.entries(data.players || {}).forEach(([id, p]) => {
+            const btn = document.createElement('button');
+            btn.className = "btn-opt";
+            btn.innerHTML = `<span>${p.name}</span><i class="fa-solid fa-user"></i>`;
+            btn.onclick = () => voteNarrator(id);
+            playersList.appendChild(btn);
         });
 
-        function updateScreens(data) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        // 2. Lógica de Apuração (Host decide quando todos votarem)
+        if (data.host === myId && !data.narradorId && data.narratorVotes) {
+            const votes = Object.values(data.narratorVotes);
+            if (votes.length >= Object.keys(data.players).length) {
+                const winner = votes.sort((a,b) => votes.filter(v => v===a).length - votes.filter(v => v===b).length).pop();
+                update(ref(db, `rooms/${roomCode}`), { narradorId: winner, gameState: 'assigning' });
+                if (winner === 'system') autoAssignRoles(data.players);
+            }
+        }
+
+        // 3. Gerenciar Telas Baseado no Papel
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        
+        if (data.gameState === 'assigning') {
+            if (data.narradorId === myId) {
+                document.getElementById('screen-narrator-panel').classList.add('active');
+                renderManualAssignment(data.players);
+            } else {
+                document.getElementById('screen-player-role').classList.add('active');
+                const me = data.players[myId];
+                if (me.role) {
+                    document.getElementById('display-my-role').innerText = me.role;
+                    setRoleDesc(me.role);
+                } else {
+                    document.getElementById('display-my-role').innerText = "AGUARDANDO...";
+                }
+            }
+        }
+
+        if (data.currentPhase === 'night') {
+            document.getElementById('night-overlay').style.display = 'flex';
+            renderNightActions(data);
+        } else {
             document.getElementById('night-overlay').style.display = 'none';
-
-            if (!data.gameState || data.gameState === 'lobby') {
-                document.getElementById('screen-lobby').classList.add('active');
-                if (amIHost) document.getElementById('host-start-btn').style.display = 'block';
-                renderLobby(data.players);
-            } else if (data.currentPhase === 'night') {
-                document.getElementById('night-overlay').style.display = 'flex';
-                renderNightUI(data);
-            } else if (data.currentPhase === 'day') {
-                document.getElementById('screen-day').classList.add('active');
-                renderDayUI(data);
-            } else if (data.gameState === 'play') {
-                document.getElementById('screen-reveal').classList.add('active');
-            }
         }
+    });
 
-        function renderNightUI(data) {
-            const grid = document.getElementById('night-action-grid');
-            const inst = document.getElementById('night-instruction');
-            grid.innerHTML = "";
-            
-            if (!isAlive) { inst.innerText = "Você está morto. Observe o silêncio."; return; }
-
-            const actionKey = getRoleKey();
-            if (actionKey && !data.nightActions?.[actionKey]) {
-                inst.innerText = `Você é o ${myRole}. Escolha sua ação!`;
-                Object.entries(data.players).forEach(([id, p]) => {
-                    if (id !== myId && p.isAlive) {
-                        const b = document.createElement('button');
-                        b.className = "player-btn";
-                        b.innerText = p.name;
-                        b.onclick = (e) => {
-                            e.target.classList.add('selected');
-                            update(ref(db, `rooms/${roomCode}/nightActions`), { [actionKey]: id });
-                        };
-                        grid.appendChild(b);
-                    }
-                });
-            } else {
-                inst.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><br>Aguardando outros jogadores...`;
-            }
-        }
-
-        function renderDayUI(data) {
-            const resText = document.getElementById('day-result-text');
-            const kill = data.nightActions?.kill;
-            const save = data.nightActions?.save;
-
-            if (kill && kill !== save) {
-                resText.innerText = `O JOGADOR ${data.players[kill].name} MORREU!`;
-                resText.style.color = "var(--neon-red)";
-                if (amIHost) update(ref(db, `rooms/${roomCode}/players/${kill}`), { isAlive: false });
-            } else {
-                resText.innerText = "NINGUÉM MORREU ESTA NOITE!";
-                resText.style.color = "var(--neon-green)";
-            }
-
-            const grid = document.getElementById('day-vote-grid');
-            grid.innerHTML = "";
-            Object.entries(data.players).forEach(([id, p]) => {
-                if (p.isAlive) {
-                    const b = document.createElement('button');
-                    b.className = "player-btn";
-                    b.innerText = p.name;
-                    b.onclick = () => alert("Voto de julgamento enviado!");
-                    grid.appendChild(b);
-                }
+    function renderManualAssignment(players) {
+        const container = document.getElementById('manual-role-assignment');
+        container.innerHTML = "";
+        ['Assassino', 'Detetive', 'Médico'].forEach(role => {
+            const div = document.createElement('div');
+            div.style.marginBottom = "15px";
+            div.innerHTML = `<label style="font-weight:900; font-size:0.7rem;">${role.toUpperCase()}:</label>`;
+            const select = document.createElement('select');
+            select.className = "btn-opt";
+            select.innerHTML = `<option value="">Escolher...</option>`;
+            Object.entries(players).forEach(([id, p]) => {
+                if(id !== myId) select.innerHTML += `<option value="${id}">${p.name}</option>`;
             });
-        }
+            select.onchange = (e) => assignRole(e.target.value, role);
+            div.appendChild(select);
+            container.appendChild(div);
+        });
+        document.getElementById('btn-start-night-manual').style.display = "block";
+    }
 
-        function processNightLogic(data) {
-            const actions = data.nightActions || {};
-            const roles = data.players;
-            
-            // Bot joga instantaneamente se tiver papel ativo
-            Object.entries(roles).forEach(([id, p]) => {
-                if (p.isBot && p.isAlive) {
-                    const target = Object.keys(roles).find(tid => tid !== id && roles[tid].isAlive);
-                    if (p.role === 'Assassino' && !actions.kill) update(ref(db, `rooms/${roomCode}/nightActions`), { kill: target });
-                    if (p.role === 'Médico' && !actions.save) update(ref(db, `rooms/${roomCode}/nightActions`), { save: target });
-                }
+    function assignRole(uid, role) {
+        if (!uid) return;
+        update(ref(db, `rooms/${roomCode}/players/${uid}`), { role: role });
+    }
+
+    window.startNightManual = () => {
+        // Define Cidadãos para quem sobrou
+        get(ref(db, `rooms/${roomCode}/players`)).then(snap => {
+            const players = snap.val();
+            let updates = {};
+            Object.entries(players).forEach(([id, p]) => {
+                if (!p.role && id !== currentNarrator) updates[`players/${id}/role`] = "Cidadão";
+                updates[`players/${id}/isAlive`] = true;
             });
+            updates['currentPhase'] = 'night';
+            update(ref(db, `rooms/${roomCode}`), updates);
+        });
+    }
 
-            // Verifica se todos os papéis ativos jogaram
-            const hasAssas = Object.values(roles).some(p => p.role === 'Assassino' && p.isAlive);
-            const hasMed = Object.values(roles).some(p => p.role === 'Médico' && p.isAlive);
+    function autoAssignRoles(players) {
+        const ids = Object.keys(players).sort(() => Math.random() - 0.5);
+        let updates = {};
+        const roles = ['Assassino', 'Detetive', 'Médico'];
+        ids.forEach((id, idx) => {
+            updates[`players/${id}/role`] = roles[idx] || "Cidadão";
+            updates[`players/${id}/isAlive`] = true;
+        });
+        updates['currentPhase'] = 'night';
+        update(ref(db, `rooms/${roomCode}`), updates);
+    }
 
-            if ((!hasAssas || actions.kill) && (!hasMed || actions.save)) {
-                setTimeout(() => update(ref(db, `rooms/${roomCode}`), { currentPhase: 'day' }), 3000);
+    function setRoleDesc(role) {
+        const desc = document.getElementById('role-instruction');
+        if (role === 'Assassino') desc.innerText = "Você deve matar sem ser pego.";
+        else if (role === 'Médico') desc.innerText = "Você deve salvar as vítimas.";
+        else if (role === 'Detetive') desc.innerText = "Você deve descobrir o assassino.";
+        else desc.innerText = "Tente sobreviver até o amanhecer.";
+    }
+
+    function renderNightActions(data) {
+        const grid = document.getElementById('night-action-grid');
+        grid.innerHTML = "";
+        const me = data.players[myId];
+        if (me.role === 'Cidadão' || !me.isAlive) return;
+
+        Object.entries(data.players).forEach(([id, p]) => {
+            if (id !== myId && p.isAlive && p.role !== 'Narrador') {
+                const btn = document.createElement('button');
+                btn.className = "player-btn";
+                btn.innerText = p.name;
+                btn.onclick = () => alert("Ação registrada!");
+                grid.appendChild(btn);
             }
-        }
-
-        function getRoleKey() {
-            if (myRole === 'Assassino') return 'kill';
-            if (myRole === 'Médico') return 'save';
-            if (myRole === 'Detetive') return 'investigate';
-            return null;
-        }
-
-        function renderLobby(players) {
-            const list = document.getElementById('player-list-lobby');
-            list.innerHTML = "";
-            Object.values(players || {}).forEach(p => {
-                list.innerHTML += `<div style="padding:12px; border-bottom:1px solid rgba(255,255,255,0.05);">• ${p.name}</div>`;
-            });
-        }
-    </script>
+        });
+    }
+</script>
 </body>
 </html>
