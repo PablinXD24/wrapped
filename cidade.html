@@ -30,12 +30,9 @@
         }
 
         .app-container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
             padding: 20px;
             background: radial-gradient(circle at top right, rgba(45, 70, 185, 0.15), transparent),
                         radial-gradient(circle at bottom left, rgba(255, 70, 70, 0.1), transparent);
@@ -48,88 +45,64 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 32px;
             padding: 30px;
-            width: 100%;
-            max-width: 400px;
+            width: 100%; max-width: 400px;
             text-align: center;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            z-index: 10;
         }
 
         .role-title { font-size: 2.5rem; font-weight: 900; margin: 15px 0; text-transform: uppercase; letter-spacing: -1px; }
         .status-badge { font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 2px; }
 
         .btn-main {
-            background: white;
-            color: black;
-            border: none;
-            padding: 18px 30px;
-            border-radius: 100px;
-            font-family: var(--font-main);
-            font-weight: 900;
-            font-size: 1rem;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: white; color: black; border: none;
+            padding: 18px 30px; border-radius: 100px;
+            font-family: var(--font-main); font-weight: 900;
+            font-size: 1rem; cursor: pointer; width: 100%;
+            margin-top: 20px; transition: all 0.3s ease;
         }
 
-        .btn-main:active { transform: scale(0.95); }
-
+        /* Overlay Corrigido */
         #night-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 100;
-            display: none;
+            background: #000;
+            z-index: 1000;
+            display: none; /* Escondido por padrão */
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: center; align-items: center;
             text-align: center;
         }
 
         .vote-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 20px;
-            width: 100%;
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; margin-top: 20px; width: 100%;
         }
 
         .player-btn {
             background: rgba(255,255,255,0.1);
             border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            padding: 15px;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            font-weight: 700;
+            color: white; padding: 15px; border-radius: 15px;
+            font-size: 0.9rem; font-weight: 700;
         }
 
         .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
         .screen.active { display: flex; }
 
-        #player-list-lobby {
-            margin: 20px 0;
-            text-align: left;
-            width: 100%;
-        }
-
-        .player-item {
-            padding: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-weight: 700;
-        }
+        #player-list-lobby { margin: 20px 0; text-align: left; width: 100%; }
+        .player-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 700; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        
         <div id="screen-lobby" class="screen active">
             <div class="glass-card">
                 <i class="fa-solid fa-users-viewfinder" style="font-size: 2rem; margin-bottom: 15px;"></i>
                 <h2>SALA: <span id="display-room-code" style="color: var(--neon-blue);">----</span></h2>
                 <div id="player-list-lobby"></div>
-                <button class="btn-main" onclick="startGame()">INICIAR JOGO</button>
+                <button id="host-start-btn" class="btn-main" style="display: none;" onclick="startGame()">INICIAR JOGO</button>
+                <p id="wait-msg" style="margin-top: 20px; opacity: 0.5;">Aguardando líder...</p>
             </div>
         </div>
 
@@ -143,19 +116,18 @@
                 </div>
             </div>
         </div>
-
     </div>
 
     <div id="night-overlay">
         <i class="fa-solid fa-moon" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 20px;"></i>
         <h1 class="role-title">A CIDADE DORME</h1>
-        <p id="night-instruction" style="max-width: 80%; opacity: 0.8;"></p>
+        <p id="night-instruction" style="max-width: 80%; opacity: 0.8; margin-bottom: 20px;"></p>
         <div id="night-action-grid" class="vote-grid" style="padding: 20px; max-width: 400px;"></div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
@@ -170,27 +142,20 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Captura o código da sala pela URL (?room=XXXX)
         const urlParams = new URLSearchParams(window.location.search);
         const roomCode = urlParams.get('room') || "SALA1";
         document.getElementById('display-room-code').innerText = roomCode;
 
-        let myId = localStorage.getItem('player_id') || 'p_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('player_id', myId);
-        
+        let myId = localStorage.getItem('wrapped_uid');
         let myRole = "";
         let isAlive = true;
 
-        // --- FUNÇÕES EXPOSTAS PARA O WINDOW (Corrigindo o Erro de startGame) ---
         window.startGame = async function() {
             const playersRef = ref(db, `rooms/${roomCode}/players`);
-            const snapshot = await get(playersRef);
-            const players = snapshot.val();
-            
+            const snap = await get(playersRef);
+            const players = snap.val();
             if (!players) return;
             const ids = Object.keys(players);
-
-            if (ids.length < 3) { alert("Mínimo 3 jogadores!"); return; }
 
             let roles = ['Assassino', 'Detetive', 'Médico'];
             while (roles.length < ids.length) roles.push('Cidadão');
@@ -203,69 +168,69 @@
             });
             updates['gameState'] = 'reveal';
             updates['currentPhase'] = 'night';
-
             update(ref(db, `rooms/${roomCode}`), updates);
         };
 
-        // --- ESCUTAR MUDANÇAS NO FIREBASE ---
         onValue(ref(db, `rooms/${roomCode}`), (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
 
-            // Atualiza Lista de Jogadores no Lobby
-            const lobbyList = document.getElementById('player-list-lobby');
-            if (data.gameState === 'lobby' || !data.gameState) {
-                lobbyList.innerHTML = "";
+            // 1. Gerenciar Lobby
+            if (!data.gameState || data.gameState === 'lobby') {
+                showUIScreen('screen-lobby');
+                const list = document.getElementById('player-list-lobby');
+                list.innerHTML = "";
                 Object.values(data.players || {}).forEach(p => {
-                    const item = document.createElement('div');
-                    item.className = "player-item";
-                    item.innerText = "• " + (p.name || "Jogador Conectado");
-                    lobbyList.appendChild(item);
+                    list.innerHTML += `<div class="player-item">• ${p.name}</div>`;
                 });
+                
+                if (data.host === myId) {
+                    document.getElementById('host-start-btn').style.display = 'block';
+                    document.getElementById('wait-msg').style.display = 'none';
+                }
             }
 
+            // 2. Gerenciar Papéis
             const me = data.players ? data.players[myId] : null;
-            if (me) {
+            if (me && me.role) {
                 myRole = me.role;
                 isAlive = me.isAlive;
+                document.getElementById('my-role-name').innerText = myRole;
+                setRoleUI(myRole);
             }
 
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-
+            // 3. Gerenciar Fluxo de Telas (CORREÇÃO DA SOBREPOSIÇÃO)
             if (data.gameState === 'reveal') {
-                document.getElementById('screen-reveal').classList.add('active');
-                if (myRole) {
-                    document.getElementById('my-role-name').innerText = myRole;
-                    setRoleUI(myRole);
+                // Se a fase for noite, mostra o overlay, senão mostra a tela de reveal
+                if (data.currentPhase === 'night') {
+                    document.getElementById('night-overlay').style.display = 'flex';
+                    showUIScreen('none'); // Esconde telas de fundo
+                    setupNightAction(data);
+                } else {
+                    document.getElementById('night-overlay').style.display = 'none';
+                    showUIScreen('screen-reveal');
                 }
-            } else if (!data.gameState || data.gameState === 'lobby') {
-                document.getElementById('screen-lobby').classList.add('active');
-            }
-
-            if (data.currentPhase === 'night' && data.gameState === 'reveal') {
-                document.getElementById('night-overlay').style.display = 'flex';
-                setupNightAction(data);
-            } else {
-                document.getElementById('night-overlay').style.display = 'none';
             }
         });
+
+        function showUIScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            if (id !== 'none') {
+                const target = document.getElementById(id);
+                if (target) target.classList.add('active');
+            }
+        }
 
         function setRoleUI(role) {
             const card = document.getElementById('role-card-display');
             const desc = document.getElementById('my-role-desc');
-            if (role === 'Assassino') {
-                card.style.borderColor = "var(--neon-red)";
-                desc.innerText = "Escolha alguém para eliminar todas as noites.";
-            } else if (role === 'Médico') {
-                card.style.borderColor = "var(--neon-green)";
-                desc.innerText = "Escolha alguém para salvar da morte.";
-            } else if (role === 'Detetive') {
-                card.style.borderColor = "var(--neon-blue)";
-                desc.innerText = "Descubra a identidade de um jogador.";
-            } else {
-                card.style.borderColor = "white";
-                desc.innerText = "Tente sobreviver e descobrir os assassinos.";
-            }
+            const colors = { 'Assassino': '#ff4646', 'Médico': '#1ed760', 'Detetive': '#2d46b9', 'Cidadão': '#ffffff' };
+            card.style.borderColor = colors[role] || '#fff';
+            
+            if (role === 'Assassino') desc.innerText = "Elimine um jogador a cada noite.";
+            else if (role === 'Médico') desc.innerText = "Salve alguém de ser eliminado.";
+            else if (role === 'Detetive') desc.innerText = "Investigue a identidade de alguém.";
+            else desc.innerText = "Tente sobreviver e descobrir quem é o assassino.";
         }
 
         function setupNightAction(data) {
@@ -273,16 +238,19 @@
             const inst = document.getElementById('night-instruction');
             grid.innerHTML = "";
 
-            if (!isAlive) { inst.innerText = "Estás morto. Observa o silêncio."; return; }
+            if (!isAlive) { inst.innerText = "Você morreu. Aguarde o fim da rodada."; return; }
 
             if (myRole === 'Assassino') {
-                inst.innerText = "Assassino, escolha quem deve morrer:";
+                inst.innerText = "Escolha sua vítima:";
                 renderButtons(data, 'kill');
             } else if (myRole === 'Médico') {
-                inst.innerText = "Médico, escolha quem salvar:";
+                inst.innerText = "Escolha quem proteger:";
                 renderButtons(data, 'save');
+            } else if (myRole === 'Detetive') {
+                inst.innerText = "Escolha quem investigar:";
+                renderButtons(data, 'investigate');
             } else {
-                inst.innerText = "Aguarde a noite passar...";
+                inst.innerText = "Shhh... A cidade está dormindo. Aguarde o dia.";
             }
         }
 
@@ -292,7 +260,7 @@
                 if (id !== myId && data.players[id].isAlive) {
                     const b = document.createElement('button');
                     b.className = "player-btn";
-                    b.innerText = data.players[id].name || "Jogador";
+                    b.innerText = data.players[id].name;
                     b.onclick = () => {
                         update(ref(db, `rooms/${roomCode}/nightActions`), { [type]: id });
                         alert("Ação registrada!");
