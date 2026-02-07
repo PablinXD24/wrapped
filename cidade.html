@@ -16,7 +16,7 @@
         .user-identity { background: var(--glass); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
         .role-badge { padding: 5px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; background: var(--neon-blue); }
 
-        .glass-card { background: var(--glass); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 32px; padding: 25px; width: 100%; max-width: 420px; margin: auto; text-align: center; overflow-y: auto; max-height: 80vh; }
+        .glass-card { background: var(--glass); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 32px; padding: 25px; width: 100%; max-width: 420px; margin: auto; text-align: center; overflow-y: auto; max-height: 85vh; }
         .role-title { font-size: 2rem; font-weight: 900; text-transform: uppercase; margin: 10px 0; letter-spacing: -1px; }
         
         .btn-main { background: white; color: black; border: none; padding: 18px; border-radius: 100px; font-weight: 900; cursor: pointer; width: 100%; margin-top: 15px; text-transform: uppercase; transition: 0.3s; }
@@ -27,7 +27,6 @@
         
         .grid-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         .action-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 15px; border-radius: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        .action-btn:active { transform: scale(0.95); }
         .action-btn.voted { background: var(--neon-green); border-color: white; }
 
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; }
@@ -69,7 +68,7 @@
             <h2 style="color: var(--neon-gold);">DISTRIBUIR PAPÉIS</h2>
             <div id="mestre-controls" style="margin: 20px 0; text-align: left;"></div>
             <button class="btn-main" id="btn-start-game" disabled onclick="startNight()">INICIAR O JOGO</button>
-            <p id="mestre-warning" style="font-size: 0.6rem; color: var(--neon-red); margin-top: 10px;">Selecione todos os papéis principais.</p>
+            <p id="mestre-warning" style="font-size: 0.6rem; color: var(--neon-red); margin-top: 10px;">Selecione Assassino, Detetive e Médico.</p>
         </div>
     </div>
 
@@ -80,8 +79,8 @@
                 <p id="news-report" style="font-size: 0.9rem; line-height: 1.4;"></p>
             </div>
             
-            <div id="day-voting-area" style="display:none; margin-top: 20px;">
-                <h3 style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 10px;">VOTAÇÃO DE EXPULSÃO</h3>
+            <div id="day-voting-area" style="display:none; margin-top: 10px;">
+                <h3 style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 10px; text-transform: uppercase;">Votação de Expulsão</h3>
                 <div id="day-targets" class="grid-actions"></div>
             </div>
 
@@ -94,7 +93,7 @@
     <i class="fa-solid fa-moon" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 20px;"></i>
     <h2 id="night-role-instruction" style="text-align: center; margin-bottom: 20px;">A CIDADE DORME</h2>
     <div id="night-targets" class="grid-actions"></div>
-    <p style="margin-top: 30px; opacity: 0.5; font-size: 0.7rem;">Aguardando outros jogadores agirem...</p>
+    <p style="margin-top: 30px; opacity: 0.5; font-size: 0.7rem;">Aguardando outros jogadores...</p>
 </div>
 
 <script type="module">
@@ -171,8 +170,8 @@
                 renderMestrePanel(players);
             } else {
                 document.getElementById('screen-game').classList.add('active');
-                document.getElementById('game-status-title').innerText = "PAPÉIS SENDO DISTRIBUÍDOS";
-                document.getElementById('news-report').innerText = "O mestre está escolhendo quem vive e quem morre...";
+                document.getElementById('game-status-title').innerText = "PAPÉIS...";
+                document.getElementById('news-report').innerText = "O mestre está distribuindo os papéis...";
             }
         } 
         else {
@@ -220,15 +219,13 @@
         ['Assassino', 'Detetive', 'Médico'].forEach(role => {
             const label = document.createElement('p');
             label.style = "font-size: 0.7rem; margin-top: 10px; opacity: 0.6;";
-            label.innerText = `QUEM É O ${role.toUpperCase()}?`;
+            label.innerText = `ESCOLHA O ${role.toUpperCase()}:`;
             const sel = document.createElement('select');
             sel.className = "btn-opt";
-            sel.innerHTML = `<option value="">Escolher...</option>`;
-            
+            sel.innerHTML = `<option value="">Selecione...</option>`;
             Object.entries(players).forEach(([id, p]) => {
-                sel.innerHTML += `<option value="${id}">${p.name}${p.isBot ? ' (BOT)' : ''}</option>`;
+                sel.innerHTML += `<option value="${id}">${p.name}</option>`;
             });
-
             sel.onchange = (e) => {
                 const targetId = e.target.value;
                 localRoles[role] = targetId;
@@ -278,9 +275,8 @@
         const voteArea = document.getElementById('day-voting-area');
         
         title.innerText = "CIDADE ACORDOU";
-        report.innerText = data.lastNightEvent || "A noite foi silenciosa...";
+        report.innerText = data.lastNightEvent || "Ninguém foi atacado esta noite.";
         
-        // Área de Votação do Dia
         voteArea.style.display = "block";
         const grid = document.getElementById('day-targets');
         grid.innerHTML = "";
@@ -312,7 +308,7 @@
         grid.innerHTML = "";
 
         if (!me.isAlive) {
-            instr.innerText = "VOCÊ ESTÁ MORTO. AGUARDE.";
+            instr.innerText = "VOCÊ FOI ELIMINADO.";
             return;
         }
 
@@ -324,10 +320,11 @@
         instr.innerText = `${me.role.toUpperCase()}: ESCOLHA UM ALVO`;
         Object.entries(data.players).forEach(([id, p]) => {
             if (id !== myId && p.isAlive && id !== data.narradorId) {
+                const field = getRoleField(me.role);
                 const b = document.createElement('button');
-                b.className = `action-btn ${data.nightActions?.[getRoleField(me.role)] === id ? 'voted' : ''}`;
+                b.className = `action-btn ${data.nightActions?.[field] === id ? 'voted' : ''}`;
                 b.innerText = p.name;
-                b.onclick = () => submitAction(me.role, id, p.name);
+                b.onclick = () => submitAction(me.role, id);
                 grid.appendChild(b);
             }
         });
@@ -337,12 +334,13 @@
         return role === 'Assassino' ? 'kill' : role === 'Médico' ? 'save' : 'check';
     }
 
-    async function submitAction(role, targetId, targetName) {
+    async function submitAction(role, targetId) {
         const field = getRoleField(role);
-        await update(ref(db, `rooms/${roomCode}/nightActions`), { [field]: targetId });
+        const updates = {};
+        updates[field] = targetId;
+        await update(ref(db, `rooms/${roomCode}/nightActions`), updates);
     }
 
-    // --- LÓGICA DE BOT (HOST APENAS) ---
     async function botNightLogic(data) {
         let updates = {};
         let changed = false;
@@ -351,14 +349,15 @@
                 const field = getRoleField(p.role);
                 if (!data.nightActions?.[field]) {
                     const targets = Object.keys(data.players).filter(pid => pid !== id && data.players[pid].isAlive);
-                    updates[field] = targets[Math.floor(Math.random() * targets.length)];
-                    changed = true;
+                    if(targets.length > 0) {
+                        updates[field] = targets[Math.floor(Math.random() * targets.length)];
+                        changed = true;
+                    }
                 }
             }
         });
         if (changed) update(ref(db, `rooms/${roomCode}/nightActions`), updates);
         
-        // Auto processar amanhecer se todas ações principais existirem
         const acts = data.nightActions || {};
         if (acts.kill && acts.save && acts.check) processDawn(data);
     }
@@ -382,9 +381,9 @@
         let victim = acts.kill;
 
         if (acts.kill === acts.save) {
-            msg = "O Assassino tentou atacar, mas o Médico salvou a vítima!";
+            msg = "O Assassino atacou, mas o Médico salvou a vítima!";
         } else {
-            msg = `${d.players[victim].name} foi encontrado morto nesta manhã!`;
+            msg = `${d.players[victim].name} foi assassinado durante a noite!`;
             await update(ref(db, `rooms/${roomCode}/players/${victim}`), { isAlive: false });
         }
 
@@ -398,16 +397,21 @@
 
     async function processLynch(d) {
         const votes = d.dayVotes || {};
-        const aliveCount = Object.values(d.players).filter(p => p.isAlive).length;
+        const alivePlayers = Object.entries(d.players).filter(([id, p]) => p.isAlive);
+        const aliveCount = alivePlayers.length;
+        
         if (Object.keys(votes).length < aliveCount) return;
 
         const counts = Object.values(votes).reduce((acc, v) => { acc[v] = (acc[v] || 0) + 1; return acc; }, {});
         const target = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
         
         if (counts[target] > aliveCount / 2) {
-            let msg = `A cidade decidiu expulsar ${d.players[target].name}! Ele era ${d.players[target].role}.`;
-            await update(ref(db, `rooms/${roomCode}/players/${target}`), { isAlive: false });
-            update(ref(db, `rooms/${roomCode}/lastNightEvent`), msg);
+            let msg = `A cidade expulsou ${d.players[target].name}. Ele era ${d.players[target].role}!`;
+            const ups = {};
+            ups[`players/${target}/isAlive`] = false;
+            ups[`lastNightEvent`] = msg;
+            ups[`dayVotes`] = null;
+            await update(ref(db, `rooms/${roomCode}`), ups);
         }
     }
 
