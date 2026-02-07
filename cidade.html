@@ -41,7 +41,6 @@
                         radial-gradient(circle at bottom left, rgba(255, 70, 70, 0.1), transparent);
         }
 
-        /* Glass Cards */
         .glass-card {
             background: var(--glass);
             backdrop-filter: blur(20px);
@@ -58,7 +57,6 @@
         .role-title { font-size: 2.5rem; font-weight: 900; margin: 15px 0; text-transform: uppercase; letter-spacing: -1px; }
         .status-badge { font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 2px; }
 
-        /* Buttons (Same style as your previous project) */
         .btn-main {
             background: white;
             color: black;
@@ -76,7 +74,6 @@
 
         .btn-main:active { transform: scale(0.95); }
 
-        /* Night Phase overlay */
         #night-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -107,15 +104,18 @@
             font-weight: 700;
         }
 
-        .player-btn.voted { border-color: var(--neon-red); background: rgba(255, 70, 70, 0.2); }
-
         .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
         .screen.active { display: flex; }
 
-        .phase-announcer {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            color: var(--neon-blue);
+        #player-list-lobby {
+            margin: 20px 0;
+            text-align: left;
+            width: 100%;
+        }
+
+        .player-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
             font-weight: 700;
         }
     </style>
@@ -128,8 +128,7 @@
             <div class="glass-card">
                 <i class="fa-solid fa-users-viewfinder" style="font-size: 2rem; margin-bottom: 15px;"></i>
                 <h2>SALA: <span id="display-room-code" style="color: var(--neon-blue);">----</span></h2>
-                <p style="opacity: 0.7; margin-top: 10px;">Aguardando jogadores...</p>
-                <div id="player-list" style="margin: 20px 0; font-weight: 700;"></div>
+                <div id="player-list-lobby"></div>
                 <button class="btn-main" onclick="startGame()">INICIAR JOGO</button>
             </div>
         </div>
@@ -142,15 +141,6 @@
                 <div style="margin-top: 30px; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
                     <p id="phase-instruction">Aguardando o pôr do sol...</p>
                 </div>
-            </div>
-        </div>
-
-        <div id="screen-day" class="screen">
-            <p class="phase-announcer"><i class="fa-solid fa-sun"></i> A CIDADE ACORDOU</p>
-            <div class="glass-card">
-                <p id="last-night-event" style="margin-bottom: 20px; color: var(--neon-red); font-weight: 700;"></p>
-                <h3>Quem deve ser eliminado?</h3>
-                <div id="day-vote-grid" class="vote-grid"></div>
             </div>
         </div>
 
@@ -167,39 +157,41 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-        // COLE AS SUAS CREDENCIAIS AQUI
         const firebaseConfig = {
-            apiKey: "AIzaSy...",
-            authDomain: "...",
-            databaseURL: "...",
-            projectId: "...",
-            storageBucket: "...",
-            messagingSenderId: "...",
-            appId: "..."
+            apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
+            authDomain: "wrapped-fad94.firebaseapp.com",
+            databaseURL: "https://wrapped-fad94-default-rtdb.firebaseio.com",
+            projectId: "wrapped-fad94",
+            storageBucket: "wrapped-fad94.firebasestorage.app",
+            messagingSenderId: "360236097664",
+            appId: "1:360236097664:web:76777f529c18623bf1c665"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // VARIÁVEIS DE ESTADO
+        // Captura o código da sala pela URL (?room=XXXX)
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room') || "SALA1";
+        document.getElementById('display-room-code').innerText = roomCode;
+
         let myId = localStorage.getItem('player_id') || 'p_' + Math.random().toString(36).substr(2, 9);
         localStorage.setItem('player_id', myId);
         
-        let roomCode = "SALA1"; // Exemplo: Pegar da URL ou input
         let myRole = "";
         let isAlive = true;
 
-        // --- LÓGICA DE JOGO ---
-
-        window.startGame = async () => {
+        // --- FUNÇÕES EXPOSTAS PARA O WINDOW (Corrigindo o Erro de startGame) ---
+        window.startGame = async function() {
             const playersRef = ref(db, `rooms/${roomCode}/players`);
             const snapshot = await get(playersRef);
             const players = snapshot.val();
+            
+            if (!players) return;
             const ids = Object.keys(players);
 
             if (ids.length < 3) { alert("Mínimo 3 jogadores!"); return; }
 
-            // Sorteio de Papéis
             let roles = ['Assassino', 'Detetive', 'Médico'];
             while (roles.length < ids.length) roles.push('Cidadão');
             roles = roles.sort(() => Math.random() - 0.5);
@@ -215,25 +207,42 @@
             update(ref(db, `rooms/${roomCode}`), updates);
         };
 
-        // ESCUTAR MUDANÇAS NO BANCO
+        // --- ESCUTAR MUDANÇAS NO FIREBASE ---
         onValue(ref(db, `rooms/${roomCode}`), (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
 
-            const me = data.players[myId];
-            myRole = me.role;
-            isAlive = me.isAlive;
+            // Atualiza Lista de Jogadores no Lobby
+            const lobbyList = document.getElementById('player-list-lobby');
+            if (data.gameState === 'lobby' || !data.gameState) {
+                lobbyList.innerHTML = "";
+                Object.values(data.players || {}).forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = "player-item";
+                    item.innerText = "• " + (p.name || "Jogador Conectado");
+                    lobbyList.appendChild(item);
+                });
+            }
 
-            // Gerenciar Telas
+            const me = data.players ? data.players[myId] : null;
+            if (me) {
+                myRole = me.role;
+                isAlive = me.isAlive;
+            }
+
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 
             if (data.gameState === 'reveal') {
                 document.getElementById('screen-reveal').classList.add('active');
-                document.getElementById('my-role-name').innerText = myRole;
-                setRoleUI(myRole);
+                if (myRole) {
+                    document.getElementById('my-role-name').innerText = myRole;
+                    setRoleUI(myRole);
+                }
+            } else if (!data.gameState || data.gameState === 'lobby') {
+                document.getElementById('screen-lobby').classList.add('active');
             }
 
-            if (data.currentPhase === 'night' && data.gameState !== 'lobby') {
+            if (data.currentPhase === 'night' && data.gameState === 'reveal') {
                 document.getElementById('night-overlay').style.display = 'flex';
                 setupNightAction(data);
             } else {
@@ -244,16 +253,18 @@
         function setRoleUI(role) {
             const card = document.getElementById('role-card-display');
             const desc = document.getElementById('my-role-desc');
-            
             if (role === 'Assassino') {
-                card.style.boxShadow = "0 0 30px var(--neon-red)";
+                card.style.borderColor = "var(--neon-red)";
                 desc.innerText = "Escolha alguém para eliminar todas as noites.";
             } else if (role === 'Médico') {
-                card.style.boxShadow = "0 0 30px var(--neon-green)";
+                card.style.borderColor = "var(--neon-green)";
                 desc.innerText = "Escolha alguém para salvar da morte.";
             } else if (role === 'Detetive') {
-                card.style.boxShadow = "0 0 30px var(--neon-blue)";
+                card.style.borderColor = "var(--neon-blue)";
                 desc.innerText = "Descubra a identidade de um jogador.";
+            } else {
+                card.style.borderColor = "white";
+                desc.innerText = "Tente sobreviver e descobrir os assassinos.";
             }
         }
 
@@ -266,27 +277,27 @@
 
             if (myRole === 'Assassino') {
                 inst.innerText = "Assassino, escolha quem deve morrer:";
-                renderTargetButtons(data, 'kill');
+                renderButtons(data, 'kill');
             } else if (myRole === 'Médico') {
                 inst.innerText = "Médico, escolha quem salvar:";
-                renderTargetButtons(data, 'save');
+                renderButtons(data, 'save');
             } else {
                 inst.innerText = "Aguarde a noite passar...";
             }
         }
 
-        function renderTargetButtons(data, actionType) {
+        function renderButtons(data, type) {
             const grid = document.getElementById('night-action-grid');
-            Object.keys(data.players).forEach(pId => {
-                if (pId !== myId && data.players[pId].isAlive) {
-                    const btn = document.createElement('button');
-                    btn.className = "player-btn";
-                    btn.innerText = data.players[pId].name || "Jogador";
-                    btn.onclick = () => {
-                        update(ref(db, `rooms/${roomCode}/nightActions`), { [actionType]: pId });
-                        alert("Ação realizada!");
+            Object.keys(data.players).forEach(id => {
+                if (id !== myId && data.players[id].isAlive) {
+                    const b = document.createElement('button');
+                    b.className = "player-btn";
+                    b.innerText = data.players[id].name || "Jogador";
+                    b.onclick = () => {
+                        update(ref(db, `rooms/${roomCode}/nightActions`), { [type]: id });
+                        alert("Ação registrada!");
                     };
-                    grid.appendChild(btn);
+                    grid.appendChild(b);
                 }
             });
         }
