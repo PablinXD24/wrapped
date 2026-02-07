@@ -44,7 +44,8 @@
     <div id="screen-narrator-panel" class="screen">
         <div class="glass-card">
             <h2 style="color: var(--neon-gold);">PAINEL DO MESTRE</h2>
-            <p style="font-size: 0.8rem; margin: 10px 0;">Distribua os papéis (Bots incluídos):</p>
+            <p style="font-size: 0.8rem; margin: 10px 0;">Distribua os papéis:</p>
+            <p style="font-size: 0.6rem; color: var(--neon-red); margin-bottom: 10px;">* Priorize jogadores reais nos cargos principais.</p>
             <div id="manual-role-assignment" style="text-align: left;"></div>
             <button class="btn-main" onclick="finalizeManualAssignment()">INICIAR NOITE</button>
         </div>
@@ -86,24 +87,16 @@
     const myId = localStorage.getItem('wrapped_uid') || "user_" + Math.random().toString(36).substr(2, 9);
     if(!localStorage.getItem('wrapped_uid')) localStorage.setItem('wrapped_uid', myId);
 
-    // --- FUNÇÕES DE APOIO ---
-
+    // --- LOGICA DE BOTS ---
     async function fillWithBots(currentPlayers) {
         const totalNeeded = 6;
         const currentIds = Object.keys(currentPlayers);
-        const currentCount = currentIds.length;
-        
-        if (currentCount < totalNeeded) {
-            const botsToAdd = totalNeeded - currentCount;
+        if (currentIds.length < totalNeeded) {
+            const botsToAdd = totalNeeded - currentIds.length;
             let updates = {};
             for (let i = 1; i <= botsToAdd; i++) {
-                const botId = `bot_${i}_${Math.random().toString(36).substr(2, 5)}`;
-                updates[`players/${botId}`] = {
-                    name: `Bot ${i} 🤖`,
-                    isBot: true,
-                    isAlive: true,
-                    role: ""
-                };
+                const botId = `bot_${i}_${Math.random().toString(36).substr(2, 4)}`;
+                updates[`players/${botId}`] = { name: `Bot ${i} 🤖`, isBot: true, isAlive: true, role: "" };
             }
             await update(ref(db, `rooms/${roomCode}`), updates);
         }
@@ -113,49 +106,38 @@
         update(ref(db, `rooms/${roomCode}/narratorVotes`), { [myId]: val });
     };
 
-    // --- LÓGICA PRINCIPAL ---
-
     onValue(ref(db, `rooms/${roomCode}`), async (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
         const players = data.players || {};
         const votes = data.narratorVotes || {};
-        const totalPlayers = Object.keys(players).filter(id => !players[id].isBot).length;
-
-        // 1. Atualizar Lobby de Eleição
+        const humans = Object.entries(players).filter(([id, p]) => !p.isBot);
+        
+        // 1. UI Eleição
         const playersList = document.getElementById('players-narrator-list');
         playersList.innerHTML = "";
-        Object.entries(players).forEach(([id, p]) => {
-            if(!p.isBot) {
-                const btn = document.createElement('button');
-                btn.className = "btn-opt " + (votes[myId] === id ? "active" : "");
-                btn.innerHTML = `<span>${p.name}</span><i class="fa-solid fa-user"></i>`;
-                btn.onclick = () => voteNarrator(id);
-                playersList.appendChild(btn);
-            }
+        humans.forEach(([id, p]) => {
+            const btn = document.createElement('button');
+            btn.className = "btn-opt " + (votes[myId] === id ? "active" : "");
+            btn.innerHTML = `<span>${p.name}</span><i class="fa-solid fa-user"></i>`;
+            btn.onclick = () => voteNarrator(id);
+            playersList.appendChild(btn);
         });
         if(votes[myId] === 'system') document.getElementById('vote-system').classList.add('active');
 
-        // 2. Apuração (Apenas o Host processa)
-        if (data.host === myId && !data.narradorId && Object.keys(votes).length >= totalPlayers && totalPlayers > 0) {
+        // 2. Processamento Votos
+        if (data.host === myId && !data.narradorId && Object.keys(votes).length >= humans.length && humans.length > 0) {
             const voteCounts = Object.values(votes).reduce((acc, v) => { acc[v] = (acc[v] || 0) + 1; return acc; }, {});
             const winner = Object.keys(voteCounts).reduce((a, b) => voteCounts[a] > voteCounts[b] ? a : b);
             
-            // Antes de mudar o estado, se o vencedor for humano ou sistema, garantimos os bots
             await fillWithBots(players);
-            
-            update(ref(db, `rooms/${roomCode}`), { 
-                narradorId: winner, 
-                gameState: 'assigning' 
-            });
-
+            update(ref(db, `rooms/${roomCode}`), { narradorId: winner, gameState: 'assigning' });
             if (winner === 'system') autoAssignRoles();
         }
 
-        // 3. Gerenciamento de Telas
+        // 3. Telas
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        
         if (data.gameState === 'assigning') {
             if (data.narradorId === myId) {
                 document.getElementById('screen-narrator-panel').classList.add('active');
@@ -163,19 +145,17 @@
             } else {
                 document.getElementById('screen-player-role').classList.add('active');
                 const me = players[myId];
-                if (me && me.role) {
+                if (me?.role) {
                     document.getElementById('display-my-role').innerText = me.role;
                     setRoleDesc(me.role);
                 } else {
-                    document.getElementById('display-my-role').innerText = "ESPERANDO...";
-                    document.getElementById('role-instruction').innerText = "O narrador está distribuindo os papéis.";
+                    document.getElementById('display-my-role').innerText = "ESCOLHENDO...";
                 }
             }
         } else {
             document.getElementById('screen-election').classList.add('active');
         }
 
-        // 4. Noite
         if (data.currentPhase === 'night') {
             document.getElementById('night-overlay').style.display = 'flex';
             renderNightActions(data);
@@ -187,14 +167,21 @@
     async function autoAssignRoles() {
         const snap = await get(ref(db, `rooms/${roomCode}/players`));
         const allPlayers = snap.val();
-        const ids = Object.keys(allPlayers).sort(() => Math.random() - 0.5);
+        const narradorId = (await get(ref(db, `rooms/${roomCode}/narradorId`))).val();
+        
+        // Separa humanos e bots (excluindo o narrador)
+        let availableHumans = Object.keys(allPlayers).filter(id => !allPlayers[id].isBot && id !== narradorId).sort(() => Math.random() - 0.5);
+        let availableBots = Object.keys(allPlayers).filter(id => allPlayers[id].isBot).sort(() => Math.random() - 0.5);
+        
+        let pool = [...availableHumans, ...availableBots]; // Humanos primeiro na fila
         let updates = {};
         const roles = ['Assassino', 'Detetive', 'Médico'];
         
-        ids.forEach((id, idx) => {
+        pool.forEach((id, idx) => {
             updates[`players/${id}/role`] = roles[idx] || "Cidadão";
             updates[`players/${id}/isAlive`] = true;
         });
+        
         updates['currentPhase'] = 'night';
         update(ref(db, `rooms/${roomCode}`), updates);
     }
@@ -211,10 +198,11 @@
             select.className = "btn-opt";
             select.innerHTML = `<option value="">Escolher...</option>`;
             
-            Object.entries(players).forEach(([id, p]) => {
-                if(id !== narradorId) {
-                    select.innerHTML += `<option value="${id}">${p.name}</option>`;
-                }
+            // Renderiza humanos no topo da lista
+            const sortedPlayers = Object.entries(players).filter(([id]) => id !== narradorId).sort((a,b) => (a[1].isBot === b[1].isBot) ? 0 : a[1].isBot ? 1 : -1);
+
+            sortedPlayers.forEach(([id, p]) => {
+                select.innerHTML += `<option value="${id}">${p.name}${p.isBot ? ' (BOT)' : ''}</option>`;
             });
 
             select.onchange = (e) => {
@@ -230,7 +218,7 @@
         const players = snap.val();
         let updates = {};
         Object.entries(players).forEach(([id, p]) => {
-            if (!p.role) updates[`players/${id}/role`] = "Cidadão";
+            if (!p.role && id !== 'narradorId') updates[`players/${id}/role`] = "Cidadão";
             updates[`players/${id}/isAlive`] = true;
         });
         updates['currentPhase'] = 'night';
@@ -252,23 +240,16 @@
         const grid = document.getElementById('night-action-grid');
         grid.innerHTML = "";
         const me = data.players[myId];
-        
-        if (myId === data.narradorId) {
-            grid.innerHTML = "<p style='grid-column:1/-1'>Você é o Narrador. Coordene a noite.</p>";
+        if (myId === data.narradorId || me?.role === 'Cidadão' || !me?.isAlive) {
+            grid.innerHTML = `<p style="opacity:0.5">${myId === data.narradorId ? 'Coordene os papéis...' : 'A cidade dorme...'}</p>`;
             return;
         }
-
-        if (me.role === 'Cidadão' || !me.isAlive) {
-            grid.innerHTML = "<p style='grid-column:1/-1; opacity:0.5'>Feche os olhos... A cidade dorme.</p>";
-            return;
-        }
-
         Object.entries(data.players).forEach(([id, p]) => {
             if (id !== myId && p.isAlive && id !== data.narradorId) {
                 const btn = document.createElement('button');
                 btn.className = "player-btn";
                 btn.innerText = p.name;
-                btn.onclick = () => alert("Ação enviada!");
+                btn.onclick = () => alert("Ação registrada!");
                 grid.appendChild(btn);
             }
         });
