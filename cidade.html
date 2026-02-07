@@ -9,7 +9,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700;900&display=swap');
 
         :root {
-            /* Paleta baseada no verde Wrapped e tons Neon */
             --wrapped-green: #1ed760; 
             --neon-red: #ff4646;
             --neon-blue: #2d46b9;
@@ -31,7 +30,6 @@
             flex-direction: column;
         }
 
-        /* Top Bar Estilo Dynamic Island */
         .island-header {
             background: var(--glass);
             backdrop-filter: blur(15px);
@@ -54,14 +52,12 @@
             background: var(--neon-blue);
         }
 
-        /* Container Principal */
         .main-stage {
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             padding: 20px;
-            position: relative;
         }
 
         .glass-panel {
@@ -71,17 +67,14 @@
             border: 1px solid rgba(255,255,255,0.1);
             padding: 30px;
             text-align: center;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
             max-width: 450px;
             margin: 0 auto;
             width: 100%;
         }
 
-        /* Typography */
         h1 { font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 10px; }
         p.desc { opacity: 0.6; font-size: 0.9rem; margin-bottom: 25px; }
 
-        /* Grid de Ações */
         .grid-players {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -95,7 +88,7 @@
             padding: 15px;
             border-radius: 20px;
             cursor: pointer;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -105,13 +98,10 @@
         .player-card.selected {
             border-color: var(--wrapped-green);
             background: rgba(30, 215, 96, 0.15);
-            transform: translateY(-5px);
         }
 
-        .player-card i { font-size: 1.2rem; opacity: 0.5; }
         .player-card.dead { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
 
-        /* Botões */
         .btn-action {
             background: white;
             color: black;
@@ -122,12 +112,8 @@
             width: 100%;
             text-transform: uppercase;
             cursor: pointer;
-            transition: 0.3s;
         }
 
-        .btn-action:disabled { opacity: 0.3; }
-
-        /* Overlay Noite */
         #night-transition {
             position: fixed;
             inset: 0;
@@ -137,92 +123,161 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            animation: fadeIn 0.8s ease;
         }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .phase-icon {
-            font-size: 4rem;
-            color: var(--neon-blue);
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 15px var(--neon-blue));
-        }
-
+        .status-msg { font-size: 0.7rem; color: var(--wrapped-green); font-weight: 700; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="island-header" id="ui-island">
-        <div id="player-info">
-            <span style="display:block; font-size: 0.5rem; opacity: 0.5;">SESSÃO</span>
-            <strong id="display-name">Carregando...</strong>
+    <div class="island-header">
+        <div>
+            <span style="display:block; font-size: 0.5rem; opacity: 0.5;">JOGADOR</span>
+            <strong id="display-name">...</strong>
         </div>
-        <div class="role-indicator" id="display-role">Cidadão</div>
+        <div class="role-indicator" id="display-role">Definindo...</div>
     </div>
 
     <div class="main-stage">
-        
         <div id="view-lobby" class="glass-panel">
             <h1>O TRIBUNAL</h1>
             <p class="desc">Quem conduzirá o destino da cidade hoje?</p>
-            
-            <div id="narrator-choices" class="grid-players">
-                </div>
-            
-            <p style="font-size: 0.7rem; color: var(--wrapped-green); font-weight: 700;">
-                <i class="fa-solid fa-circle-notch fa-spin"></i> Aguardando votos...
-            </p>
+            <div id="narrator-choices" class="grid-players"></div>
+            <p class="status-msg" id="vote-count-msg">Aguardando votos...</p>
         </div>
 
         <div id="view-game" class="glass-panel" style="display: none;">
-            <h1 id="phase-title">DIA 1</h1>
-            <div id="event-report" style="padding: 15px; background: rgba(0,0,0,0.2); border-radius: 15px; margin-bottom: 20px;">
-                </div>
-
+            <h1 id="phase-title">CIDADE ACORDOU</h1>
+            <div id="event-report" style="padding: 15px; background: rgba(0,0,0,0.2); border-radius: 15px; margin-bottom: 20px;"></div>
             <div id="action-zone">
-                <p class="desc" id="action-instr">Debatam e escolham alguém para o tribunal.</p>
                 <div id="target-list" class="grid-players"></div>
             </div>
-
-            <button class="btn-action" id="main-btn" onclick="advancePhase()">Confirmar Decisão</button>
+            <button class="btn-action" id="main-btn" style="display:none">Próxima Fase</button>
         </div>
-
     </div>
 
     <div id="night-transition">
-        <div class="phase-icon"><i class="fa-solid fa-moon"></i></div>
-        <h2 style="letter-spacing: 5px;">A CIDADE DORME</h2>
-        <p id="night-instruction" style="margin-top: 20px; opacity: 0.6;">Feche seus olhos...</p>
+        <i class="fa-solid fa-moon" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 20px;"></i>
+        <h2>A CIDADE DORME</h2>
+        <div id="night-targets" class="grid-players" style="width: 100%; padding: 20px;"></div>
     </div>
 
     <script type="module">
-        // Configuração e inicialização permanecem conforme seu código original
-        // Adicionaremos aqui a lógica de transição de telas e UX
-        
-        function updateUI(gameState) {
-            const views = {
-                'lobby': document.getElementById('view-lobby'),
-                'active': document.getElementById('view-game')
-            };
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-            // Lógica de troca de telas baseada no Firebase
-            if(gameState === 'assigning' || gameState === 'active') {
-                views.lobby.style.display = 'none';
-                views.active.style.display = 'block';
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1buacNarLY8ELWla6yeqTi4L0vTdloSc",
+            authDomain: "wrapped-fad94.firebaseapp.com",
+            databaseURL: "https://wrapped-fad94-default-rtdb.firebaseio.com",
+            projectId: "wrapped-fad94",
+            storageBucket: "wrapped-fad94.firebasestorage.app",
+            messagingSenderId: "360236097664",
+            appId: "1:360236097664:web:76777f529c18623bf1c665"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room') || "SALA1";
+        const myId = localStorage.getItem('wrapped_uid') || "user_" + Math.random().toString(36).substr(2, 5);
+        localStorage.setItem('wrapped_uid', myId);
+
+        onValue(ref(db, `rooms/${roomCode}`), (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            const players = data.players || {};
+            const me = players[myId];
+
+            if (me) {
+                document.getElementById('display-name').innerText = me.name;
+                document.getElementById('display-role').innerText = me.role || "Aguardando";
+                document.getElementById('display-role').style.background = me.role === 'Assassino' ? 'var(--neon-red)' : 'var(--neon-blue)';
+            }
+
+            if (!data.narradorId) {
+                renderElection(players, data.narratorVotes || {});
+                checkElectionProcess(data, players);
+            } else {
+                document.getElementById('view-lobby').style.display = 'none';
+                document.getElementById('view-game').style.display = 'block';
+                renderGame(data);
+            }
+
+            document.getElementById('night-transition').style.display = data.currentPhase === 'night' ? 'flex' : 'none';
+            if(data.currentPhase === 'night') renderNightActions(data);
+        });
+
+        function renderElection(players, votes) {
+            const container = document.getElementById('narrator-choices');
+            container.innerHTML = `<div class="player-card ${votes[myId] === 'system' ? 'selected' : ''}" onclick="vote('system')">
+                <i class="fa-solid fa-robot"></i><span>SISTEMA IA</span>
+            </div>`;
+            
+            Object.entries(players).forEach(([id, p]) => {
+                if (!p.isBot) {
+                    container.innerHTML += `<div class="player-card ${votes[myId] === id ? 'selected' : ''}" onclick="vote('${id}')">
+                        <i class="fa-solid fa-user"></i><span>${p.name}</span>
+                    </div>`;
+                }
+            });
+            document.getElementById('vote-count-msg').innerText = `${Object.keys(votes).length} votos registrados`;
+        }
+
+        window.vote = (id) => update(ref(db, `rooms/${roomCode}/narratorVotes`), { [myId]: id });
+
+        async function checkElectionProcess(data, players) {
+            const humanCount = Object.values(players).filter(p => !p.isBot).length;
+            const votes = data.narratorVotes || {};
+            if (data.host === myId && Object.keys(votes).length >= humanCount && humanCount > 0) {
+                const winner = Object.keys(votes)[0]; // Simplificado: primeiro voto ganha ou lógica de sorteio
+                autoAssignRoles(players, winner);
             }
         }
 
-        // Função para simular o clima de suspense
-        window.advancePhase = () => {
-            const overlay = document.getElementById('night-transition');
-            overlay.style.display = 'flex';
+        async function autoAssignRoles(players, narradorId) {
+            const ids = Object.keys(players).sort(() => Math.random() - 0.5);
+            const roles = ['Assassino', 'Detetive', 'Médico'];
+            let updates = { narradorId, gameState: 'active', currentPhase: 'night' };
+            ids.forEach((id, i) => { updates[`players/${id}/role`] = roles[i] || 'Cidadão'; updates[`players/${id}/isAlive`] = true; });
+            update(ref(db, `rooms/${roomCode}`), updates);
+        }
+
+        function renderGame(data) {
+            const report = document.getElementById('event-report');
+            report.innerText = data.lastNightEvent || "A cidade amanheceu tranquila.";
+            const grid = document.getElementById('target-list');
+            grid.innerHTML = "";
+            Object.entries(data.players).forEach(([id, p]) => {
+                if(p.isAlive) {
+                    grid.innerHTML += `<div class="player-card ${data.dayVotes?.[myId] === id ? 'selected' : ''}" onclick="castDayVote('${id}')">
+                        <span>${p.name}</span>
+                    </div>`;
+                }
+            });
+            if(data.host === myId) {
+                document.getElementById('main-btn').style.display = 'block';
+                document.getElementById('main-btn').onclick = () => update(ref(db, `rooms/${roomCode}`), { currentPhase: 'night', dayVotes: null });
+            }
+        }
+
+        window.castDayVote = (id) => update(ref(db, `rooms/${roomCode}/dayVotes`), { [myId]: id });
+
+        function renderNightActions(data) {
+            const me = data.players[myId];
+            const container = document.getElementById('night-targets');
+            container.innerHTML = "";
+            if (!me || !me.isAlive || me.role === 'Cidadão') return;
             
-            setTimeout(() => {
-                // Aqui entraria a chamada de update do Firebase para mudar a fase
-                console.log("Fase alterada no banco de dados.");
-            }, 2000);
-        };
+            Object.entries(data.players).forEach(([id, p]) => {
+                if(p.isAlive && id !== myId) {
+                    container.innerHTML += `<div class="player-card" onclick="submitNightAction('${id}')">
+                        <span>${p.name}</span>
+                    </div>`;
+                }
+            });
+        }
     </script>
 </body>
 </html>
