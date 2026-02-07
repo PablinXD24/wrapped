@@ -13,16 +13,17 @@
         .app-container { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: radial-gradient(circle at top right, rgba(45, 70, 185, 0.15), transparent), radial-gradient(circle at bottom left, rgba(255, 70, 70, 0.1), transparent); }
         .glass-card { background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 32px; padding: 25px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
         .role-title { font-size: 2.2rem; font-weight: 900; margin: 10px 0; text-transform: uppercase; letter-spacing: -1px; }
-        .btn-main { background: white; color: black; border: none; padding: 16px; border-radius: 100px; font-weight: 900; cursor: pointer; width: 100%; margin-top: 15px; text-transform: uppercase; }
+        .btn-main { background: white; color: black; border: none; padding: 16px; border-radius: 100px; font-weight: 900; cursor: pointer; width: 100%; margin-top: 15px; text-transform: uppercase; transition: 0.3s; }
+        .btn-main:active { transform: scale(0.95); opacity: 0.8; }
         .btn-opt { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 15px; border-radius: 15px; width: 100%; margin-bottom: 10px; font-weight: 700; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; }
-        .btn-opt.active { border-color: var(--neon-green); background: rgba(30, 215, 96, 0.1); }
-        .vote-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; width: 100%; }
+        .btn-opt.active { border-color: var(--neon-green); background: rgba(30, 215, 96, 0.2); }
         .player-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 15px 10px; border-radius: 15px; font-weight: 700; transition: 0.3s; cursor: pointer; }
+        .player-btn:active { background: var(--neon-blue); }
         .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
         .screen.active { display: flex; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         #night-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
-        select.btn-opt { appearance: none; width: 100%; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 15px center; background-size: 20px; color: white; }
+        select.btn-opt { appearance: none; color: white; outline: none; }
     </style>
 </head>
 <body>
@@ -44,18 +45,21 @@
     <div id="screen-narrator-panel" class="screen">
         <div class="glass-card">
             <h2 style="color: var(--neon-gold);">PAINEL DO MESTRE</h2>
-            <p style="font-size: 0.8rem; margin: 10px 0;">Distribua os papéis:</p>
-            <p style="font-size: 0.6rem; color: var(--neon-red); margin-bottom: 10px;">* Priorize jogadores reais nos cargos principais.</p>
-            <div id="manual-role-assignment" style="text-align: left;"></div>
+            <div id="manual-role-assignment" style="text-align: left; margin: 15px 0;"></div>
             <button class="btn-main" onclick="finalizeManualAssignment()">INICIAR NOITE</button>
         </div>
     </div>
 
     <div id="screen-player-role" class="screen">
         <div class="glass-card">
-            <p style="opacity: 0.6;">SEU PAPEL É</p>
+            <p id="label-top" style="opacity: 0.6;">SEU PAPEL É</p>
             <h1 id="display-my-role" class="role-title">...</h1>
-            <p id="role-instruction" style="opacity: 0.8;"></p>
+            <p id="role-instruction" style="opacity: 0.8; margin-bottom: 20px;"></p>
+            <div id="day-news" style="display:none; padding: 15px; border-radius: 15px; background: rgba(255,255,255,0.05); margin-top: 10px;">
+                <h3 style="color: var(--neon-gold); font-size: 0.9rem;">NOTÍCIAS DA MANHÃ:</h3>
+                <p id="news-text" style="font-size: 0.8rem; margin-top: 5px;"></p>
+            </div>
+            <button id="btn-next-night" class="btn-main" style="display:none;" onclick="triggerNight()">PRÓXIMA NOITE</button>
         </div>
     </div>
 </div>
@@ -63,7 +67,8 @@
 <div id="night-overlay">
     <i class="fa-solid fa-moon" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 20px;"></i>
     <h1 class="role-title">A NOITE CAIU</h1>
-    <div id="night-action-grid" class="vote-grid" style="padding: 20px; max-width: 400px;"></div>
+    <p id="night-instruction" style="margin-bottom: 20px; opacity: 0.7;">Escolha seu alvo:</p>
+    <div id="night-action-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 350px;"></div>
 </div>
 
 <script type="module">
@@ -87,7 +92,7 @@
     const myId = localStorage.getItem('wrapped_uid') || "user_" + Math.random().toString(36).substr(2, 9);
     if(!localStorage.getItem('wrapped_uid')) localStorage.setItem('wrapped_uid', myId);
 
-    // --- LOGICA DE BOTS ---
+    // --- BOTS E SISTEMA ---
     async function fillWithBots(currentPlayers) {
         const totalNeeded = 6;
         const currentIds = Object.keys(currentPlayers);
@@ -95,164 +100,206 @@
             const botsToAdd = totalNeeded - currentIds.length;
             let updates = {};
             for (let i = 1; i <= botsToAdd; i++) {
-                const botId = `bot_${i}_${Math.random().toString(36).substr(2, 4)}`;
+                const botId = `bot_${i}`;
                 updates[`players/${botId}`] = { name: `Bot ${i} 🤖`, isBot: true, isAlive: true, role: "" };
             }
             await update(ref(db, `rooms/${roomCode}`), updates);
         }
     }
 
-    window.voteNarrator = (val) => {
-        update(ref(db, `rooms/${roomCode}/narratorVotes`), { [myId]: val });
-    };
+    window.voteNarrator = (val) => update(ref(db, `rooms/${roomCode}/narratorVotes`), { [myId]: val });
 
+    // --- ESCUTA PRINCIPAL ---
     onValue(ref(db, `rooms/${roomCode}`), async (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
         const players = data.players || {};
-        const votes = data.narratorVotes || {};
         const humans = Object.entries(players).filter(([id, p]) => !p.isBot);
         
-        // 1. UI Eleição
-        const playersList = document.getElementById('players-narrator-list');
-        playersList.innerHTML = "";
-        humans.forEach(([id, p]) => {
-            const btn = document.createElement('button');
-            btn.className = "btn-opt " + (votes[myId] === id ? "active" : "");
-            btn.innerHTML = `<span>${p.name}</span><i class="fa-solid fa-user"></i>`;
-            btn.onclick = () => voteNarrator(id);
-            playersList.appendChild(btn);
-        });
-        if(votes[myId] === 'system') document.getElementById('vote-system').classList.add('active');
-
-        // 2. Processamento Votos
-        if (data.host === myId && !data.narradorId && Object.keys(votes).length >= humans.length && humans.length > 0) {
-            const voteCounts = Object.values(votes).reduce((acc, v) => { acc[v] = (acc[v] || 0) + 1; return acc; }, {});
-            const winner = Object.keys(voteCounts).reduce((a, b) => voteCounts[a] > voteCounts[b] ? a : b);
-            
-            await fillWithBots(players);
-            update(ref(db, `rooms/${roomCode}`), { narradorId: winner, gameState: 'assigning' });
-            if (winner === 'system') autoAssignRoles();
+        // 1. Eleição
+        if (data.gameState !== 'assigning' && !data.narradorId) {
+            updateLobby(players, data.narratorVotes || {});
+            if (data.host === myId && Object.keys(data.narratorVotes || {}).length >= humans.length && humans.length > 0) {
+                processElection(data.narratorVotes, players);
+            }
         }
 
-        // 3. Telas
+        // 2. Telas e Estados
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         if (data.gameState === 'assigning') {
-            if (data.narradorId === myId) {
-                document.getElementById('screen-narrator-panel').classList.add('active');
-                renderManualAssignment(players, data.narradorId);
-            } else {
-                document.getElementById('screen-player-role').classList.add('active');
-                const me = players[myId];
-                if (me?.role) {
-                    document.getElementById('display-my-role').innerText = me.role;
-                    setRoleDesc(me.role);
-                } else {
-                    document.getElementById('display-my-role').innerText = "ESCOLHENDO...";
-                }
-            }
+            handleAssigning(data, players);
+        } else if (data.currentPhase === 'day') {
+            handleDayPhase(data);
         } else {
             document.getElementById('screen-election').classList.add('active');
         }
 
-        if (data.currentPhase === 'night') {
-            document.getElementById('night-overlay').style.display = 'flex';
-            renderNightActions(data);
-        } else {
-            document.getElementById('night-overlay').style.display = 'none';
-        }
+        // 3. Noite
+        document.getElementById('night-overlay').style.display = data.currentPhase === 'night' ? 'flex' : 'none';
+        if (data.currentPhase === 'night') renderNightActions(data);
     });
+
+    function updateLobby(players, votes) {
+        const list = document.getElementById('players-narrator-list');
+        list.innerHTML = "";
+        Object.entries(players).forEach(([id, p]) => {
+            if(!p.isBot) {
+                const btn = document.createElement('button');
+                btn.className = "btn-opt " + (votes[myId] === id ? "active" : "");
+                btn.innerHTML = `<span>${p.name}</span><i class="fa-solid fa-user"></i>`;
+                btn.onclick = () => voteNarrator(id);
+                list.appendChild(btn);
+            }
+        });
+        document.getElementById('vote-system').className = "btn-opt " + (votes[myId] === 'system' ? "active" : "");
+    }
+
+    async function processElection(votes, players) {
+        const counts = Object.values(votes).reduce((acc, v) => { acc[v] = (acc[v] || 0) + 1; return acc; }, {});
+        const winner = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+        await fillWithBots(players);
+        update(ref(db, `rooms/${roomCode}`), { narradorId: winner, gameState: 'assigning' });
+        if (winner === 'system') autoAssignRoles();
+    }
+
+    function handleAssigning(data, players) {
+        if (data.narradorId === myId) {
+            document.getElementById('screen-narrator-panel').classList.add('active');
+            renderManualPanel(players);
+        } else {
+            document.getElementById('screen-player-role').classList.add('active');
+            const me = players[myId];
+            document.getElementById('display-my-role').innerText = me?.role || "DEFININDO...";
+            if(me?.role) setRoleDesc(me.role);
+        }
+    }
+
+    function handleDayPhase(data) {
+        document.getElementById('screen-player-role').classList.add('active');
+        const news = document.getElementById('day-news');
+        const newsText = document.getElementById('news-text');
+        const me = data.players[myId];
+
+        document.getElementById('label-top').innerText = me.isAlive ? "VOCÊ SOBREVIVEU" : "VOCÊ MORREU";
+        document.getElementById('display-my-role').innerText = me.role;
+        
+        news.style.display = "block";
+        newsText.innerText = data.lastNightEvent || "A noite foi calma... ninguém se feriu.";
+        
+        if (myId === data.narradorId || data.host === myId) {
+            document.getElementById('btn-next-night').style.display = "block";
+        }
+    }
+
+    // --- AÇÕES DA NOITE ---
+    function renderNightActions(data) {
+        const grid = document.getElementById('night-action-grid');
+        grid.innerHTML = "";
+        const me = data.players[myId];
+        if (myId === data.narradorId || me.role === 'Cidadão' || !me.isAlive) return;
+
+        Object.entries(data.players).forEach(([id, p]) => {
+            if (id !== myId && p.isAlive && id !== data.narradorId) {
+                const btn = document.createElement('button');
+                btn.className = "player-btn";
+                btn.innerText = p.name;
+                btn.onclick = () => registerAction(me.role, id, p.name);
+                grid.appendChild(btn);
+            }
+        });
+    }
+
+    async function registerAction(role, targetId, targetName) {
+        const field = role === 'Assassino' ? 'kill' : role === 'Médico' ? 'save' : 'check';
+        await update(ref(db, `rooms/${roomCode}/nightActions`), { [field]: targetId });
+        alert(`Você escolheu ${targetName}!`);
+        
+        // Se for o host ou sistema, checa se as ações acabaram para processar o amanhecer
+        checkNightEnd();
+    }
+
+    async function checkNightEnd() {
+        const snap = await get(ref(db, `rooms/${roomCode}`));
+        const data = snap.val();
+        const actions = data.nightActions || {};
+        
+        // Lógica simplificada: Se Assassino e Médico agiram (ou são bots)
+        if (actions.kill && (actions.save || !Object.values(data.players).find(p => p.role === 'Médico' && p.isAlive))) {
+            processDawn(data);
+        }
+    }
+
+    async function processDawn(data) {
+        const kill = data.nightActions.kill;
+        const save = data.nightActions.save;
+        let eventText = "";
+
+        if (kill === save) {
+            eventText = `O Assassino tentou atacar, mas o Médico salvou a vítima a tempo!`;
+        } else {
+            const victimName = data.players[kill].name;
+            eventText = `Infelizmente, ${victimName} foi encontrado morto esta manhã.`;
+            await update(ref(db, `rooms/${roomCode}/players/${kill}`), { isAlive: false });
+        }
+
+        update(ref(db, `rooms/${roomCode}`), {
+            currentPhase: 'day',
+            lastNightEvent: eventText,
+            nightActions: null // Reseta para a próxima
+        });
+    }
+
+    // --- UTILITÁRIOS ---
+    window.triggerNight = () => update(ref(db, `rooms/${roomCode}`), { currentPhase: 'night' });
 
     async function autoAssignRoles() {
         const snap = await get(ref(db, `rooms/${roomCode}/players`));
-        const allPlayers = snap.val();
-        const narradorId = (await get(ref(db, `rooms/${roomCode}/narradorId`))).val();
-        
-        // Separa humanos e bots (excluindo o narrador)
-        let availableHumans = Object.keys(allPlayers).filter(id => !allPlayers[id].isBot && id !== narradorId).sort(() => Math.random() - 0.5);
-        let availableBots = Object.keys(allPlayers).filter(id => allPlayers[id].isBot).sort(() => Math.random() - 0.5);
-        
-        let pool = [...availableHumans, ...availableBots]; // Humanos primeiro na fila
-        let updates = {};
+        const players = snap.val();
+        const humans = Object.keys(players).filter(id => !players[id].isBot).sort(() => Math.random() - 0.5);
+        const bots = Object.keys(players).filter(id => players[id].isBot);
+        const pool = [...humans, ...bots];
         const roles = ['Assassino', 'Detetive', 'Médico'];
-        
+        let updates = {};
         pool.forEach((id, idx) => {
             updates[`players/${id}/role`] = roles[idx] || "Cidadão";
             updates[`players/${id}/isAlive`] = true;
         });
-        
         updates['currentPhase'] = 'night';
         update(ref(db, `rooms/${roomCode}`), updates);
     }
 
-    function renderManualAssignment(players, narradorId) {
+    function renderManualPanel(players) {
         const container = document.getElementById('manual-role-assignment');
-        if (container.innerHTML !== "") return; 
-
+        if (container.innerHTML !== "") return;
         ['Assassino', 'Detetive', 'Médico'].forEach(role => {
-            const div = document.createElement('div');
-            div.style.marginBottom = "15px";
-            div.innerHTML = `<label style="font-weight:900; font-size:0.7rem; opacity:0.6">${role.toUpperCase()}:</label>`;
             const select = document.createElement('select');
             select.className = "btn-opt";
-            select.innerHTML = `<option value="">Escolher...</option>`;
-            
-            // Renderiza humanos no topo da lista
-            const sortedPlayers = Object.entries(players).filter(([id]) => id !== narradorId).sort((a,b) => (a[1].isBot === b[1].isBot) ? 0 : a[1].isBot ? 1 : -1);
-
-            sortedPlayers.forEach(([id, p]) => {
-                select.innerHTML += `<option value="${id}">${p.name}${p.isBot ? ' (BOT)' : ''}</option>`;
+            select.innerHTML = `<option value="">${role}...</option>`;
+            Object.entries(players).forEach(([id, p]) => {
+                if(id !== myId) select.innerHTML += `<option value="${id}">${p.name}</option>`;
             });
-
-            select.onchange = (e) => {
-                if(e.target.value) update(ref(db, `rooms/${roomCode}/players/${e.target.value}`), { role: role });
-            };
-            div.appendChild(select);
-            container.appendChild(div);
+            select.onchange = (e) => update(ref(db, `rooms/${roomCode}/players/${e.target.value}`), { role: role });
+            container.appendChild(select);
         });
     }
 
     window.finalizeManualAssignment = async () => {
         const snap = await get(ref(db, `rooms/${roomCode}/players`));
         const players = snap.val();
-        let updates = {};
-        Object.entries(players).forEach(([id, p]) => {
-            if (!p.role && id !== 'narradorId') updates[`players/${id}/role`] = "Cidadão";
-            updates[`players/${id}/isAlive`] = true;
-        });
-        updates['currentPhase'] = 'night';
+        let updates = { currentPhase: 'night' };
+        Object.entries(players).forEach(([id, p]) => { if (!p.role) updates[`players/${id}/role`] = "Cidadão"; });
         update(ref(db, `rooms/${roomCode}`), updates);
     }
 
     function setRoleDesc(role) {
-        const desc = document.getElementById('role-instruction');
         const map = {
-            'Assassino': "Elimine os cidadãos sem ser descoberto.",
-            'Médico': "Escolha alguém para salvar todas as noites.",
-            'Detetive': "Investigue um jogador para descobrir seu papel.",
-            'Cidadão': "Tente sobreviver e descobrir quem é o assassino."
+            'Assassino': "Mate sem ser visto.",
+            'Médico': "Salve as vítimas.",
+            'Detetive': "Descubra a verdade.",
+            'Cidadão': "Tente sobreviver."
         };
-        desc.innerText = map[role] || "";
-    }
-
-    function renderNightActions(data) {
-        const grid = document.getElementById('night-action-grid');
-        grid.innerHTML = "";
-        const me = data.players[myId];
-        if (myId === data.narradorId || me?.role === 'Cidadão' || !me?.isAlive) {
-            grid.innerHTML = `<p style="opacity:0.5">${myId === data.narradorId ? 'Coordene os papéis...' : 'A cidade dorme...'}</p>`;
-            return;
-        }
-        Object.entries(data.players).forEach(([id, p]) => {
-            if (id !== myId && p.isAlive && id !== data.narradorId) {
-                const btn = document.createElement('button');
-                btn.className = "player-btn";
-                btn.innerText = p.name;
-                btn.onclick = () => alert("Ação registrada!");
-                grid.appendChild(btn);
-            }
-        });
+        document.getElementById('role-instruction').innerText = map[role] || "";
     }
 </script>
 </body>
