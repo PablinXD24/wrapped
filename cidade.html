@@ -22,7 +22,7 @@
         .screen.active { display: flex; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         #night-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
-        select.btn-opt { appearance: none; -webkit-appearance: none; width: 100%; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 15px center; background-size: 20px; }
+        select.btn-opt { appearance: none; width: 100%; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 15px center; background-size: 20px; color: white; }
     </style>
 </head>
 <body>
@@ -37,16 +37,16 @@
                 </button>
                 <div id="players-narrator-list"></div>
             </div>
-            <p id="election-status" style="font-size: 0.8rem; margin-top: 15px; opacity: 0.5;">Aguardando votos de todos...</p>
+            <p id="election-status" style="font-size: 0.8rem; margin-top: 15px; opacity: 0.5;">Aguardando votos...</p>
         </div>
     </div>
 
     <div id="screen-narrator-panel" class="screen">
         <div class="glass-card">
             <h2 style="color: var(--neon-gold);">PAINEL DO MESTRE</h2>
-            <p style="font-size: 0.8rem; margin: 10px 0;">Distribua os papéis em tempo real:</p>
+            <p style="font-size: 0.8rem; margin: 10px 0;">Distribua os papéis (Bots incluídos):</p>
             <div id="manual-role-assignment" style="text-align: left;"></div>
-            <button class="btn-main" onclick="startNight()">FECHAR DISTRIBUIÇÃO</button>
+            <button class="btn-main" onclick="finalizeManualAssignment()">INICIAR NOITE</button>
         </div>
     </div>
 
@@ -83,52 +83,74 @@
     const db = getDatabase(app);
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get('room') || "SALA1";
-    const myId = localStorage.getItem('wrapped_uid');
+    const myId = localStorage.getItem('wrapped_uid') || "user_" + Math.random().toString(36).substr(2, 9);
+    if(!localStorage.getItem('wrapped_uid')) localStorage.setItem('wrapped_uid', myId);
 
-    // --- VOTAÇÃO NARRADOR ---
+    // --- FUNÇÕES DE APOIO ---
+
+    async function fillWithBots(currentPlayers) {
+        const totalNeeded = 6;
+        const currentIds = Object.keys(currentPlayers);
+        const currentCount = currentIds.length;
+        
+        if (currentCount < totalNeeded) {
+            const botsToAdd = totalNeeded - currentCount;
+            let updates = {};
+            for (let i = 1; i <= botsToAdd; i++) {
+                const botId = `bot_${i}_${Math.random().toString(36).substr(2, 5)}`;
+                updates[`players/${botId}`] = {
+                    name: `Bot ${i} 🤖`,
+                    isBot: true,
+                    isAlive: true,
+                    role: ""
+                };
+            }
+            await update(ref(db, `rooms/${roomCode}`), updates);
+        }
+    }
+
     window.voteNarrator = (val) => {
         update(ref(db, `rooms/${roomCode}/narratorVotes`), { [myId]: val });
-        // Feedback visual local
-        document.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('active'));
     };
 
-    onValue(ref(db, `rooms/${roomCode}`), (snapshot) => {
+    // --- LÓGICA PRINCIPAL ---
+
+    onValue(ref(db, `rooms/${roomCode}`), async (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
         const players = data.players || {};
-        const totalPlayers = Object.keys(players).length;
         const votes = data.narratorVotes || {};
-        const totalVotes = Object.keys(votes).length;
+        const totalPlayers = Object.keys(players).filter(id => !players[id].isBot).length;
 
-        // 1. Atualizar lista de candidatos na tela de eleição
+        // 1. Atualizar Lobby de Eleição
         const playersList = document.getElementById('players-narrator-list');
         playersList.innerHTML = "";
         Object.entries(players).forEach(([id, p]) => {
-            const btn = document.createElement('button');
-            btn.className = "btn-opt " + (votes[myId] === id ? "active" : "");
-            btn.innerHTML = `<span>${p.name}</span><i class="fa-solid fa-user"></i>`;
-            btn.onclick = () => voteNarrator(id);
-            playersList.appendChild(btn);
+            if(!p.isBot) {
+                const btn = document.createElement('button');
+                btn.className = "btn-opt " + (votes[myId] === id ? "active" : "");
+                btn.innerHTML = `<span>${p.name}</span><i class="fa-solid fa-user"></i>`;
+                btn.onclick = () => voteNarrator(id);
+                playersList.appendChild(btn);
+            }
         });
         if(votes[myId] === 'system') document.getElementById('vote-system').classList.add('active');
 
-        // 2. Lógica de Apuração Automática (Host processa quando todos votarem)
-        if (data.host === myId && !data.narradorId && totalVotes >= totalPlayers && totalPlayers > 0) {
-            const voteCounts = Object.values(votes).reduce((acc, v) => {
-                acc[v] = (acc[v] || 0) + 1;
-                return acc;
-            }, {});
+        // 2. Apuração (Apenas o Host processa)
+        if (data.host === myId && !data.narradorId && Object.keys(votes).length >= totalPlayers && totalPlayers > 0) {
+            const voteCounts = Object.values(votes).reduce((acc, v) => { acc[v] = (acc[v] || 0) + 1; return acc; }, {});
             const winner = Object.keys(voteCounts).reduce((a, b) => voteCounts[a] > voteCounts[b] ? a : b);
+            
+            // Antes de mudar o estado, se o vencedor for humano ou sistema, garantimos os bots
+            await fillWithBots(players);
             
             update(ref(db, `rooms/${roomCode}`), { 
                 narradorId: winner, 
                 gameState: 'assigning' 
             });
 
-            if (winner === 'system') {
-                autoAssignRoles(players);
-            }
+            if (winner === 'system') autoAssignRoles();
         }
 
         // 3. Gerenciamento de Telas
@@ -136,17 +158,18 @@
         
         if (data.gameState === 'assigning') {
             if (data.narradorId === myId) {
-                // Eu sou o Narrador Humano
                 document.getElementById('screen-narrator-panel').classList.add('active');
                 renderManualAssignment(players, data.narradorId);
-            } else if (data.narradorId === 'system') {
-                // Narrador é o Sistema
-                document.getElementById('screen-player-role').classList.add('active');
-                displayMyRole(players[myId]);
             } else {
-                // Narrador é outro Humano
                 document.getElementById('screen-player-role').classList.add('active');
-                displayMyRole(players[myId]);
+                const me = players[myId];
+                if (me && me.role) {
+                    document.getElementById('display-my-role').innerText = me.role;
+                    setRoleDesc(me.role);
+                } else {
+                    document.getElementById('display-my-role').innerText = "ESPERANDO...";
+                    document.getElementById('role-instruction').innerText = "O narrador está distribuindo os papéis.";
+                }
             }
         } else {
             document.getElementById('screen-election').classList.add('active');
@@ -161,46 +184,10 @@
         }
     });
 
-    function displayMyRole(me) {
-        if (me && me.role) {
-            document.getElementById('display-my-role').innerText = me.role;
-            setRoleDesc(me.role);
-        } else {
-            document.getElementById('display-my-role').innerText = "ESPERANDO MESTRE...";
-            document.getElementById('role-instruction').innerText = "O narrador está distribuindo os papéis.";
-        }
-    }
-
-    function renderManualAssignment(players, narradorId) {
-        const container = document.getElementById('manual-role-assignment');
-        if (container.children.length > 0) return; // Evita re-renderizar e perder o foco do select
-
-        ['Assassino', 'Detetive', 'Médico'].forEach(role => {
-            const div = document.createElement('div');
-            div.style.marginBottom = "15px";
-            div.innerHTML = `<label style="font-weight:900; font-size:0.7rem; color:white; opacity:0.6">${role.toUpperCase()}:</label>`;
-            const select = document.createElement('select');
-            select.className = "btn-opt";
-            select.innerHTML = `<option value="">Escolher jogador...</option>`;
-            
-            Object.entries(players).forEach(([id, p]) => {
-                if(id !== narradorId) {
-                    const isSelected = p.role === role ? "selected" : "";
-                    select.innerHTML += `<option value="${id}" ${isSelected}>${p.name}</option>`;
-                }
-            });
-
-            select.onchange = (e) => {
-                const uid = e.target.value;
-                if(uid) update(ref(db, `rooms/${roomCode}/players/${uid}`), { role: role });
-            };
-            div.appendChild(select);
-            container.appendChild(div);
-        });
-    }
-
-    function autoAssignRoles(players) {
-        const ids = Object.keys(players).sort(() => Math.random() - 0.5);
+    async function autoAssignRoles() {
+        const snap = await get(ref(db, `rooms/${roomCode}/players`));
+        const allPlayers = snap.val();
+        const ids = Object.keys(allPlayers).sort(() => Math.random() - 0.5);
         let updates = {};
         const roles = ['Assassino', 'Detetive', 'Médico'];
         
@@ -212,33 +199,67 @@
         update(ref(db, `rooms/${roomCode}`), updates);
     }
 
-    window.startNight = () => {
-        get(ref(db, `rooms/${roomCode}/players`)).then(snap => {
-            const players = snap.val();
-            let updates = {};
+    function renderManualAssignment(players, narradorId) {
+        const container = document.getElementById('manual-role-assignment');
+        if (container.innerHTML !== "") return; 
+
+        ['Assassino', 'Detetive', 'Médico'].forEach(role => {
+            const div = document.createElement('div');
+            div.style.marginBottom = "15px";
+            div.innerHTML = `<label style="font-weight:900; font-size:0.7rem; opacity:0.6">${role.toUpperCase()}:</label>`;
+            const select = document.createElement('select');
+            select.className = "btn-opt";
+            select.innerHTML = `<option value="">Escolher...</option>`;
+            
             Object.entries(players).forEach(([id, p]) => {
-                if (!p.role) updates[`players/${id}/role`] = "Cidadão";
-                updates[`players/${id}/isAlive`] = true;
+                if(id !== narradorId) {
+                    select.innerHTML += `<option value="${id}">${p.name}</option>`;
+                }
             });
-            updates['currentPhase'] = 'night';
-            update(ref(db, `rooms/${roomCode}`), updates);
+
+            select.onchange = (e) => {
+                if(e.target.value) update(ref(db, `rooms/${roomCode}/players/${e.target.value}`), { role: role });
+            };
+            div.appendChild(select);
+            container.appendChild(div);
         });
+    }
+
+    window.finalizeManualAssignment = async () => {
+        const snap = await get(ref(db, `rooms/${roomCode}/players`));
+        const players = snap.val();
+        let updates = {};
+        Object.entries(players).forEach(([id, p]) => {
+            if (!p.role) updates[`players/${id}/role`] = "Cidadão";
+            updates[`players/${id}/isAlive`] = true;
+        });
+        updates['currentPhase'] = 'night';
+        update(ref(db, `rooms/${roomCode}`), updates);
     }
 
     function setRoleDesc(role) {
         const desc = document.getElementById('role-instruction');
-        if (role === 'Assassino') desc.innerText = "Você deve matar sem ser pego.";
-        else if (role === 'Médico') desc.innerText = "Você deve salvar as vítimas.";
-        else if (role === 'Detetive') desc.innerText = "Você deve descobrir o assassino.";
-        else desc.innerText = "Tente sobreviver até o amanhecer.";
+        const map = {
+            'Assassino': "Elimine os cidadãos sem ser descoberto.",
+            'Médico': "Escolha alguém para salvar todas as noites.",
+            'Detetive': "Investigue um jogador para descobrir seu papel.",
+            'Cidadão': "Tente sobreviver e descobrir quem é o assassino."
+        };
+        desc.innerText = map[role] || "";
     }
 
     function renderNightActions(data) {
         const grid = document.getElementById('night-action-grid');
         grid.innerHTML = "";
         const me = data.players[myId];
-        if (me.role === 'Cidadão' || !me.isAlive || myId === data.narradorId) {
-            grid.innerHTML = "<p style='grid-column: 1/-1; opacity:0.5'>Aguarde as ações dos outros papéis...</p>";
+        
+        if (myId === data.narradorId) {
+            grid.innerHTML = "<p style='grid-column:1/-1'>Você é o Narrador. Coordene a noite.</p>";
+            return;
+        }
+
+        if (me.role === 'Cidadão' || !me.isAlive) {
+            grid.innerHTML = "<p style='grid-column:1/-1; opacity:0.5'>Feche os olhos... A cidade dorme.</p>";
             return;
         }
 
@@ -247,7 +268,7 @@
                 const btn = document.createElement('button');
                 btn.className = "player-btn";
                 btn.innerText = p.name;
-                btn.onclick = () => alert("Ação enviada ao narrador!");
+                btn.onclick = () => alert("Ação enviada!");
                 grid.appendChild(btn);
             }
         });
