@@ -3,217 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NO MERCY - THE TIMELESS</title>
+    <title>NO MERCY - Alvo Marcado</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Syne:wght@700;800&family=VT323&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --font-display: 'Syne', sans-serif;
-            --font-data: 'Space Grotesk', sans-serif;
-            --font-mono: 'VT323', monospace;
-            --island-bezier: cubic-bezier(0.25, 1, 0.5, 1);
-            --neon-red: #ff2a75;
-            --deep-red: #8b0000;
-            --neon-green: #00ff66;
-            --neon-yellow: #ffd600;
-            --bg-dark: #000000;
+            --neon-red: #ff6b6b;
+            --deep-red: #c92a2a;
+            --neon-green: #b2f2bb;
+            --neon-yellow: #ffd43b;
+            --neon-blue: #74c0fc;
+            --neon-pink: #faa2c1;
+            --bg-dark: #f4f0e6;
+            --border-color: #111111;
+            --border-width: 3px;
+            --box-shadow: 4px 4px 0px #111111;
+            --box-shadow-lg: 6px 6px 0px #111111;
+            --font-display: 'Plus Jakarta Sans', sans-serif;
+            --font-data: 'Plus Jakarta Sans', sans-serif;
+            --island-bezier: cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: #000000;
-            color: #000;
-            height: 100vh; 
-            width: 100vw; 
-            overflow: hidden;
-            font-family: var(--font-data);
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            justify-content: center;
-            transition: transform 0.6s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.4s ease;
+            background-color: var(--bg-dark);
+            color: var(--border-color);
+            height: 100vh; width: 100vw; overflow: hidden;
+            font-family: var(--font-display);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: background 0.5s ease;
         }
 
-        /* --- EFEITO PORTAL FECHANDO (CINEMÁTICO ARANHAVERSO) --- */
-        body.portal-closing {
-            transform: scaleY(0.005) scaleX(1.2);
-            opacity: 0;
-            background-color: #000000 !important;
-            filter: brightness(3) contrast(2);
-        }
-
-        /* --- DYNAMIC ISLAND (ESTÉTICA MODERNA, COLORIDA E TEXTOS INTEIROS) --- */
+        /* DYNAMIC ISLAND STYLE */
         .island-container {
-            position: fixed; top: 12px; width: 100%; display: flex; justify-content: center; z-index: 9999; pointer-events: none;
+            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; width: 100%; display: flex; justify-content: center; pointer-events: none;
         }
         .island {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
-            width: 160px; height: 42px;
-            border-radius: 24px; pointer-events: auto;
-            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-            border: 2px solid #ff2a75;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden; box-shadow: 0 4px 20px rgba(255, 42, 117, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-            cursor: pointer; position: relative;
+            background: #ffffff; color: var(--border-color); padding: 10px 22px;
+            border-radius: 16px; display: flex; align-items: center; gap: 12px;
+            min-width: 180px; max-width: 90%; transition: all 0.5s var(--island-bezier);
+            box-shadow: var(--box-shadow); cursor: pointer; pointer-events: auto;
+            border: var(--border-width) solid var(--border-color); flex-direction: column; height: 46px; overflow: hidden;
         }
-        .island.mini-active { width: 48px; height: 48px; border-radius: 50%; border-color: #00ff66; box-shadow: 0 0 15px rgba(0, 255, 102, 0.5); }
-        .island.expanded { width: 360px; height: 260px; border-radius: 20px; border-color: #ffd600; box-shadow: 0 6px 30px rgba(255, 214, 0, 0.5); }
-        .island.pulse { animation: islandPulse 0.5s ease; }
-        .island.error { animation: shake 0.4s ease; background: linear-gradient(135deg, #ff2a75 0%, #8b0000 100%) !important; border-color: #fff !important; color: #fff; }
-
-        @keyframes islandPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
-        }
-
         .island-compact {
-            width: 100%; padding: 0 16px; display: flex; align-items: center; justify-content: space-between;
-            opacity: 1; transition: opacity 0.3s ease; position: absolute; pointer-events: auto;
+            display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 20px;
+            transition: opacity 0.2s ease, transform 0.3s var(--island-bezier);
         }
-        .island.expanded .island-compact { opacity: 0; pointer-events: none; }
+        .island-title { font-size: 0.85rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+        .island-icon { font-size: 0.9rem; animation: pulse 1.5s infinite; color: var(--deep-red); }
         
-        .island-mini-status { display: flex; align-items: center; gap: 8px; }
-        .dot { width: 9px; height: 9px; border-radius: 50%; background: #00ff66; box-shadow: 0 0 8px #00ff66; border: 1px solid rgba(255,255,255,0.4); }
-        .island-mini-status span { font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: #fff; text-shadow: 0 0 5px rgba(0,255,102,0.5); }
-        
-        #island-mini-icon { display: block; font-size: 16px; color: #ff2a75; filter: drop-shadow(0 0 5px #ff2a75); }
-
+        .island.expanded {
+            border-radius: 16px; padding: 20px; min-width: 300px; height: 320px;
+        }
+        .island.expanded .island-compact {
+            opacity: 0.4; transform: scale(0.95);
+        }
         .island-content {
-            width: 100%; height: 100%; padding: 15px; display: flex; flex-direction: column; gap: 8px;
-            opacity: 0; transition: opacity 0.3s ease; position: absolute; pointer-events: none; overflow-y: auto;
+            width: 100%; flex-direction: column; gap: 12px; margin-top: 15px;
+            opacity: 0; transform: translateY(-10px) scale(0.95); pointer-events: none;
+            transition: opacity 0.3s ease 0.1s, transform 0.4s var(--island-bezier) 0.1s;
+            overflow-y: auto; display: flex; height: calc(100% - 35px);
+            padding-right: 2px;
         }
-        .island.expanded .island-content { opacity: 1; pointer-events: auto; }
+        .island.expanded .island-content { 
+            opacity: 1; transform: translateY(0) scale(1); pointer-events: auto;
+        }
         
         .island-player-row {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 12px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px;
-            font-family: var(--font-data); font-size: 0.9rem; background: rgba(255,255,255,0.05); color: #fff;
+            padding: 8px 12px; border: 2px solid var(--border-color); border-radius: 8px;
+            font-family: var(--font-data); font-size: 0.95rem; background: #faf9f6;
+            animation: islandItemPop 0.4s var(--island-bezier) both;
+            box-shadow: 2px 2px 0px #111;
         }
-        .island-player-name { font-weight: bold; text-transform: uppercase; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .island-skulls { display: flex; gap: 5px; color: rgba(255,255,255,0.2); align-items: center; }
-        .island-skulls .active-skull { color: #ff2a75; text-shadow: 0 0 8px #ff2a75; }
+        .island-player-name { font-weight: 700; text-transform: uppercase; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .island-skulls { display: flex; gap: 5px; color: #ccc; align-items: center; }
+        .island-skulls .active-skull { color: var(--deep-red); transform: scale(1.1); }
 
         .powerup-badge {
-            background: #ffd600; color: #000; font-size: 0.65rem; font-weight: 900;
-            padding: 2px 6px; border-radius: 4px; border: 1px solid #000;
+            background: var(--neon-yellow); color: var(--border-color); font-size: 0.7rem; font-weight: 800;
+            padding: 2px 6px; border-radius: 6px; border: 2px solid var(--border-color);
             display: inline-flex; align-items: center; gap: 2px; margin-left: 5px;
+            box-shadow: 1px 1px 0px #111;
         }
 
-        .ambilight-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.15; background: repeating-linear-gradient(45deg, #222, #222 1px, transparent 1px, transparent 10px); transition: all 0.5s ease; }
-        .noise { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: url('https://grainy-gradients.vercel.app/noise.svg'); 
-            opacity: 0.05; pointer-events: none; z-index: 999; filter: contrast(150%) grayscale(100%);
+        .island-content::-webkit-scrollbar { width: 4px; }
+        .island-content::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+
+        @keyframes islandItemPop {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
+
+        .noise { display: none; }
         
-        .screen { 
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; 
-            display: none; flex-direction: column; padding: 70px 40px 40px; 
-            overflow-y: auto; justify-content: center; align-items: center; border: none; z-index: 10;
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; padding: 30px;
+            align-items: center; justify-content: center; text-align: center;
+            z-index: 10;
         }
-        .screen.active { display: flex; animation: slideUp 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        .screen.active { display: flex; animation: slideUp 0.4s ease forwards; }
         
         @keyframes slideUp { 
-            from { opacity: 0; transform: translateY(30px); } 
+            from { opacity: 0; transform: translateY(15px); } 
             to { opacity: 1; transform: translateY(0); } 
         }
 
-        h1 { font-family: var(--font-display); font-size: clamp(3rem, 9vw, 5.5rem); font-weight: 800; line-height: 0.9; letter-spacing: -2px; margin-bottom: 15px; text-transform: uppercase; text-align: center; color: #fff; }
-        p { font-size: 1.1rem; color: #fff; opacity: 0.85; margin-bottom: 25px; font-family: var(--font-data); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; text-align: center; }
+        h1 { 
+            font-size: clamp(3rem, 10vw, 4.5rem); font-weight: 800; line-height: 1; 
+            text-transform: uppercase; margin-bottom: 25px; 
+            color: var(--border-color);
+            letter-spacing: -1px;
+        }
 
         .card {
-            background: #ffffff; border: 4px solid #000000; border-radius: 0px;
-            padding: 30px; width: 100%; max-width: 480px;
-            box-shadow: 6px 6px 0px #000000; position: relative; z-index: 2; margin-bottom: 20px;
+            background: #ffffff;
+            border: var(--border-width) solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px 30px;
+            width: 100%; max-width: 420px;
+            box-shadow: var(--box-shadow-lg);
+            position: relative; z-index: 2;
         }
-
-        input { 
-            width: 100%; background: #ffffff; border: 4px solid #000000; 
-            color: #000000; padding: 18px; border-radius: 0px; font-family: var(--font-data); 
-            font-size: 1.1rem; font-weight: 700; outline: none; margin-bottom: 20px; text-align: center; 
-            text-transform: uppercase; box-shadow: 6px 6px 0px #000000; transition: transform 0.2s, box-shadow 0.2s;
-        }
-        input:focus { transform: translate(-2px, -2px); box-shadow: 8px 8px 0px #000000; background: #fff; }
 
         .btn { 
-            background: #ffd600; color: #000000; border: 4px solid #000000; padding: 18px; 
-            border-radius: 0px; font-weight: 800; font-size: 1.1rem; font-family: var(--font-display); width: 100%; max-width: 480px; cursor: pointer; 
-            box-shadow: 6px 6px 0px #000000; transition: 0.2s ease; text-transform: uppercase; margin-bottom: 16px;
+            background: var(--neon-yellow); color: var(--border-color); border: var(--border-width) solid var(--border-color); padding: 16px 20px; 
+            border-radius: 12px; font-family: var(--font-display); font-weight: 800; 
+            font-size: 1rem; width: 100%; cursor: pointer; text-transform: uppercase; 
+            margin-bottom: 15px; transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: var(--box-shadow);
             display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .btn:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0px #000000; background: #adff2f; }
-        .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000000; }
+        .btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #111; }
+        .btn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px #111; }
         
-        .btn-safe { background: #ffffff; color: #000; }
-        .btn-safe:hover { background: #00ff66; color: #000; }
-        .btn-hard { background: #ff2a75; color: #fff; }
-        .btn-hard:hover { background: #8b0000; color: #fff; }
+        .btn-safe { background: var(--neon-green); color: var(--border-color); }
+        .btn-hard { background: var(--neon-pink); color: var(--border-color); }
 
         .btn-powerup {
-            background: #ffd600; color: #000; border: 3px solid #000; padding: 14px;
-            border-radius: 0px; font-family: var(--font-display); font-weight: 900;
+            background: var(--neon-yellow); color: var(--border-color); border: var(--border-width) solid var(--border-color); padding: 14px;
+            border-radius: 12px; font-family: var(--font-display); font-weight: 800;
             font-size: 0.95rem; width: 100%; cursor: pointer; text-transform: uppercase;
-            margin-top: 10px; margin-bottom: 10px; transition: 0.2s ease;
-            box-shadow: 4px 4px 0px #000000;
+            margin-top: 10px; margin-bottom: 10px; transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: var(--box-shadow);
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .btn-powerup:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #000; background: #adff2f; }
+        .btn-powerup:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #111; }
 
-        .strikes-container { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; }
+        .strikes-container { display: flex; gap: 25px; justify-content: center; margin-bottom: 25px; }
         .strike-skull { 
-            font-size: 2rem; color: #333; 
+            font-size: 1.8rem;
+            color: #d1cbd5; 
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
         .strike-skull.active { 
-            color: #ff2a75; transform: scale(1.3) rotate(-5deg); 
-            filter: drop-shadow(0 0 10px #ff2a75);
+            color: var(--deep-red); 
+            transform: scale(1.3) rotate(-5deg); 
         }
 
-        .vote-row { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 15px; }
+        .vote-row { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 20px; }
         .vote-btns { display: flex; gap: 12px; width: 100%; }
-        .btn-fail { background: #ffffff; border: 3px solid #ff2a75; color: #ff2a75; box-shadow: 4px 4px 0px #ff2a75; }
-        .btn-fail:hover { background: #ff2a75; color: #fff; box-shadow: 6px 6px 0px #000; }
-        .btn-pass { background: #ffffff; border: 3px solid #00ff66; color: #008033; box-shadow: 4px 4px 0px #00ff66; }
-        .btn-pass:hover { background: #00ff66; color: #000; box-shadow: 6px 6px 0px #000; }
+        .btn-fail { background: var(--neon-pink); border: var(--border-width) solid var(--border-color); color: var(--border-color); box-shadow: var(--box-shadow); }
+        .btn-fail:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #111; }
+        .btn-pass { background: var(--neon-green); border: var(--border-width) solid var(--border-color); color: var(--border-color); box-shadow: var(--box-shadow); }
+        .btn-pass:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #111; }
 
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99; transition: background 0.1s; }
         
-        .strike-bg { background-color: #2b0008 !important; animation: shake 0.4s ease-in-out; }
-        .safe-bg { background-color: #002b11 !important; color: white; }
+        .strike-bg { background-color: #ffd8d8 !important; animation: shake 0.4s ease-in-out; }
+        .safe-bg { background-color: #d3f9d8 !important; color: black; }
+        
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
 
         .target-badge { 
-            background: #ff2a75; color: white; font-weight: 900;
-            padding: 6px 16px; border-radius: 0px; font-size: 0.85rem; 
-            letter-spacing: 2px; margin-bottom: 12px; display: none; 
+            background: var(--neon-pink); color: var(--border-color); font-weight: 800;
+            padding: 6px 16px; border-radius: 8px; font-size: 0.85rem; 
+            letter-spacing: 1px; margin-bottom: 12px; display: none; 
             animation: pulse 1s infinite;
-            border: 3px solid #000000;
-            box-shadow: 4px 4px 0px #000000;
+            border: var(--border-width) solid var(--border-color);
+            box-shadow: 2px 2px 0px #111;
         }
 
         @keyframes pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
 
-        #target-player-display { color: #ffd600; font-weight: 700; margin-bottom: 15px; text-decoration: underline; font-family: var(--font-mono); font-size: 1.2rem; }
-        .streak-info { font-size: 0.85rem; color: #00ff66; font-family: var(--font-mono); margin-bottom: 10px; display: none; font-weight: bold; }
+        #target-player-display { color: var(--deep-red); font-weight: 700; margin-bottom: 15px; text-decoration: underline; }
+        .streak-info { font-size: 0.8rem; color: #2b8a3e; font-family: var(--font-data); margin-bottom: 10px; display: none; font-weight: 800; }
         
         .punishment-box { 
-            background: #000000; border: 4px solid #ff2a75; 
-            padding: 20px; border-radius: 0px; margin-top: 20px; 
-            box-shadow: 6px 6px 0px #ff2a75;
+            background: #ffffff; border: var(--border-width) solid var(--border-color); 
+            padding: 25px; border-radius: 16px; margin-top: 25px; 
+            box-shadow: var(--box-shadow-lg);
+            animation: slideUp 0.3s ease;
         }
 
-        #screen-bottle-spin { background: #000000; z-index: 95; }
+        #screen-bottle-spin {
+            background: var(--bg-dark);
+            z-index: 95;
+        }
         .bottle-icon-container {
-            font-size: 6rem; color: #ffd600; display: inline-block;
-            filter: drop-shadow(4px 4px 0px #ff2a75);
+            font-size: 6rem;
+            color: var(--border-color);
+            display: inline-block;
+            filter: drop-shadow(4px 4px 0px #111);
             animation: fastSpin 1.2s cubic-bezier(0.1, 0.8, 0.1, 1) infinite;
         }
         @keyframes fastSpin {
@@ -222,42 +218,38 @@
         }
 
         .powerup-modal {
-            background: rgba(0,0,0,0.85); position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
         }
         .powerup-modal.active { display: flex; }
         .powerup-modal-card {
-            background: #ffffff; border: 4px solid #000000; padding: 25px; border-radius: 0px;
-            width: 100%; max-width: 380px; box-shadow: 8px 8px 0px #000000; text-align: center;
+            background: #ffffff; border: var(--border-width) solid var(--border-color); padding: 25px; border-radius: 16px;
+            width: 100%; max-width: 380px; box-shadow: var(--box-shadow-lg); text-align: center;
         }
     </style>
 </head>
 <body>
 
-<div class="ambilight-bg" id="ambilight"></div>
 <div class="noise"></div>
 <div id="flash-layer" class="flash-overlay"></div>
 
 <div class="island-container">
     <div class="island" id="dynamic-island" onclick="toggleIsland(event)">
         <div class="island-compact">
-            <i class="fa-solid fa-skull-crossbones" id="island-mini-icon"></i>
-            <div class="island-mini-status">
-                <div class="dot" id="status-dot"></div>
-                <span id="mini-player-count">NO MERCY</span>
-            </div>
+            <i class="fa-solid fa-skull-crossbones island-icon"></i>
+            <span class="island-title">PARTICIPANTES</span>
         </div>
-        <div class="island-content" id="island-participants-list"></div>
+        <div class="island-content" id="island-participants-list">
+        </div>
     </div>
 </div>
 
-<!-- Modal para Transferir Desafio -->
 <div id="transfer-modal" class="powerup-modal">
     <div class="powerup-modal-card">
-        <h2 style="font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 10px; color: #000;">⚡ TRANSFERIR DESAFIO</h2>
-        <p style="font-size: 0.9rem; margin-bottom: 20px; color: #333; font-weight: 700;">Escolha para quem deseja repassar o desafio atual:</p>
+        <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px;">⚡ TRANSFERIR DESAFIO</h2>
+        <p style="font-size: 0.9rem; margin-bottom: 20px;">Escolha para quem deseja repassar o desafio atual:</p>
         <div id="transfer-players-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto;"></div>
-        <button class="btn btn-outline" style="margin-top: 15px; background: #e5e5e5; font-size: 0.9rem; padding: 12px; color: #000;" onclick="closeTransferModal()">CANCELAR</button>
+        <button class="btn" style="margin-top: 15px; background: #eee; font-size: 0.9rem; padding: 12px;" onclick="closeTransferModal()">CANCELAR</button>
     </div>
 </div>
 
@@ -266,28 +258,28 @@
 <audio id="snd-safe" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
 <audio id="snd-roulette" src="https://assets.mixkit.co/active_storage/sfx/123/123-preview.mp3" loop></audio>
 
-<div id="screen-lobby" class="screen active" style="background-color: #ff2a75;">
-    <p style="margin-bottom: 5px; color: #000; font-weight: 800;">SISTEMA INTEGRADO</p>
-    <h1 style="color: #fff;">NO <span style="color: transparent; -webkit-text-stroke: 2px #000;">MERCY</span></h1>
-    <p id="lobby-text" style="color: #000; font-weight: 800;">Sincronizando banco de dados...</p>
-    <div id="loading"><i class="fa-solid fa-spinner fa-spin" style="font-size: 2.5rem; color: #000000;"></i></div>
+<div id="screen-lobby" class="screen active">
+    <div style="margin-bottom: 20px; opacity: 0.7; letter-spacing: 3px; font-weight: 800;">SISTEMA</div>
+    <h1>NO MERCY</h1>
+    <p id="lobby-text">Sincronizando banco de dados...</p>
+    <div id="loading"><i class="fa-solid fa-spinner fa-spin" style="font-size: 2.5rem; color: var(--border-color);"></i></div>
 </div>
 
-<div id="screen-mode-selection" class="screen" style="background-color: #ffd600;">
-    <p style="margin-bottom: 5px; color: #000; font-weight: 800;">ESTAÇÃO DE COMANDO</p>
-    <h1 style="color: #000;">ESCOLHA O MODO</h1>
-    <div class="card" style="background: #fff;">
-        <button class="btn btn-safe" onclick="selectGameMode('safe')"><i class="fa-solid fa-shield-heart" style="color: #00ff66;"></i> MODO SAFE</button>
-        <button class="btn btn-hard" onclick="selectGameMode('hard')" style="margin-bottom: 0;"><i class="fa-solid fa-fire" style="color: #ff2a75;"></i> MODO HARD</button>
-        <p style="font-size: 0.8rem; color: #000; opacity: 0.7; margin-top: 15px; margin-bottom: 0; font-weight: 700;">O modo define a lista de desafios que será carregada.</p>
+<div id="screen-mode-selection" class="screen">
+    <div style="margin-bottom: 20px; opacity: 0.7; letter-spacing: 3px; font-weight: 800;">HOST CONFIG</div>
+    <h1>ESCOLHA O MODO</h1>
+    <div class="card">
+        <button class="btn btn-safe" onclick="selectGameMode('safe')"><i class="fa-solid fa-shield-heart" style="color: var(--border-color);"></i> MODO SAFE</button>
+        <button class="btn btn-hard" onclick="selectGameMode('hard')"><i class="fa-solid fa-fire" style="color: var(--border-color);"></i> MODO HARD</button>
+        <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 15px; margin-bottom: 0; font-weight: 600;">O modo define a lista de desafios que será carregada.</p>
     </div>
 </div>
 
-<div id="screen-game" class="screen" style="background-color: #000;">
+<div id="screen-game" class="screen">
     <div id="target-badge" class="target-badge">⚠️ ALVO MARCADO ⚠️</div>
     <div id="streak-info" class="streak-info">SOBREVIVEU 1/2 RODADAS</div>
     
-    <div id="current-player-name" style="font-size: 2.5rem; font-family: var(--font-display); font-weight: 800; margin-bottom: 5px; color: #fff; margin-top: 15px; text-transform: uppercase;">...</div>
+    <div id="current-player-name" style="font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; color: var(--border-color); margin-top: 15px;">...</div>
     <div id="target-player-display"></div>
     
     <div class="strikes-container" id="game-strikes-display">
@@ -296,35 +288,35 @@
         <i class="fa-solid fa-skull strike-skull" id="s3"></i>
     </div>
     
-    <div class="card" style="background: #1a1a2e; border-color: #ffd600; color: #fff; box-shadow: 6px 6px 0px #ffd600;">
-        <div id="challenge-text" style="font-size: 1.4rem; font-family: var(--font-display); font-weight: 700; line-height: 1.3; color: #fff;">...</div>
+    <div class="card">
+        <div id="challenge-text" style="font-size: 1.4rem; font-weight: 700; line-height: 1.3;">...</div>
     </div>
 
-    <div id="controls-area" style="width: 100%; max-width: 480px; margin-top: 10px;"></div>
-    <p id="wait-msg" class="pulse-text" style="margin-top:20px; display:none; font-family: var(--font-mono); font-size: 1rem; color: #00ff66;"></p>
+    <div id="controls-area" style="width: 100%; max-width: 420px; margin-top: 10px;"></div>
+    <p id="wait-msg" class="pulse-text" style="margin-top:20px; display:none; font-family: var(--font-data); font-size: 0.8rem; opacity: 0.7;"></p>
 </div>
 
 <div id="screen-bottle-spin" class="screen">
     <div class="bottle-icon-container">
-        <i class="fa-solid fa-skull-crossbones"></i>
+        <i class="fa-solid fa-bottle-droplet"></i>
     </div>
-    <h2 style="font-family: var(--font-display); color: #fff; font-weight: 900; margin-top: 30px; text-transform: uppercase; letter-spacing: 2px; font-size: 2rem;">PROCESSANDO VEREDITO...</h2>
+    <h2 style="font-family: var(--font-display); font-weight: 800; margin-top: 40px; text-transform: uppercase; letter-spacing: 2px;">PROCESSANDO VEREDITO...</h2>
 </div>
 
-<div id="screen-roulette" class="screen" style="background: #000;">
-    <i class="fa-solid fa-skull-crossbones" style="font-size: 7rem; color: #ff2a75; margin-bottom: 20px; animation: pulse 0.5s infinite;"></i>
-    <h2 style="color: #fff; font-family: var(--font-display); letter-spacing: 3px; font-weight: 900; font-size: 2.5rem; text-transform: uppercase;">SORTEANDO<br><span style="color: #ff2a75;">PUNIÇÃO</span></h2>
+<div id="screen-roulette" class="screen" style="background: var(--bg-dark);">
+    <i class="fa-solid fa-skull-crossbones" style="font-size: 6rem; color: var(--deep-red); margin-bottom: 30px;"></i>
+    <h2 style="color: var(--border-color); letter-spacing: 2px; font-weight: 800; font-size: 2rem;">SORTEANDO<br>PUNIÇÃO</h2>
 </div>
 
-<div id="screen-result" class="screen" style="background: #000;">
-    <div id="result-content" style="width: 100%; max-width: 480px; text-align: center;"></div>
+<div id="screen-result" class="screen">
+    <div id="result-content" style="width: 100%; max-width: 450px;"></div>
 </div>
 
-<div id="screen-winner" class="screen" style="background: #ffd600; color: #000;">
-    <i class="fa-solid fa-trophy" style="font-size: 6rem; margin-bottom: 25px; color: #000;"></i>
-    <h1 style="color: #000;">SOBREVIVENTE</h1>
-    <h2 id="winner-name" style="font-size: 3rem; font-weight: 900; text-transform: uppercase; text-decoration: underline; color: #ff2a75; font-family: var(--font-display);">NOME</h2>
-    <button class="btn" style="background: #000; color: #fff; margin-top: 40px; width: 100%; max-width: 480px;" onclick="window.location.href='index.html'">FINALIZAR</button>
+<div id="screen-winner" class="screen" style="background: var(--bg-dark); color: var(--border-color);">
+    <i class="fa-solid fa-trophy" style="font-size: 6rem; margin-bottom: 25px; color: var(--neon-yellow);"></i>
+    <h1 style="color: var(--border-color);">SOBREVIVENTE</h1>
+    <h2 id="winner-name" style="font-size: 3rem; font-weight: 800; text-transform: uppercase; text-decoration: underline; color: #2b8a3e;">NOME</h2>
+    <button class="btn" style="background: var(--border-color); color: #fff; margin-top: 40px; width: 80%; max-width: 400px; margin-left: auto; margin-right: auto;" onclick="window.location.href='index.html'">FINALIZAR</button>
 </div>
 
 <script type="module">
@@ -363,7 +355,6 @@
         if(audio) { audio.pause(); audio.currentTime = 0; }
     }
 
-    // INTERAÇÃO DA DYNAMIC ISLAND
     window.toggleIsland = (event) => {
         if(event) event.stopPropagation();
         const island = document.getElementById('dynamic-island');
@@ -460,16 +451,14 @@
 
             if(data.players) {
                 const islandList = document.getElementById('island-participants-list');
-                const miniCount = document.getElementById('mini-player-count');
-                if(miniCount) miniCount.innerText = `${Object.keys(data.players).length} PLAYERS`;
-
                 if(islandList) {
                     let htmlList = '';
+                    let delay = 0;
                     Object.entries(data.players).forEach(([id, player]) => {
                         const sCount = player.strikes || 0;
-                        const hasPowerup = player.powerup ? `<span class="powerup-badge" title="${player.powerup === 'double_vote' ? 'Voto Duplo' : 'Transferir Desafio'}">⚡ CORINGA</span>` : '';
+                        const hasPowerup = player.powerup ? `<span class="powerup-badge" title="${player.powerup === 'double_vote' ? 'Voto Duplo' : 'Transferir Desafio'}">⚡</span>` : '';
                         htmlList += `
-                            <div class="island-player-row">
+                            <div class="island-player-row" style="animation-delay: ${delay}ms;">
                                 <div style="display:flex; align-items:center;">
                                     <span class="island-player-name">${player.name}</span>
                                     ${hasPowerup}
@@ -481,6 +470,7 @@
                                 </div>
                             </div>
                         `;
+                        delay += 40;
                     });
                     islandList.innerHTML = htmlList;
                 }
@@ -508,7 +498,7 @@
                 if(!rouletteInterval) {
                     rouletteInterval = setInterval(() => {
                         const flash = document.getElementById('flash-layer');
-                        flash.style.background = Math.random() > 0.7 ? 'rgba(255, 42, 117, 0.15)' : 'transparent';
+                        flash.style.background = Math.random() > 0.7 ? 'rgba(250, 162, 193, 0.25)' : 'transparent';
                     }, 100);
                 }
             }
@@ -520,18 +510,18 @@
                 const strikes = data.players[pid]?.strikes || 0;
                 
                 document.getElementById('result-content').innerHTML = `
-                    <div style="background: #000; border: 4px solid #ff2a75; padding: 30px; box-shadow: 8px 8px 0px #ff2a75;">
-                        <i class="fa-solid fa-skull-crossbones" style="font-size:5rem; color:#ff2a75; margin-bottom:15px; filter: drop-shadow(0 0 10px #ff2a75);"></i>
-                        <h1 style="font-size:3rem; color:#ff2a75; margin-bottom: 5px;">MÁXIMA PUNIÇÃO</h1>
-                        <p style="font-size:1.3rem; font-weight:900; color:#fff; margin-bottom:15px; text-transform:uppercase;">🚨 ${pid === myId ? "VOCÊ FALHOU" : data.roundPlayerName + " FALHOU"}</p>
+                    <div style="animation: shake 0.4s ease-in-out;">
+                        <i class="fa-solid fa-skull-crossbones" style="font-size:6rem; color:var(--deep-red); margin-bottom:15px; filter: drop-shadow(3px 3px 0px #000);"></i>
+                        <h1 style="font-size:3.5rem; color:var(--deep-red); text-shadow: 2px 2px 0px #111; margin-bottom: 5px;">MÁXIMA PUNIÇÃO</h1>
+                        <p style="font-size:1.4rem; font-weight:800; color:var(--border-color); margin-bottom:10px; text-transform:uppercase;">🚨 ${pid === myId ? "VOCÊ COLOCOU TUDO A PERDER" : data.roundPlayerName + " COLOCOU TUDO A PERDER"}</p>
                         
-                        <div style="background:#ff2a75; color:white; padding:8px 24px; font-weight:900; font-size:1.1rem; border:2px solid #000; display:inline-block; box-shadow: 4px 4px 0px #000; text-transform:uppercase; margin-bottom: 15px;">
+                        <div style="background:var(--neon-pink); color:var(--border-color); padding:10px 30px; font-weight:800; font-size:1.2rem; border-radius:12px; border:3px solid var(--border-color); margin-top:5px; display:inline-block; box-shadow: var(--box-shadow); text-transform:uppercase;">
                             ${strikes} ${strikes === 1 ? 'STRIKE' : 'STRIKES'}
                         </div>
                         
                         <div class="punishment-box">
-                            <h3 style="color:#ffd600; margin-bottom:8px; font-size: 1rem; font-family: var(--font-mono); letter-spacing: 2px;">ORDEM DO SISTEMA</h3>
-                            <p style="font-size:1.5rem; font-weight:900; color:#fff; line-height:1.2; text-transform:uppercase; font-family: var(--font-display);">${data.currentPunishment || "BEBA!"}</p>
+                            <h3 style="color:var(--deep-red); margin-bottom:12px; font-size: 1rem; letter-spacing: 1px; font-weight:800; text-transform:uppercase; text-decoration:underline;">ORDEM DO SISTEMA</h3>
+                            <p style="font-size:1.6rem; font-weight:800; color:var(--border-color); line-height:1.2; text-transform:uppercase;">${data.currentPunishment || "BEBA!"}</p>
                         </div>
                     </div>
                 `;
@@ -541,11 +531,9 @@
                 playSound('snd-safe');
                 document.body.classList.add('safe-bg');
                 document.getElementById('result-content').innerHTML = `
-                    <div style="background: #000; border: 4px solid #00ff66; padding: 40px; box-shadow: 8px 8px 0px #00ff66;">
-                        <i class="fa-solid fa-check-circle" style="font-size:5rem; color:#00ff66; margin-bottom:20px;"></i>
-                        <h1 style="font-size:4rem; color:#00ff66;">SAFE</h1>
-                        <p style="color:#fff; font-weight:900; letter-spacing: 1px; font-family: var(--font-mono); font-size: 1.2rem;">MISSÃO CONCLUÍDA COM SUCESSO</p>
-                    </div>
+                    <i class="fa-solid fa-check-circle" style="font-size:6rem; color:#2b8a3e; margin-bottom:20px;"></i>
+                    <h1 style="font-size:4rem; color:#2b8a3e;">SAFE</h1>
+                    <p style="color:var(--border-color); font-weight:800; letter-spacing: 1px; text-decoration: underline;">MISSÃO CONCLUÍDA</p>
                 `;
             }
             else {
@@ -593,16 +581,16 @@
             if(myVoteObj) {
                 const voteVal = typeof myVoteObj === 'object' ? myVoteObj.vote : myVoteObj;
                 const isDouble = typeof myVoteObj === 'object' && myVoteObj.weight === 2;
-                controls.innerHTML = `<div style="background: #1a1a2e; padding: 20px; border: 4px solid #ffd600; font-weight: bold; box-shadow: 6px 6px 0px #ffd600; color: #fff; text-align: center; font-family: var(--font-display);">Veredito: ${voteVal === 'pass' ? '<b style="color: #00ff66;">CUMPRIU</b>' : '<b style="color: #ff2a75;">NEGADO</b>'} ${isDouble ? '<span style="color: #ffd600; font-weight:900;">(2X)</span>' : ''}</div>`;
+                controls.innerHTML = `<div style="background: #ffffff; padding: 20px; border-radius: 12px; border: 3px solid var(--border-color); font-weight: 800; box-shadow: var(--box-shadow);">Veredito: ${voteVal === 'pass' ? '<b style="color: #2b8a3e; text-decoration: underline;">CUMPRIU</b>' : '<b style="color: var(--deep-red); border-bottom: 2px dashed var(--deep-red);">NEGADO</b>'} ${isDouble ? '<span style="color: var(--border-color); font-weight:800;">(VOTO DUPLO 2X)</span>' : ''}</div>`;
             } else {
                 let powerupBtnHtml = '';
                 if(myPowerup === 'double_vote') {
                     powerupBtnHtml = `
-                        <div style="margin-top: 15px;">
-                            <p style="font-size:0.85rem; font-family: var(--font-mono); color: #ffd600; margin-bottom:8px; font-weight: bold;">⚡ CORINGA DISPONÍVEL (VOTO DUPLO):</p>
+                        <div style="margin-top: 10px;">
+                            <p style="font-size:0.8rem; font-weight:800; margin-bottom:5px;">⚡ VOCÊ POSSUI O CORINGA VOTO DUPLO:</p>
                             <div style="display:flex; gap:10px;">
-                                <button class="btn-powerup" style="background:#ff2a75; color:#fff; margin:0;" onclick="castVote('fail', true)">NÃO FEZ (2X)</button>
-                                <button class="btn-powerup" style="background:#00ff66; color:#000; margin:0;" onclick="castVote('pass', true)">FEZ (2X)</button>
+                                <button class="btn-powerup" style="background:var(--neon-pink); color:var(--border-color); margin:0;" onclick="castVote('fail', true)">VOTO DUPLO: NÃO FEZ (2X)</button>
+                                <button class="btn-powerup" style="background:var(--neon-green); color:var(--border-color); margin:0;" onclick="castVote('pass', true)">VOTO DUPLO: FEZ (2X)</button>
                             </div>
                         </div>
                     `;
@@ -641,10 +629,9 @@
             if(id !== myId) {
                 const btn = document.createElement('button');
                 btn.className = 'btn';
-                btn.style.margin = '0 0 10px 0';
+                btn.style.margin = '0';
                 btn.style.padding = '12px';
                 btn.style.fontSize = '1rem';
-                btn.style.background = '#ffd600';
                 btn.innerText = p.name;
                 btn.onclick = () => executeTransfer(id, p.name);
                 listContainer.appendChild(btn);
@@ -709,6 +696,7 @@
     async function checkVotes(data) {
         if(data.votesProcessed || isUpdating) return;
         const votes = data.roundVotes || {};
+        
         const required = Object.keys(data.players).length - 1;
         
         if(Object.keys(votes).length >= required && required > 0) {
