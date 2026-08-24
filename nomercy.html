@@ -6,7 +6,7 @@
     <title>NO MERCY - Alvo Marcado</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Passion+One:wght@400;700;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --neon-red: #ff6b6b;
@@ -20,7 +20,7 @@
             --border-width: 3px;
             --box-shadow: 4px 4px 0px #111111;
             --box-shadow-lg: 6px 6px 0px #111111;
-            --font-display: 'Plus Jakarta Sans', sans-serif;
+            --font-display: 'Passion One', cursive, sans-serif;
             --font-data: 'Plus Jakarta Sans', sans-serif;
             --island-bezier: cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
@@ -31,7 +31,7 @@
             background-color: var(--bg-dark);
             color: var(--border-color);
             height: 100vh; width: 100vw; overflow: hidden;
-            font-family: var(--font-display);
+            font-family: var(--font-data);
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             transition: background 0.5s ease;
@@ -53,7 +53,7 @@
             display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 20px;
             transition: opacity 0.2s ease, transform 0.3s var(--island-bezier);
         }
-        .island-title { font-size: 0.85rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+        .island-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
         .island-icon { font-size: 0.9rem; animation: pulse 1.5s infinite; color: var(--deep-red); }
         
         .island.expanded {
@@ -115,10 +115,11 @@
         }
 
         h1 { 
-            font-size: clamp(3rem, 10vw, 4.5rem); font-weight: 800; line-height: 1; 
+            font-family: var(--font-display);
+            font-size: clamp(4rem, 12vw, 6rem); font-weight: 900; line-height: 0.9; 
             text-transform: uppercase; margin-bottom: 25px; 
             color: var(--border-color);
-            letter-spacing: -1px;
+            letter-spacing: 2px;
         }
 
         .card {
@@ -132,12 +133,13 @@
         }
 
         .btn { 
-            background: var(--neon-yellow); color: var(--border-color); border: var(--border-width) solid var(--border-color); padding: 16px 20px; 
-            border-radius: 12px; font-family: var(--font-display); font-weight: 800; 
-            font-size: 1rem; width: 100%; cursor: pointer; text-transform: uppercase; 
+            background: var(--neon-yellow); color: var(--border-color); border: var(--border-width) solid var(--border-color); padding: 14px 20px; 
+            border-radius: 12px; font-family: var(--font-display); font-weight: 700; 
+            font-size: 1.4rem; width: 100%; cursor: pointer; text-transform: uppercase; 
             margin-bottom: 15px; transition: transform 0.1s, box-shadow 0.1s;
             box-shadow: var(--box-shadow);
             display: flex; align-items: center; justify-content: center; gap: 10px;
+            letter-spacing: 1px;
         }
         .btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #111; }
         .btn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px #111; }
@@ -146,12 +148,13 @@
         .btn-hard { background: var(--neon-pink); color: var(--border-color); }
 
         .btn-powerup {
-            background: var(--neon-yellow); color: var(--border-color); border: var(--border-width) solid var(--border-color); padding: 14px;
-            border-radius: 12px; font-family: var(--font-display); font-weight: 800;
-            font-size: 0.95rem; width: 100%; cursor: pointer; text-transform: uppercase;
+            background: var(--neon-yellow); color: var(--border-color); border: var(--border-width) solid var(--border-color); padding: 12px;
+            border-radius: 12px; font-family: var(--font-display); font-weight: 700;
+            font-size: 1.2rem; width: 100%; cursor: pointer; text-transform: uppercase;
             margin-top: 10px; margin-bottom: 10px; transition: transform 0.1s, box-shadow 0.1s;
             box-shadow: var(--box-shadow);
             display: flex; align-items: center; justify-content: center; gap: 8px;
+            letter-spacing: 1px;
         }
         .btn-powerup:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #111; }
 
@@ -168,9 +171,9 @@
 
         .vote-row { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 20px; }
         .vote-btns { display: flex; gap: 12px; width: 100%; }
-        .btn-fail { background: var(--neon-pink); border: var(--border-width) solid var(--border-color); color: var(--border-color); box-shadow: var(--box-shadow); }
+        .btn-fail { background: var(--neon-pink); border: var(--border-width) solid var(--border-color); color: var(--border-color); box-shadow: var(--box-shadow); font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; }
         .btn-fail:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #111; }
-        .btn-pass { background: var(--neon-green); border: var(--border-width) solid var(--border-color); color: var(--border-color); box-shadow: var(--box-shadow); }
+        .btn-pass { background: var(--neon-green); border: var(--border-width) solid var(--border-color); color: var(--border-color); box-shadow: var(--box-shadow); font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; }
         .btn-pass:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #111; }
 
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99; transition: background 0.1s; }
@@ -181,9 +184,9 @@
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
 
         .target-badge { 
-            background: var(--neon-pink); color: var(--border-color); font-weight: 800;
-            padding: 6px 16px; border-radius: 8px; font-size: 0.85rem; 
-            letter-spacing: 1px; margin-bottom: 12px; display: none; 
+            background: var(--neon-pink); color: var(--border-color); font-family: var(--font-display); font-weight: 700;
+            padding: 4px 16px; border-radius: 8px; font-size: 1.1rem; 
+            letter-spacing: 1.5px; margin-bottom: 12px; display: none; 
             animation: pulse 1s infinite;
             border: var(--border-width) solid var(--border-color);
             box-shadow: 2px 2px 0px #111;
@@ -191,8 +194,8 @@
 
         @keyframes pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
 
-        #target-player-display { color: var(--deep-red); font-weight: 700; margin-bottom: 15px; text-decoration: underline; }
-        .streak-info { font-size: 0.8rem; color: #2b8a3e; font-family: var(--font-data); margin-bottom: 10px; display: none; font-weight: 800; }
+        #target-player-display { color: var(--deep-red); font-weight: 700; margin-bottom: 15px; text-decoration: underline; font-family: var(--font-data); }
+        .streak-info { font-size: 0.85rem; color: #2b8a3e; font-family: var(--font-data); margin-bottom: 10px; display: none; font-weight: 800; }
         
         .punishment-box { 
             background: #ffffff; border: var(--border-width) solid var(--border-color); 
@@ -246,10 +249,10 @@
 
 <div id="transfer-modal" class="powerup-modal">
     <div class="powerup-modal-card">
-        <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px;">⚡ TRANSFERIR DESAFIO</h2>
-        <p style="font-size: 0.9rem; margin-bottom: 20px;">Escolha para quem deseja repassar o desafio atual:</p>
+        <h2 style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">⚡ TRANSFERIR DESAFIO</h2>
+        <p style="font-family: var(--font-data); font-size: 0.9rem; margin-bottom: 20px; font-weight: 400;">Escolha para quem deseja repassar o desafio atual:</p>
         <div id="transfer-players-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto;"></div>
-        <button class="btn" style="margin-top: 15px; background: #eee; font-size: 0.9rem; padding: 12px;" onclick="closeTransferModal()">CANCELAR</button>
+        <button class="btn" style="margin-top: 15px; background: #eee; font-size: 1.1rem; padding: 10px;" onclick="closeTransferModal()">CANCELAR</button>
     </div>
 </div>
 
@@ -259,19 +262,19 @@
 <audio id="snd-roulette" src="https://assets.mixkit.co/active_storage/sfx/123/123-preview.mp3" loop></audio>
 
 <div id="screen-lobby" class="screen active">
-    <div style="margin-bottom: 20px; opacity: 0.7; letter-spacing: 3px; font-weight: 800;">SISTEMA</div>
+    <div style="margin-bottom: 20px; opacity: 0.7; letter-spacing: 3px; font-weight: 800; font-family: var(--font-data);">SISTEMA</div>
     <h1>NO MERCY</h1>
-    <p id="lobby-text">Sincronizando banco de dados...</p>
-    <div id="loading"><i class="fa-solid fa-spinner fa-spin" style="font-size: 2.5rem; color: var(--border-color);"></i></div>
+    <p id="lobby-text" style="font-family: var(--font-data); font-weight: 400;">Sincronizando banco de dados...</p>
+    <div id="loading" style="margin-top: 15px;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 2.5rem; color: var(--border-color);"></i></div>
 </div>
 
 <div id="screen-mode-selection" class="screen">
-    <div style="margin-bottom: 20px; opacity: 0.7; letter-spacing: 3px; font-weight: 800;">HOST CONFIG</div>
+    <div style="margin-bottom: 20px; opacity: 0.7; letter-spacing: 3px; font-weight: 800; font-family: var(--font-data);">HOST CONFIG</div>
     <h1>ESCOLHA O MODO</h1>
     <div class="card">
         <button class="btn btn-safe" onclick="selectGameMode('safe')"><i class="fa-solid fa-shield-heart" style="color: var(--border-color);"></i> MODO SAFE</button>
         <button class="btn btn-hard" onclick="selectGameMode('hard')"><i class="fa-solid fa-fire" style="color: var(--border-color);"></i> MODO HARD</button>
-        <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 15px; margin-bottom: 0; font-weight: 600;">O modo define a lista de desafios que será carregada.</p>
+        <p style="font-family: var(--font-data); font-size: 0.85rem; opacity: 0.7; margin-top: 15px; margin-bottom: 0; font-weight: 400;">O modo define a lista de desafios que será carregada.</p>
     </div>
 </div>
 
@@ -279,7 +282,7 @@
     <div id="target-badge" class="target-badge">⚠️ ALVO MARCADO ⚠️</div>
     <div id="streak-info" class="streak-info">SOBREVIVEU 1/2 RODADAS</div>
     
-    <div id="current-player-name" style="font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; color: var(--border-color); margin-top: 15px;">...</div>
+    <div id="current-player-name" style="font-family: var(--font-display); font-size: 3.5rem; font-weight: 700; margin-bottom: 2px; color: var(--border-color); margin-top: 10px; letter-spacing: 1px;">...</div>
     <div id="target-player-display"></div>
     
     <div class="strikes-container" id="game-strikes-display">
@@ -289,7 +292,7 @@
     </div>
     
     <div class="card">
-        <div id="challenge-text" style="font-size: 1.4rem; font-weight: 700; line-height: 1.3;">...</div>
+        <div id="challenge-text" style="font-family: var(--font-data); font-size: 1.25rem; font-weight: 600; line-height: 1.35;">...</div>
     </div>
 
     <div id="controls-area" style="width: 100%; max-width: 420px; margin-top: 10px;"></div>
@@ -300,12 +303,12 @@
     <div class="bottle-icon-container">
         <i class="fa-solid fa-bottle-droplet"></i>
     </div>
-    <h2 style="font-family: var(--font-display); font-weight: 800; margin-top: 40px; text-transform: uppercase; letter-spacing: 2px;">PROCESSANDO VEREDITO...</h2>
+    <h2 style="font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; margin-top: 40px; text-transform: uppercase; letter-spacing: 2px;">PROCESSANDO VEREDITO...</h2>
 </div>
 
 <div id="screen-roulette" class="screen" style="background: var(--bg-dark);">
     <i class="fa-solid fa-skull-crossbones" style="font-size: 6rem; color: var(--deep-red); margin-bottom: 30px;"></i>
-    <h2 style="color: var(--border-color); letter-spacing: 2px; font-weight: 800; font-size: 2rem;">SORTEANDO<br>PUNIÇÃO</h2>
+    <h2 style="font-family: var(--font-display); color: var(--border-color); letter-spacing: 2px; font-weight: 700; font-size: 3rem; line-height: 1;">SORTEANDO<br>PUNIÇÃO</h2>
 </div>
 
 <div id="screen-result" class="screen">
@@ -315,7 +318,7 @@
 <div id="screen-winner" class="screen" style="background: var(--bg-dark); color: var(--border-color);">
     <i class="fa-solid fa-trophy" style="font-size: 6rem; margin-bottom: 25px; color: var(--neon-yellow);"></i>
     <h1 style="color: var(--border-color);">SOBREVIVENTE</h1>
-    <h2 id="winner-name" style="font-size: 3rem; font-weight: 800; text-transform: uppercase; text-decoration: underline; color: #2b8a3e;">NOME</h2>
+    <h2 id="winner-name" style="font-family: var(--font-display); font-size: 4rem; font-weight: 700; text-transform: uppercase; text-decoration: underline; color: #2b8a3e; letter-spacing: 2px;">NOME</h2>
     <button class="btn" style="background: var(--border-color); color: #fff; margin-top: 40px; width: 80%; max-width: 400px; margin-left: auto; margin-right: auto;" onclick="window.location.href='index.html'">FINALIZAR</button>
 </div>
 
@@ -512,16 +515,16 @@
                 document.getElementById('result-content').innerHTML = `
                     <div style="animation: shake 0.4s ease-in-out;">
                         <i class="fa-solid fa-skull-crossbones" style="font-size:6rem; color:var(--deep-red); margin-bottom:15px; filter: drop-shadow(3px 3px 0px #000);"></i>
-                        <h1 style="font-size:3.5rem; color:var(--deep-red); text-shadow: 2px 2px 0px #111; margin-bottom: 5px;">MÁXIMA PUNIÇÃO</h1>
-                        <p style="font-size:1.4rem; font-weight:800; color:var(--border-color); margin-bottom:10px; text-transform:uppercase;">🚨 ${pid === myId ? "VOCÊ COLOCOU TUDO A PERDER" : data.roundPlayerName + " COLOCOU TUDO A PERDER"}</p>
+                        <h1 style="font-family: var(--font-display); font-size:3.5rem; color:var(--deep-red); text-shadow: 2px 2px 0px #111; margin-bottom: 5px; letter-spacing: 2px;">MÁXIMA PUNIÇÃO</h1>
+                        <p style="font-family: var(--font-data); font-size:1.1rem; font-weight:700; color:var(--border-color); margin-bottom:10px; text-transform:uppercase;">🚨 ${pid === myId ? "VOCÊ COLOCOU TUDO A PERDER" : data.roundPlayerName + " COLOCOU TUDO A PERDER"}</p>
                         
-                        <div style="background:var(--neon-pink); color:var(--border-color); padding:10px 30px; font-weight:800; font-size:1.2rem; border-radius:12px; border:3px solid var(--border-color); margin-top:5px; display:inline-block; box-shadow: var(--box-shadow); text-transform:uppercase;">
+                        <div style="background:var(--neon-pink); color:var(--border-color); padding:8px 25px; font-family: var(--font-display); font-weight:700; font-size:1.4rem; border-radius:12px; border:3px solid var(--border-color); margin-top:5px; display:inline-block; box-shadow: var(--box-shadow); text-transform:uppercase; letter-spacing: 1px;">
                             ${strikes} ${strikes === 1 ? 'STRIKE' : 'STRIKES'}
                         </div>
                         
                         <div class="punishment-box">
-                            <h3 style="color:var(--deep-red); margin-bottom:12px; font-size: 1rem; letter-spacing: 1px; font-weight:800; text-transform:uppercase; text-decoration:underline;">ORDEM DO SISTEMA</h3>
-                            <p style="font-size:1.6rem; font-weight:800; color:var(--border-color); line-height:1.2; text-transform:uppercase;">${data.currentPunishment || "BEBA!"}</p>
+                            <h3 style="font-family: var(--font-display); color:var(--deep-red); margin-bottom:8px; font-size: 1.3rem; letter-spacing: 1.5px; font-weight:700; text-transform:uppercase; text-decoration:underline;">ORDEM DO SISTEMA</h3>
+                            <p style="font-family: var(--font-data); font-size:1.35rem; font-weight:700; color:var(--border-color); line-height:1.25; text-transform:uppercase;">${data.currentPunishment || "BEBA!"}</p>
                         </div>
                     </div>
                 `;
@@ -532,8 +535,8 @@
                 document.body.classList.add('safe-bg');
                 document.getElementById('result-content').innerHTML = `
                     <i class="fa-solid fa-check-circle" style="font-size:6rem; color:#2b8a3e; margin-bottom:20px;"></i>
-                    <h1 style="font-size:4rem; color:#2b8a3e;">SAFE</h1>
-                    <p style="color:var(--border-color); font-weight:800; letter-spacing: 1px; text-decoration: underline;">MISSÃO CONCLUÍDA</p>
+                    <h1 style="font-family: var(--font-display); font-size:5rem; color:#2b8a3e; letter-spacing: 2px;">SAFE</h1>
+                    <p style="font-family: var(--font-data); color:var(--border-color); font-weight:800; letter-spacing: 1px; text-decoration: underline;">MISSÃO CONCLUÍDA</p>
                 `;
             }
             else {
@@ -581,13 +584,13 @@
             if(myVoteObj) {
                 const voteVal = typeof myVoteObj === 'object' ? myVoteObj.vote : myVoteObj;
                 const isDouble = typeof myVoteObj === 'object' && myVoteObj.weight === 2;
-                controls.innerHTML = `<div style="background: #ffffff; padding: 20px; border-radius: 12px; border: 3px solid var(--border-color); font-weight: 800; box-shadow: var(--box-shadow);">Veredito: ${voteVal === 'pass' ? '<b style="color: #2b8a3e; text-decoration: underline;">CUMPRIU</b>' : '<b style="color: var(--deep-red); border-bottom: 2px dashed var(--deep-red);">NEGADO</b>'} ${isDouble ? '<span style="color: var(--border-color); font-weight:800;">(VOTO DUPLO 2X)</span>' : ''}</div>`;
+                controls.innerHTML = `<div style="background: #ffffff; padding: 20px; border-radius: 12px; border: 3px solid var(--border-color); font-weight: 800; box-shadow: var(--box-shadow); font-family: var(--font-data);">Veredito: ${voteVal === 'pass' ? '<b style="color: #2b8a3e; text-decoration: underline;">CUMPRIU</b>' : '<b style="color: var(--deep-red); border-bottom: 2px dashed var(--deep-red);">NEGADO</b>'} ${isDouble ? '<span style="color: var(--border-color); font-weight:800;">(VOTO DUPLO 2X)</span>' : ''}</div>`;
             } else {
                 let powerupBtnHtml = '';
                 if(myPowerup === 'double_vote') {
                     powerupBtnHtml = `
                         <div style="margin-top: 10px;">
-                            <p style="font-size:0.8rem; font-weight:800; margin-bottom:5px;">⚡ VOCÊ POSSUI O CORINGA VOTO DUPLO:</p>
+                            <p style="font-family: var(--font-data); font-size:0.8rem; font-weight:800; margin-bottom:5px;">⚡ VOCÊ POSSUI O CORINGA VOTO DUPLO:</p>
                             <div style="display:flex; gap:10px;">
                                 <button class="btn-powerup" style="background:var(--neon-pink); color:var(--border-color); margin:0;" onclick="castVote('fail', true)">VOTO DUPLO: NÃO FEZ (2X)</button>
                                 <button class="btn-powerup" style="background:var(--neon-green); color:var(--border-color); margin:0;" onclick="castVote('pass', true)">VOTO DUPLO: FEZ (2X)</button>
@@ -631,7 +634,7 @@
                 btn.className = 'btn';
                 btn.style.margin = '0';
                 btn.style.padding = '12px';
-                btn.style.fontSize = '1rem';
+                btn.style.fontSize = '1.2rem';
                 btn.innerText = p.name;
                 btn.onclick = () => executeTransfer(id, p.name);
                 listContainer.appendChild(btn);
